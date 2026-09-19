@@ -20,12 +20,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Instalacja Java (JDK 21)
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '21'
 
       - name: Konfiguracja Android SDK
@@ -37,9 +36,11 @@ jobs:
       - name: Budowanie aplikacji webowej
         run: npm run build
 
-      - name: Inicjalizacja platformy Android Capacitor
+      - name: Synchronizacja Capacitor Android
         run: |
-          npx cap add android || true
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
           npx cap sync android
 
       - name: Nadanie uprawnień do uruchomienia gradlew
@@ -48,7 +49,7 @@ jobs:
       - name: Kompilacja pliku APK (assembleDebug)
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
       - name: Udostępnienie gotowego pliku APK jako artefakt
         uses: actions/upload-artifact@v4
