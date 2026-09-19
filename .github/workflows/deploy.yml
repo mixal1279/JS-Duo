@@ -1,0 +1,64 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+# Uprawnienia wymagane do bezpiecznego wdrożenia na GitHub Pages za pomocą OIDC
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Blokada współbieżnych wdrożeń (jedno wdrożenie naraz)
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Budowanie aplikacji (Vite + npm)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalacja zależności
+        run: npm install
+
+      - name: Weryfikacja typów TypeScript
+        run: npm run lint
+
+      - name: Budowanie projektu Vite
+        run: npm run build
+
+      - name: Konfiguracja GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Przesłanie artefaktu (katalog dist)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+  deploy:
+    name: Wdrożenie na GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Publikacja na GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
