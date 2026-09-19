@@ -43,9 +43,13 @@ jobs:
 
       - name: Konfiguracja GitHub Pages
         uses: actions/configure-pages@v5
+        continue-on-error: true
+        with:
+          enablement: true
 
       - name: Przesłanie artefaktu (katalog dist)
         uses: actions/upload-pages-artifact@v3
+        continue-on-error: true
         with:
           path: './dist'
 
