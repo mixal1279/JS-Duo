@@ -37,15 +37,16 @@ jobs:
       - name: Budowanie aplikacji webowej
         run: npm run build
 
-      - name: Synchronizacja Capacitor Android
+      - name: Inicjalizacja i synchronizacja Capacitor Android
         run: |
-          if [ ! -d "android" ]; then
+          if [ ! -f "android/gradlew" ]; then
+            echo "Brak kompletnego katalogu android lub pliku gradlew - generowanie..."
+            rm -rf android
             npx cap add android
           fi
           npx cap sync android
-
-      - name: Nadanie uprawnień do uruchomienia gradlew
-        run: chmod +x android/gradlew
+          echo "android.builder.sdkDownload=true" >> android/gradle.properties
+          chmod +x android/gradlew
 
       - name: Kompilacja pliku APK (assembleDebug)
         run: |

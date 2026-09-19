@@ -13,6 +13,8 @@
     "cap:build": "npm run build && npx cap sync && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
@@ -23,8 +25,6 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.5.2",
-    "@capacitor/cli": "^8.5.2",
     "@types/canvas-confetti": "^1.9.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
