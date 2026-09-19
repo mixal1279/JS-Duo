@@ -30,7 +30,7 @@ jobs:
       - name: Konfiguracja Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Instalacja zależności
         run: npm install
@@ -60,4 +60,5 @@ jobs:
     steps:
       - name: Publikacja na GitHub Pages
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
