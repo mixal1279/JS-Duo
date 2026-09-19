@@ -1,0 +1,6 @@
+{
+  "name": "JS Duo",
+  "description": "Interaktywna platforma do nauki JavaScript w stylu Duolingo ze ścieżką nauki, zadaniami, sercami, rankingiem i wyzwaniami.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
