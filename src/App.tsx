@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Flame, Gem, Heart, Sparkles, BookOpen, Bell } from 'lucide-react';
-import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, Question } from './types';
+import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, Question, AppTheme } from './types';
 import { storageService } from './services/storageService';
 import { notificationService } from './services/notificationService';
 import { ALL_QUESTIONS, getQuestionsByLesson } from './data/questionsData';
@@ -18,6 +18,8 @@ import { QuizModal } from './components/QuizModal';
 import { QuestionDetailModal } from './components/QuestionDetailModal';
 import { NotificationSettingsModal } from './components/NotificationSettingsModal';
 import { HeartRefillModal } from './components/HeartRefillModal';
+import { ProfileView } from './components/ProfileView';
+import { StreakToast } from './components/StreakToast';
 
 export const App: React.FC = () => {
   // Application State
@@ -27,11 +29,13 @@ export const App: React.FC = () => {
   const [friends, setFriends] = useState<Friend[]>(() => storageService.getFriends());
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => storageService.getChatMessages());
   const [notifConfig, setNotifConfig] = useState<NotificationConfig>(() => storageService.getNotificationConfig());
+  const [theme, setTheme] = useState<AppTheme>(() => storageService.getTheme());
 
   // Navigation State
   const [currentTab, setCurrentTab] = useState<TabType>('path');
 
-  // Modal States
+  // Modal & Toast States
+  const [showStreakToast, setShowStreakToast] = useState(false);
   const [activeLesson, setActiveLesson] = useState<{
     questions: Question[];
     unitTitle: string;
@@ -68,16 +72,44 @@ export const App: React.FC = () => {
     storageService.saveNotificationConfig(notifConfig);
   }, [notifConfig]);
 
-  // Initial welcome reminder setup
+  // Synchronize App Theme (Deep Night vs Light Mode)
   useEffect(() => {
-    if (notifConfig.enabled && notificationService.checkPermission()) {
-      // Simulate periodic notification schedule check
-      const timer = setTimeout(() => {
-        // Can remind if needed
-      }, 1000);
-      return () => clearTimeout(timer);
+    if (theme === 'light') {
+      document.documentElement.classList.add('theme-light');
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.classList.remove('theme-light');
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'deep-night');
     }
-  }, [notifConfig]);
+    storageService.saveTheme(theme);
+  }, [theme]);
+
+  // Push Notification & 24h Inactivity Monitoring
+  useEffect(() => {
+    // Record login/activity session
+    notificationService.recordActivity();
+
+    // Start 24-hour inactivity monitor
+    const cleanupMonitor = notificationService.startInactivityMonitor(
+      () => stats.streak,
+      () => notifConfig.tone,
+      () => notifConfig.enabled
+    );
+
+    return () => {
+      cleanupMonitor();
+    };
+  }, [stats.streak, notifConfig.tone, notifConfig.enabled]);
+
+  // Toast informujący o passie (streak) tuż po zalogowaniu / uruchomieniu aplikacji
+  useEffect(() => {
+    const toastTimer = setTimeout(() => {
+      setShowStreakToast(true);
+    }, 600);
+    return () => clearTimeout(toastTimer);
+  }, []);
 
   // Desktop keyboard shortcuts (when no modal is open and user isn't typing in an input)
   useEffect(() => {
@@ -95,6 +127,7 @@ export const App: React.FC = () => {
       else if (e.key === '3') setCurrentTab('leaderboard');
       else if (e.key === '4') setCurrentTab('duels');
       else if (e.key === '5') setCurrentTab('chat');
+      else if (e.key === '6') setCurrentTab('profile');
       else if (e.key === 'q' || e.key === 'Q') {
         setExplorerQuestionId(null);
         setShowExplorer(true);
@@ -133,6 +166,7 @@ export const App: React.FC = () => {
     completedQuestionIds: number[];
   }) => {
     setActiveLesson(null);
+    notificationService.recordActivity();
 
     // Update Stats
     const newXp = stats.xp + results.earnedXp;
@@ -324,7 +358,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#131F24] text-white flex font-sans selection:bg-duo-green selection:text-black">
+    <div className={`min-h-screen ${theme === 'light' ? 'bg-[#F7F9FA] text-[#0F172A]' : 'bg-[#131F24] text-white'} flex font-sans selection:bg-duo-green selection:text-black transition-colors duration-200`}>
       {/* Desktop Left Sidebar (visible on md and up) */}
       <DesktopSidebar
         currentTab={currentTab}
@@ -351,18 +385,28 @@ export const App: React.FC = () => {
             }}
             onOpenNotifications={() => setShowNotifications(true)}
             onRefillHearts={() => setShowHeartRefill(true)}
+            onOpenProfile={() => setCurrentTab('profile')}
+            onShowStreakToast={() => setShowStreakToast(true)}
           />
         </div>
 
         {/* Medium Screen Top Stats Header (visible on md:flex lg:hidden) */}
         <div className="hidden md:flex lg:hidden items-center justify-between px-6 py-3 border-b border-[#2A373F] bg-[#131F24]/95 sticky top-0 z-20">
-          <div className="flex items-center gap-2">
+          <div
+            onClick={() => setCurrentTab('profile')}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            title="Kliknij, aby otworzyć Profil i Osiągnięcia"
+          >
             <span className="font-extrabold text-sm text-white">Poziom {stats.level}</span>
             <span className="text-xs text-gray-400 font-mono">({stats.xp} XP)</span>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] text-[#FF9600] font-bold text-xs">
+            <div
+              onClick={() => setShowStreakToast(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] hover:border-[#FF9600] text-[#FF9600] font-bold text-xs cursor-pointer transition-colors active:scale-95"
+              title="Kliknij, aby wyświetlić komunikat o passie"
+            >
               <Flame size={16} className="fill-[#FF9600]" />
               <span>{stats.streak}</span>
             </div>
@@ -434,6 +478,20 @@ export const App: React.FC = () => {
                 onSelectQuestion={handleOpenExplorerAt}
               />
             )}
+
+            {currentTab === 'profile' && (
+              <ProfileView
+                userStats={stats}
+                onUpdateStats={(newSt) => setStats((prev) => ({ ...prev, ...newSt }))}
+                onOpenExplorer={() => {
+                  setExplorerQuestionId(null);
+                  setShowExplorer(true);
+                }}
+                onOpenLeaderboard={() => setCurrentTab('leaderboard')}
+                currentTheme={theme}
+                onToggleTheme={setTheme}
+              />
+            )}
           </main>
 
           {/* Desktop Right Panel (visible on lg and up) */}
@@ -443,6 +501,7 @@ export const App: React.FC = () => {
             onRefillHearts={() => setShowHeartRefill(true)}
             onOpenLeaderboard={() => setCurrentTab('leaderboard')}
             onOpenQuests={() => setCurrentTab('quests')}
+            onOpenProfile={() => setCurrentTab('profile')}
           />
         </div>
 
@@ -494,6 +553,18 @@ export const App: React.FC = () => {
           onClose={() => setShowHeartRefill(false)}
           onRefillWithGems={() => handleBuyItem('hearts', 50)}
           onFreePractice={handleFreePractice}
+        />
+      )}
+
+      {/* Toast powitalny z liczbą dni passy (Streak) po zalogowaniu */}
+      {showStreakToast && (
+        <StreakToast
+          streak={stats.streak}
+          onClose={() => setShowStreakToast(false)}
+          onOpenProfile={() => {
+            setCurrentTab('profile');
+            setShowStreakToast(false);
+          }}
         />
       )}
     </div>

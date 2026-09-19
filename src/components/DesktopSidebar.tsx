@@ -9,7 +9,9 @@ import {
   Bell,
   Heart,
   Keyboard,
-  Sparkles
+  Sparkles,
+  User,
+  Award
 } from 'lucide-react';
 import { TabType } from './BottomNavigation';
 import { UserStats } from '../types';
@@ -42,6 +44,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { id: 'leaderboard' as TabType, label: 'Ranking', icon: Trophy, shortcut: '3' },
     { id: 'duels' as TabType, label: 'Pojedynki 1v1', icon: Swords, shortcut: '4' },
     { id: 'chat' as TabType, label: 'Społeczność', icon: MessageSquareText, badge: unreadChatCount, shortcut: '5' },
+    { id: 'profile' as TabType, label: 'Osiągnięcia & Profil', icon: Award, shortcut: '6' },
   ];
 
   return (
@@ -142,10 +145,18 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         </button>
       </nav>
 
-      {/* User Mini Profile Card */}
+      {/* User Mini Profile Card (Clickable) */}
       <div className="pt-4 border-t border-[#243138] mt-auto">
-        <div className="p-3 bg-[#1C262C] border border-[#2A373F] rounded-2xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-duo-yellow/20 border border-duo-yellow/40 flex items-center justify-center text-xl">
+        <button
+          onClick={() => onSelectTab('profile')}
+          className={`w-full p-3 rounded-2xl flex items-center gap-3 border-2 transition-all cursor-pointer text-left ${
+            currentTab === 'profile'
+              ? 'bg-[#1C3545] border-duo-blue shadow-[0_3px_0_#1899d6]'
+              : 'bg-[#1C262C] border-[#2A373F] hover:border-duo-yellow/60 hover:bg-[#202E36]'
+          }`}
+          title="Kliknij, aby otworzyć Profil i Osiągnięcia"
+        >
+          <div className="w-10 h-10 rounded-xl bg-duo-yellow/20 border border-duo-yellow/40 flex items-center justify-center text-xl shrink-0">
             🦉
           </div>
           <div className="flex-1 min-w-0">
@@ -157,7 +168,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             </div>
             <p className="text-[11px] text-gray-400 truncate">{levelInfo.title}</p>
           </div>
-        </div>
+        </button>
       </div>
     </aside>
   );

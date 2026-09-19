@@ -1,7 +1,8 @@
 import React from 'react';
-import { Flame, Gem, Heart, Trophy, Keyboard, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Flame, Gem, Heart, Trophy, Keyboard, Sparkles, CheckCircle2, ArrowRight, Award } from 'lucide-react';
 import { UserStats, DailyQuest } from '../types';
 import { storageService } from '../services/storageService';
+import { calculateAchievements } from '../data/achievementsData';
 
 interface DesktopRightPanelProps {
   stats: UserStats;
@@ -9,6 +10,7 @@ interface DesktopRightPanelProps {
   onRefillHearts: () => void;
   onOpenLeaderboard: () => void;
   onOpenQuests: () => void;
+  onOpenProfile?: () => void;
 }
 
 export const DesktopRightPanel: React.FC<DesktopRightPanelProps> = ({
@@ -17,8 +19,11 @@ export const DesktopRightPanel: React.FC<DesktopRightPanelProps> = ({
   onRefillHearts,
   onOpenLeaderboard,
   onOpenQuests,
+  onOpenProfile,
 }) => {
   const levelInfo = storageService.calculateLevel(stats.xp);
+  const achievements = calculateAchievements(stats);
+  const unlockedCount = achievements.filter(a => a.isUnlocked).length;
   const currentXpProgress = Math.min(
     100,
     ((stats.xp - levelInfo.currentLevelXp) / (levelInfo.nextLevelXp - levelInfo.currentLevelXp)) * 100
@@ -177,6 +182,52 @@ export const DesktopRightPanel: React.FC<DesktopRightPanelProps> = ({
             <span className="font-mono font-bold bg-[#1F2B33] px-2 py-0.5 rounded border border-[#2D3F4B] text-duo-blue">
               Klawisze 1-5
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Achievements Mini Card */}
+      <div
+        onClick={onOpenProfile}
+        className="bg-gradient-to-br from-[#1A262E] to-[#141F25] border-2 border-[#2C3E4A] hover:border-duo-yellow rounded-3xl p-4 shadow-sm cursor-pointer transition-all transform hover:-translate-y-0.5 group"
+      >
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-duo-yellow/20 border border-duo-yellow/50 flex items-center justify-center text-duo-yellow text-base">
+              🏆
+            </div>
+            <div>
+              <h4 className="text-xs font-black uppercase text-white tracking-wider group-hover:text-duo-yellow transition-colors">
+                Osiągnięcia
+              </h4>
+              <span className="text-[11px] text-gray-400 font-bold">
+                {unlockedCount} z {achievements.length} zdobytych
+              </span>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-duo-blue flex items-center gap-0.5">
+            <span>Zobacz</span>
+            <ArrowRight size={13} />
+          </span>
+        </div>
+
+        {/* Sneak peek badges */}
+        <div className="flex items-center gap-2 pt-1">
+          {achievements.slice(0, 4).map((ach) => (
+            <div
+              key={ach.id}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg border transition-all ${
+                ach.isUnlocked
+                  ? 'bg-duo-yellow/20 border-duo-yellow/80 shadow-[0_0_8px_rgba(255,215,0,0.3)]'
+                  : 'bg-[#1C2730] border-[#293A46] text-gray-600 grayscale opacity-60'
+              }`}
+              title={`${ach.title}: ${ach.current}/${ach.target} ${ach.unit}`}
+            >
+              <span>{ach.icon}</span>
+            </div>
+          ))}
+          <div className="flex-1 text-right text-[11px] font-extrabold text-duo-yellow">
+            +{achievements.length - 4} więcej
           </div>
         </div>
       </div>

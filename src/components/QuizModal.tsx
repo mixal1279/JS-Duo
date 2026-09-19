@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti';
 import { Question, UserStats } from '../types';
 import { CodeBlock } from './CodeBlock';
 import { MascotOwl } from './MascotOwl';
+import { LessonSummary, QuestionResult } from './LessonSummary';
 import { soundService } from '../services/soundService';
 
 interface QuizModalProps {
@@ -39,6 +40,9 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   const [solvedIds, setSolvedIds] = useState<number[]>([]);
   const [isLessonFinished, setIsLessonFinished] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [startTime] = useState<number>(() => Date.now());
+  const [durationSeconds, setDurationSeconds] = useState(0);
+  const [results, setResults] = useState<QuestionResult[]>([]);
 
   const currentQ = questions[currentIndex];
   const progressPercent = ((currentIndex) / questions.length) * 100;
@@ -48,11 +52,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (isLessonFinished) {
-          onComplete({
-            earnedXp,
-            perfect: perfectLesson,
-            completedQuestionIds: solvedIds,
-          });
+          handleFinish();
         } else {
           onClose();
         }
@@ -61,11 +61,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
 
       if (isLessonFinished) {
         if (e.key === 'Enter' || e.key === ' ') {
-          onComplete({
-            earnedXp,
-            perfect: perfectLesson,
-            completedQuestionIds: solvedIds,
-          });
+          handleFinish();
         }
         return;
       }
@@ -104,6 +100,18 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     setIsCorrect(correct);
     setIsAnswerChecked(true);
 
+    setResults((prev) => [
+      ...prev,
+      {
+        questionId: currentQ.id,
+        questionText: currentQ.question,
+        selectedOptionText: currentQ.options[selectedOption],
+        correctOptionText: currentQ.options[currentQ.correctIndex],
+        isCorrect: correct,
+        explanation: currentQ.explanation,
+      },
+    ]);
+
     if (correct) {
       soundService.playCorrect();
       setEarnedXp((prev) => prev + currentQ.points);
@@ -124,6 +132,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     } else {
       // Finished
       setIsLessonFinished(true);
+      setDurationSeconds(Math.max(1, Math.round((Date.now() - startTime) / 1000)));
       soundService.playLevelUp();
       confetti({
         particleCount: 80,
@@ -144,31 +153,43 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-[#131F24] flex flex-col justify-between overflow-y-auto">
       {/* Top Bar */}
-      <div className="max-w-2xl w-full mx-auto p-4 flex items-center justify-between gap-4">
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-[#232E35] transition-colors"
-          title="Zamknij lekcję"
-        >
-          <X size={24} />
-        </button>
-
-        {/* Progress bar */}
-        <div className="flex-1 h-3.5 bg-[#232E35] rounded-full overflow-hidden p-0.5 border border-[#2A373F]">
-          <div
-            className="h-full bg-duo-green rounded-full transition-all duration-300 relative"
-            style={{ width: `${progressPercent}%` }}
+      {!isLessonFinished ? (
+        <div className="max-w-2xl w-full mx-auto p-4 flex items-center justify-between gap-4">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-[#232E35] transition-colors cursor-pointer"
+            title="Zamknij lekcję"
           >
-            <div className="absolute inset-0 bg-white/20 rounded-full h-1"></div>
+            <X size={24} />
+          </button>
+
+          {/* Progress bar */}
+          <div className="flex-1 h-3.5 bg-[#232E35] rounded-full overflow-hidden p-0.5 border border-[#2A373F]">
+            <div
+              className="h-full bg-duo-green rounded-full transition-all duration-300 relative"
+              style={{ width: `${progressPercent}%` }}
+            >
+              <div className="absolute inset-0 bg-white/20 rounded-full h-1"></div>
+            </div>
+          </div>
+
+          {/* Hearts */}
+          <div className="flex items-center gap-1.5 font-extrabold text-duo-red">
+            <Heart size={22} className="fill-duo-red" />
+            <span className="text-base">{hearts}</span>
           </div>
         </div>
-
-        {/* Hearts */}
-        <div className="flex items-center gap-1.5 font-extrabold text-duo-red">
-          <Heart size={22} className="fill-duo-red" />
-          <span className="text-base">{hearts}</span>
+      ) : (
+        <div className="max-w-xl w-full mx-auto p-4 flex items-center justify-end">
+          <button
+            onClick={handleFinish}
+            className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-[#232E35] transition-colors cursor-pointer"
+            title="Zamknij podsumowanie"
+          >
+            <X size={24} />
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Main Content Area */}
       {!isLessonFinished ? (
@@ -260,38 +281,18 @@ export const QuizModal: React.FC<QuizModalProps> = ({
           )}
         </div>
       ) : (
-        /* Lesson Finished Summary Screen */
-        <div className="max-w-md w-full mx-auto px-4 py-8 flex-1 flex flex-col items-center justify-center text-center">
-          <MascotOwl mood="excited" size={110} className="mb-4 animate-bounce" />
-          <h2 className="text-2xl sm:text-3xl font-black text-duo-yellow mb-1 tracking-tight">
-            Lekcja ukończona! 🎉
-          </h2>
-          <p className="text-gray-400 text-sm mb-6">
-            Kolejny krok w kierunku mistrzostwa JavaScriptu zrobiony!
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 w-full mb-8">
-            <div className="p-4 rounded-2xl bg-[#202F36] border border-[#2A373F] flex flex-col items-center">
-              <Zap size={28} className="text-duo-yellow fill-duo-yellow mb-1" />
-              <span className="text-xs uppercase font-extrabold text-gray-400">Zdobyte XP</span>
-              <span className="text-xl font-black text-white">+{earnedXp} XP</span>
-            </div>
-            <div className="p-4 rounded-2xl bg-[#202F36] border border-[#2A373F] flex flex-col items-center">
-              <Award size={28} className="text-duo-green mb-1" />
-              <span className="text-xs uppercase font-extrabold text-gray-400">Dokładność</span>
-              <span className="text-xl font-black text-white">
-                {Math.round((solvedIds.length / questions.length) * 100)}%
-              </span>
-            </div>
-          </div>
-
-          <button
-            onClick={handleFinish}
-            className="w-full py-4 rounded-2xl bg-duo-green hover:bg-duo-greenDark text-black font-extrabold text-base tracking-wide uppercase shadow-[0_5px_0_#46a302] transition-transform active:translate-y-1 active:shadow-none"
-          >
-            Kontynuuj naukę
-          </button>
-        </div>
+        /* Lesson Finished Summary Screen with Recharts Accuracy Chart */
+        <LessonSummary
+          unitTitle={unitTitle}
+          lessonIndex={lessonIndex}
+          earnedXp={earnedXp}
+          correctCount={results.filter((r) => r.isCorrect).length}
+          wrongCount={results.filter((r) => !r.isCorrect).length}
+          totalQuestions={questions.length}
+          durationSeconds={durationSeconds}
+          results={results}
+          onContinue={handleFinish}
+        />
       )}
 
       {/* Bottom Action Footer */}

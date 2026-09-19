@@ -1,4 +1,4 @@
-import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig } from '../types';
+import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, AppTheme } from '../types';
 import { INITIAL_LEADERBOARD, INITIAL_FRIENDS, INITIAL_CHAT_MESSAGES } from '../data/mockUsers';
 
 const STATS_KEY = 'js_duo_user_stats_v1';
@@ -7,6 +7,7 @@ const LEADERBOARD_KEY = 'js_duo_leaderboard_v1';
 const FRIENDS_KEY = 'js_duo_friends_v1';
 const CHAT_KEY = 'js_duo_chat_v1';
 const NOTIF_KEY = 'js_duo_notification_cfg_v1';
+const THEME_KEY = 'js_duo_theme_v1';
 
 export const DEFAULT_USER_STATS: UserStats = {
   xp: 350,
@@ -181,6 +182,24 @@ export const storageService = {
   saveNotificationConfig(config: NotificationConfig) {
     try {
       localStorage.setItem(NOTIF_KEY, JSON.stringify(config));
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  getTheme(): AppTheme {
+    try {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === 'light' || saved === 'deep-night') return saved as AppTheme;
+    } catch {
+      // fallback
+    }
+    return 'deep-night';
+  },
+
+  saveTheme(theme: AppTheme) {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
     } catch (e) {
       console.error(e);
     }

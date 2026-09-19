@@ -94,3 +94,23 @@ export interface NotificationConfig {
   tone: 'friendly' | 'strict' | 'coder';
   hasBrowserPermission: boolean;
 }
+
+export type AchievementCategory = 'streak' | 'skills' | 'duels' | 'mastery';
+
+export type AppTheme = 'deep-night' | 'light';
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: AchievementCategory;
+  tier: 1 | 2 | 3;
+  target: number;
+  current: number;
+  unit: string;
+  isUnlocked: boolean;
+  unlockedDate?: string;
+  rewardGems: number;
+  rewardXp: number;
+}

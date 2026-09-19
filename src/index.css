@@ -38,3 +38,212 @@
     padding-bottom: calc(0.375rem + env(safe-area-inset-bottom));
   }
 }
+
+/* =========================================================
+   LIGHT MODE PALETTE - AUTHENTIC JS DUO LIGHT THEME
+   ========================================================= */
+
+html.theme-light,
+html.theme-light body,
+.theme-light {
+  background-color: #F7F9FA !important;
+  color: #0F172A !important;
+}
+
+/* Light Theme Scrollbars */
+html.theme-light ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+html.theme-light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+html.theme-light ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Primary surface backgrounds (Cards, Sidebars, Navbars) in Light Mode */
+html.theme-light .bg-\[\#131F24\],
+html.theme-light .bg-\[\#131F24\]\/95 {
+  background-color: #FFFFFF !important;
+}
+
+html.theme-light .bg-\[\#172227\],
+html.theme-light .bg-\[\#1A262E\],
+html.theme-light .bg-\[\#152026\],
+html.theme-light .bg-\[\#15232B\],
+html.theme-light .bg-\[\#18252C\],
+html.theme-light .bg-\[\#172127\],
+html.theme-light .bg-\[\#172026\],
+html.theme-light .bg-\[\#1B262C\],
+html.theme-light .bg-\[\#1B2730\],
+html.theme-light .bg-\[\#1E2E38\] {
+  background-color: #FFFFFF !important;
+}
+
+/* Secondary insets, pill tags, badges and sub-containers in Light Mode */
+html.theme-light .bg-\[\#10171B\],
+html.theme-light .bg-\[\#121B20\],
+html.theme-light .bg-\[\#141B20\],
+html.theme-light .bg-\[\#141E24\],
+html.theme-light .bg-\[\#141F25\],
+html.theme-light .bg-\[\#151E24\],
+html.theme-light .bg-\[\#1C262C\],
+html.theme-light .bg-\[\#1C2730\],
+html.theme-light .bg-\[\#1C2830\],
+html.theme-light .bg-\[\#1C2C35\],
+html.theme-light .bg-\[\#1E2930\],
+html.theme-light .bg-\[\#1E2B32\],
+html.theme-light .bg-\[\#1F2B33\],
+html.theme-light .bg-\[\#1F2C34\],
+html.theme-light .bg-\[\#202E36\],
+html.theme-light .bg-\[\#202F36\],
+html.theme-light .bg-\[\#202F37\],
+html.theme-light .bg-\[\#20303A\],
+html.theme-light .bg-\[\#223038\],
+html.theme-light .bg-\[\#232E35\],
+html.theme-light .bg-\[\#23313A\],
+html.theme-light .bg-\[\#233540\],
+html.theme-light .bg-\[\#25343D\],
+html.theme-light .bg-\[\#253540\],
+html.theme-light .bg-\[\#253642\],
+html.theme-light .bg-\[\#253942\],
+html.theme-light .bg-\[\#28363F\],
+html.theme-light .bg-\[\#2A373F\],
+html.theme-light .bg-\[\#2C3B44\],
+html.theme-light .bg-\[\#2F3D46\],
+html.theme-light .bg-\[\#394953\] {
+  background-color: #F1F5F9 !important;
+}
+
+/* Active navigation item background in Light Mode */
+html.theme-light .bg-\[\#1C3545\] {
+  background-color: #E0F2FE !important;
+}
+
+/* Gradients that use dark stops */
+html.theme-light .from-\[\#1E2E38\],
+html.theme-light .from-\[\#1C2C36\],
+html.theme-light .from-\[\#1A262E\],
+html.theme-light .from-\[\#202E38\],
+html.theme-light .to-\[\#152026\],
+html.theme-light .to-\[\#15232B\],
+html.theme-light .to-\[\#141F25\],
+html.theme-light .to-\[\#162127\],
+html.theme-light .to-\[\#17232A\] {
+  --tw-gradient-from: #FFFFFF !important;
+  --tw-gradient-to: #F8FAFC !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+/* Quiz success & error banner backgrounds in Light Mode */
+html.theme-light .bg-\[\#1A3324\] {
+  background-color: #DCFCE7 !important;
+  border-color: #58CC02 !important;
+}
+html.theme-light .bg-\[\#331B1E\] {
+  background-color: #FEE2E2 !important;
+  border-color: #FF4B4B !important;
+}
+
+/* Borders in Light Mode */
+html.theme-light .border-\[\#131F24\],
+html.theme-light .border-\[\#1C262C\],
+html.theme-light .border-\[\#22313A\],
+html.theme-light .border-\[\#22313B\],
+html.theme-light .border-\[\#243038\],
+html.theme-light .border-\[\#243138\],
+html.theme-light .border-\[\#24333D\],
+html.theme-light .border-\[\#253540\],
+html.theme-light .border-\[\#263742\],
+html.theme-light .border-\[\#293A46\],
+html.theme-light .border-\[\#2A373F\],
+html.theme-light .border-\[\#2A3A44\],
+html.theme-light .border-\[\#2A3B46\],
+html.theme-light .border-\[\#2C3E4A\],
+html.theme-light .border-\[\#2D3E4A\],
+html.theme-light .border-\[\#2D3F4B\],
+html.theme-light .border-\[\#2D404D\],
+html.theme-light .border-\[\#2E414E\],
+html.theme-light .border-\[\#3A4E5C\] {
+  border-color: #E2E8F0 !important;
+}
+
+/* Interactive hover in Light Mode */
+html.theme-light .hover\:bg-\[\#202F36\]:hover,
+html.theme-light .hover\:bg-\[\#202E36\]:hover,
+html.theme-light .hover\:bg-\[\#1E2B32\]:hover,
+html.theme-light .hover\:bg-\[\#253642\]:hover,
+html.theme-light .hover\:bg-\[\#253942\]:hover,
+html.theme-light .hover\:bg-\[\#223038\]:hover {
+  background-color: #E2E8F0 !important;
+}
+
+/* Typography in Light Mode */
+html.theme-light h1,
+html.theme-light h2,
+html.theme-light h3,
+html.theme-light h4,
+html.theme-light h5,
+html.theme-light h6 {
+  color: #0F172A;
+}
+
+/* General text classes when not inside solid colorful badges/buttons */
+html.theme-light .text-white:not(.keep-white):not(button[class*="bg-duo-"]):not(button[class*="bg-purple"]):not(button[class*="bg-gradient"]):not(span[class*="bg-duo-red"]):not(span[class*="bg-duo-blue"]):not(span[class*="bg-duo-green"]) {
+  color: #0F172A;
+}
+
+html.theme-light .text-gray-200 {
+  color: #1E293B !important;
+}
+html.theme-light .text-gray-300 {
+  color: #334155 !important;
+}
+html.theme-light .text-gray-400 {
+  color: #64748B !important;
+}
+
+/* Inputs & selects in Light Mode */
+html.theme-light input,
+html.theme-light select,
+html.theme-light textarea {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+html.theme-light input::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Retain Dark Terminal code blocks in Light Mode */
+html.theme-light .bg-\[\#0D1117\] {
+  background-color: #0D1117 !important;
+}
+html.theme-light .bg-\[\#161B22\] {
+  background-color: #161B22 !important;
+}
+html.theme-light .border-\[\#30363D\] {
+  border-color: #30363D !important;
+}
+html.theme-light .bg-\[\#0D1117\] *,
+html.theme-light .bg-\[\#161B22\] * {
+  color: inherit;
+}
+
+/* Keep colored action buttons with white text crisp */
+html.theme-light button.bg-duo-blue,
+html.theme-light button.bg-duo-red,
+html.theme-light button.bg-purple-600,
+html.theme-light button[class*="bg-gradient-to-r from-purple"],
+html.theme-light button.bg-duo-blue *,
+html.theme-light button.bg-duo-red * {
+  color: #FFFFFF !important;
+}
+
+/* Cards subtle elevation in Light Mode */
+html.theme-light .border-2.border-\[\#2A373F\],
+html.theme-light .border-2.border-\[\#2C3E4A\],
+html.theme-light .border-2.border-\[\#263742\],
+html.theme-light .border-2.border-\[\#253540\] {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}

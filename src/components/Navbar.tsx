@@ -8,6 +8,8 @@ interface NavbarProps {
   onOpenExplorer: () => void;
   onOpenNotifications: () => void;
   onRefillHearts: () => void;
+  onOpenProfile?: () => void;
+  onShowStreakToast?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -15,6 +17,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenExplorer,
   onOpenNotifications,
   onRefillHearts,
+  onOpenProfile,
+  onShowStreakToast,
 }) => {
   const levelInfo = storageService.calculateLevel(stats.xp);
   const currentXpProgress = Math.min(100, ((stats.xp - levelInfo.currentLevelXp) / (levelInfo.nextLevelXp - levelInfo.currentLevelXp)) * 100);
@@ -23,13 +27,19 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-30 bg-[#131F24]/95 backdrop-blur border-b border-[#2A373F] px-4 py-2.5">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         {/* Left: Brand */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-duo-green flex items-center justify-center shadow-[0_3px_0_#46a302] cursor-pointer transform active:translate-y-0.5">
+        <div
+          onClick={onOpenProfile}
+          className="flex items-center gap-2.5 cursor-pointer group"
+          title="Kliknij, aby otworzyć Profil i Osiągnięcia"
+        >
+          <div className="w-9 h-9 rounded-xl bg-duo-green flex items-center justify-center shadow-[0_3px_0_#46a302] transform active:translate-y-0.5 group-hover:scale-105 transition-all">
             <span className="font-mono font-black text-black text-sm tracking-tighter">JS</span>
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-base tracking-tight text-white font-sans">JS Duo</span>
+              <span className="font-extrabold text-base tracking-tight text-white font-sans group-hover:text-duo-green transition-colors">
+                JS Duo
+              </span>
               <span className="text-[10px] uppercase font-bold bg-[#FFD700]/20 text-[#FFD700] px-1.5 py-0.5 rounded border border-[#FFD700]/40">
                 500 pytań
               </span>
@@ -43,13 +53,14 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Center/Right: Stats Bar */}
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Streak Flame */}
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] text-[#FF9600] font-bold text-xs sm:text-sm cursor-default"
-            title={`Passa nauki: ${stats.streak} dni z rzędu!`}
+          <button
+            onClick={onShowStreakToast}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] hover:border-[#FF9600] text-[#FF9600] font-bold text-xs sm:text-sm cursor-pointer transition-colors active:scale-95"
+            title={`Passa nauki: ${stats.streak} dni z rzędu! (Kliknij, aby wyświetlić komunikat)`}
           >
             <Flame size={18} className="fill-[#FF9600] animate-pulse-subtle" />
             <span>{stats.streak}</span>
-          </div>
+          </button>
 
           {/* Gems */}
           <div
@@ -75,8 +86,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {/* Level & XP Mini Pill */}
-          <div className="hidden md:flex flex-col items-end pl-1">
-            <div className="flex items-center gap-1 text-[11px] font-bold text-gray-300">
+          <div
+            onClick={onOpenProfile}
+            className="hidden md:flex flex-col items-end pl-1 cursor-pointer group"
+            title="Kliknij, aby otworzyć Profil i Osiągnięcia"
+          >
+            <div className="flex items-center gap-1 text-[11px] font-bold text-gray-300 group-hover:text-duo-yellow transition-colors">
               <Sparkles size={12} className="text-yellow-400" />
               <span>Poz. {levelInfo.level}</span>
               <span className="text-gray-400">({stats.xp} XP)</span>

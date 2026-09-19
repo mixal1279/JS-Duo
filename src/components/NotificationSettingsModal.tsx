@@ -22,6 +22,8 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const [tone, setTone] = useState<NotificationConfig['tone']>(config.tone || 'friendly');
   const [permissionGranted, setPermissionGranted] = useState(notificationService.checkPermission());
   const [testSent, setTestSent] = useState(false);
+  const [simulating24h, setSimulating24h] = useState(false);
+  const [hoursInactive, setHoursInactive] = useState(() => Math.round(notificationService.getHoursSinceLastLogin() * 10) / 10);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,6 +50,14 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     notificationService.triggerNotification(msg.title, msg.body);
     setTestSent(true);
     setTimeout(() => setTestSent(false), 3000);
+  };
+
+  const handleSimulate24hInactivity = async () => {
+    soundService.playCorrect();
+    setSimulating24h(true);
+    await notificationService.simulate24HourInactivity(streak, tone);
+    setHoursInactive(25);
+    setTimeout(() => setSimulating24h(false), 3500);
   };
 
   const handleSave = () => {
@@ -165,6 +175,41 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               </button>
             ))}
           </div>
+        </div>
+
+        {/* 24h Inactivity Push System Card */}
+        <div className="p-3.5 rounded-2xl bg-[#1C262C] border border-[#2A373F] space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-base">⚡</span>
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                Przypomnienie po 24h braku aktywności
+              </h4>
+            </div>
+            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-duo-green/20 text-duo-green border border-duo-green/40">
+              Aktywne
+            </span>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Automatyczny Push w przeglądarce, gdy nie zalogujesz się przez 24 godziny, aby uchronić Twój streak {streak} dni.
+          </p>
+          <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1 border-t border-[#26353E]">
+            <span>Czas od ostatniej sesji:</span>
+            <span className="font-bold text-white">{hoursInactive} godz.</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleSimulate24hInactivity}
+            disabled={simulating24h}
+            className="w-full mt-1.5 py-2 px-3 rounded-xl bg-duo-blue/20 hover:bg-duo-blue/30 text-duo-blue border border-duo-blue/40 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+          >
+            <Sparkles size={14} className="animate-spin-slow" />
+            <span>
+              {simulating24h
+                ? 'Wysyłanie Push po 24h nieobecności... 🚀'
+                : 'Przetestuj powiadomienie Push (Symulacja 24h)'}
+            </span>
+          </button>
         </div>
 
         {/* Test Notification Trigger */}
