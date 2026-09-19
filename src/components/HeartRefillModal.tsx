@@ -29,12 +29,12 @@ export const HeartRefillModal: React.FC<HeartRefillModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#172127] border-2 border-[#2A373F] rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 safe-area-pad select-none">
+      <div className="bg-[#172127] border-2 border-[#2A373F] rounded-2xl sm:rounded-3xl max-w-sm w-full p-5 sm:p-6 text-center shadow-2xl space-y-4 my-auto">
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-1 rounded-lg"
+            className="text-gray-400 hover:text-white p-1 rounded-lg active:scale-95"
           >
             <X size={20} />
           </button>

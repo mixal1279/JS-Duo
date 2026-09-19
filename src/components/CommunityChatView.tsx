@@ -55,7 +55,7 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
   const availableEmojis = ['👍', '🔥', '💡', '❤️'];
 
   return (
-    <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 pb-24 flex flex-col h-[calc(100vh-130px)]">
+    <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 pb-2 flex flex-col h-[calc(100dvh-160px)] md:h-[calc(100vh-130px)]">
       {/* Channels Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto py-1 mb-2 bg-[#1C262C] p-1.5 rounded-2xl border border-[#2A373F] shrink-0">
         {channels.map((ch) => {

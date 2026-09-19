@@ -46,28 +46,29 @@ export const QuestionDetailModal: React.FC<QuestionDetailModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-[#172127] border-2 border-[#2A373F] rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-6 overflow-y-auto safe-area-pad select-none">
+      <div className="bg-[#172127] border-2 border-[#2A373F] rounded-2xl sm:rounded-3xl max-w-3xl w-full h-[95dvh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-[#2A373F] flex items-center justify-between bg-[#1C262C] shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-duo-yellow/20 border border-duo-yellow/40 flex items-center justify-center text-duo-yellow">
-              <BookOpen size={20} />
+        <div className="p-3.5 sm:p-5 border-b border-[#2A373F] flex items-center justify-between bg-[#1C262C] shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-duo-yellow/20 border border-duo-yellow/40 flex items-center justify-center text-duo-yellow shrink-0">
+              <BookOpen size={18} />
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-black text-white">
+              <h2 className="text-base sm:text-xl font-black text-white leading-tight">
                 Baza 500 Pytań JavaScript
               </h2>
-              <p className="text-xs text-gray-400">
+              <p className="text-[11px] sm:text-xs text-gray-400 line-clamp-1">
                 Wszystkie pytania z pełnymi technicznymi wyjaśnieniami
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors active:scale-95 shrink-0"
+            title="Zamknij"
           >
-            <X size={22} />
+            <X size={20} />
           </button>
         </div>
 

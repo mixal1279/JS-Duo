@@ -40,14 +40,14 @@ export const PathView: React.FC<PathViewProps> = ({
   const getOffsetClass = (index: number) => {
     const offsets = [
       'translate-x-0',
-      '-translate-x-8',
-      '-translate-x-12',
-      '-translate-x-6',
-      'translate-x-4',
-      'translate-x-10',
-      'translate-x-6',
-      '-translate-x-4',
-      '-translate-x-10',
+      '-translate-x-6 sm:-translate-x-8',
+      '-translate-x-8 sm:-translate-x-12',
+      '-translate-x-4 sm:-translate-x-6',
+      'translate-x-3 sm:translate-x-4',
+      'translate-x-8 sm:translate-x-10',
+      'translate-x-4 sm:translate-x-6',
+      '-translate-x-3 sm:-translate-x-4',
+      '-translate-x-7 sm:-translate-x-10',
       'translate-x-0',
     ];
     return offsets[index % offsets.length];
@@ -64,17 +64,17 @@ export const PathView: React.FC<PathViewProps> = ({
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-4 pb-24">
+    <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-8 select-none">
       {/* Unit Header Card */}
       <div
-        className="rounded-3xl p-5 mb-8 border-2 shadow-lg relative overflow-hidden transition-all"
+        className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-6 sm:mb-8 border-2 shadow-lg relative overflow-hidden transition-all"
         style={{
           backgroundColor: '#1B262C',
           borderColor: currentUnit.color,
         }}
       >
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-black/40 text-white border border-white/10">
+          <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-black/40 text-white border border-white/10">
             Rozdział {currentUnit.id} z 10
           </span>
           <div className="flex items-center gap-1 text-xs font-bold text-gray-300">
@@ -83,15 +83,15 @@ export const PathView: React.FC<PathViewProps> = ({
           </div>
         </div>
 
-        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-1">
+        <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight mb-1">
           {currentUnit.title}
         </h1>
-        <p className="text-xs sm:text-sm text-gray-300 mb-4 leading-relaxed">
+        <p className="text-xs sm:text-sm text-gray-300 mb-3 sm:mb-4 leading-relaxed">
           {currentUnit.description}
         </p>
 
         {/* Progress Bar */}
-        <div className="w-full bg-black/40 rounded-full h-3 p-0.5 border border-white/10">
+        <div className="w-full bg-black/40 rounded-full h-2.5 sm:h-3 p-0.5 border border-white/10">
           <div
             className="h-full rounded-full transition-all duration-500 relative"
             style={{
@@ -104,9 +104,9 @@ export const PathView: React.FC<PathViewProps> = ({
         </div>
 
         {/* Unit Selector Strip */}
-        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase">Wybierz rozdział:</span>
-          <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-[280px] scrollbar-none">
+        <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+          <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase shrink-0">Rozdział:</span>
+          <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-[280px] sm:max-w-none scrollbar-none touch-pan-x">
             {UNITS.map((u) => {
               const isSelected = u.id === selectedUnitId;
               const isLocked = u.id > userStats.unlockedUnit;

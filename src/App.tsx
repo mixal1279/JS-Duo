@@ -426,7 +426,7 @@ export const App: React.FC = () => {
 
         {/* Central Learning Content & Desktop Right Panel */}
         <div className="flex-1 flex justify-center w-full">
-          <main className="flex-1 w-full max-w-2xl px-2 sm:px-4 py-4 md:py-6 overflow-y-auto">
+          <main className="flex-1 w-full max-w-2xl px-2.5 sm:px-4 pt-2 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:py-6 overflow-y-auto">
             {currentTab === 'path' && (
               <PathView
                 userStats={stats}

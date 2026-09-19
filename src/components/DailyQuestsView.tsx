@@ -35,9 +35,9 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-4 pb-24">
+    <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-8 select-none">
       {/* Daily Challenges Header */}
-      <div className="rounded-3xl p-5 mb-6 bg-[#1B262C] border-2 border-duo-green/40 shadow-lg">
+      <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-5 sm:mb-6 bg-[#1B262C] border-2 border-duo-green/40 shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Target size={24} className="text-duo-green" />

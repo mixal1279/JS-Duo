@@ -105,9 +105,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       : 0;
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-5 sm:space-y-6 pb-8 select-none">
       {/* Header Profile Card */}
-      <div className="bg-gradient-to-b from-[#1E2E38] to-[#152026] border-2 border-[#2A3B46] rounded-3xl p-5 sm:p-7 shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-b from-[#1E2E38] to-[#152026] border-2 border-[#2A3B46] rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg relative overflow-hidden">
         {/* Ambient glow accent */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-duo-green/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 

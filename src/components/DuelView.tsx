@@ -143,7 +143,7 @@ export const DuelView: React.FC<DuelViewProps> = ({
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-4 pb-24">
+    <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-8 select-none">
       {/* LOBBY VIEW */}
       {duelState === 'lobby' && (
         <div>

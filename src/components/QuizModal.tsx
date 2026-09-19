@@ -151,20 +151,20 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#131F24] flex flex-col justify-between overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-[#131F24] flex flex-col justify-between overflow-y-auto select-none safe-area-pad">
       {/* Top Bar */}
       {!isLessonFinished ? (
-        <div className="max-w-2xl w-full mx-auto p-4 flex items-center justify-between gap-4">
+        <div className="max-w-2xl w-full mx-auto pt-[calc(0.75rem+env(safe-area-inset-top,0px))] px-3 sm:px-4 pb-2 sm:pb-3 flex items-center justify-between gap-3 shrink-0">
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-[#232E35] transition-colors cursor-pointer"
+            className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-[#232E35] transition-colors cursor-pointer active:scale-95 shrink-0"
             title="Zamknij lekcję"
           >
-            <X size={24} />
+            <X size={22} />
           </button>
 
           {/* Progress bar */}
-          <div className="flex-1 h-3.5 bg-[#232E35] rounded-full overflow-hidden p-0.5 border border-[#2A373F]">
+          <div className="flex-1 h-3 sm:h-3.5 bg-[#232E35] rounded-full overflow-hidden p-0.5 border border-[#2A373F]">
             <div
               className="h-full bg-duo-green rounded-full transition-all duration-300 relative"
               style={{ width: `${progressPercent}%` }}
@@ -174,26 +174,26 @@ export const QuizModal: React.FC<QuizModalProps> = ({
           </div>
 
           {/* Hearts */}
-          <div className="flex items-center gap-1.5 font-extrabold text-duo-red">
-            <Heart size={22} className="fill-duo-red" />
-            <span className="text-base">{hearts}</span>
+          <div className="flex items-center gap-1 font-extrabold text-duo-red shrink-0">
+            <Heart size={20} className="fill-duo-red" />
+            <span className="text-sm sm:text-base">{hearts}</span>
           </div>
         </div>
       ) : (
-        <div className="max-w-xl w-full mx-auto p-4 flex items-center justify-end">
+        <div className="max-w-xl w-full mx-auto pt-[calc(0.75rem+env(safe-area-inset-top,0px))] px-4 pb-2 flex items-center justify-end shrink-0">
           <button
             onClick={handleFinish}
-            className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-[#232E35] transition-colors cursor-pointer"
+            className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-[#232E35] transition-colors cursor-pointer active:scale-95"
             title="Zamknij podsumowanie"
           >
-            <X size={24} />
+            <X size={22} />
           </button>
         </div>
       )}
 
       {/* Main Content Area */}
       {!isLessonFinished ? (
-        <div className="max-w-2xl w-full mx-auto px-4 py-2 flex-1 flex flex-col justify-center">
+        <div className="max-w-2xl w-full mx-auto px-3 sm:px-4 py-2 flex-1 flex flex-col justify-center">
           {/* Question Meta & Prompt */}
           <div className="mb-4">
             <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
@@ -298,32 +298,32 @@ export const QuizModal: React.FC<QuizModalProps> = ({
       {/* Bottom Action Footer */}
       {!isLessonFinished && (
         <div
-          className={`border-t p-4 sm:p-5 transition-colors ${
+          className={`sticky bottom-0 z-30 border-t pt-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-3 sm:px-5 transition-colors ${
             !isAnswerChecked
-              ? 'bg-[#131F24] border-[#2A373F]'
+              ? 'bg-[#131F24]/95 backdrop-blur border-[#2A373F]'
               : isCorrect
               ? 'bg-[#1A3324] border-duo-green'
               : 'bg-[#331B1E] border-duo-red'
           }`}
         >
-          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
             {/* Status Message */}
-            <div>
+            <div className="w-full sm:w-auto">
               {!isAnswerChecked ? (
                 <p className="text-xs text-gray-400 hidden sm:block">
                   Wybierz opcję (1-4) i kliknij Sprawdź lub naciśnij Enter
                 </p>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {isCorrect ? (
-                    <div className="flex items-center gap-2 text-duo-green font-black text-lg sm:text-xl">
-                      <CheckCircle2 size={24} />
+                    <div className="flex items-center gap-2 text-duo-green font-black text-base sm:text-xl">
+                      <CheckCircle2 size={22} className="shrink-0" />
                       <span>Świetnie! Poprawna odpowiedź!</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-duo-red font-black text-lg sm:text-xl">
-                      <XCircle size={24} />
-                      <span>Niestety błąd! Prawidłowa odpowiedź: {currentQ.options[currentQ.correctIndex]}</span>
+                    <div className="flex items-center gap-2 text-duo-red font-black text-sm sm:text-base leading-snug">
+                      <XCircle size={22} className="shrink-0" />
+                      <span>Niestety błąd! Prawidłowa: {currentQ.options[currentQ.correctIndex]}</span>
                     </div>
                   )}
                 </div>
@@ -336,7 +336,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                 <>
                   <button
                     onClick={() => setShowExplanation(!showExplanation)}
-                    className="px-3 py-3 rounded-xl bg-[#232E35] hover:bg-[#2C3B44] text-xs font-bold text-gray-200 border border-[#2A373F] flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-3 rounded-xl bg-[#232E35] hover:bg-[#2C3B44] text-xs font-bold text-gray-200 border border-[#2A373F] flex items-center justify-center gap-1.5 transition-colors active:scale-95 shrink-0"
                   >
                     <HelpCircle size={16} className="text-duo-blue" />
                     <span>{showExplanation ? 'Ukryj' : 'Wyjaśnienie'}</span>
@@ -344,7 +344,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
 
                   <button
                     onClick={() => onAskCommunity(currentQ)}
-                    className="px-3 py-3 rounded-xl bg-[#232E35] hover:bg-[#2C3B44] text-xs font-bold text-gray-200 border border-[#2A373F] flex items-center gap-1.5 transition-colors"
+                    className="p-3 rounded-xl bg-[#232E35] hover:bg-[#2C3B44] text-xs font-bold text-gray-200 border border-[#2A373F] flex items-center justify-center gap-1.5 transition-colors active:scale-95 shrink-0 sm:px-3"
                     title="Skonsultuj to pytanie na czacie społeczności"
                   >
                     <MessageSquareShare size={16} className="text-duo-yellow" />
@@ -357,7 +357,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                 <button
                   onClick={handleCheck}
                   disabled={selectedOption === null}
-                  className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all ${
+                  className={`flex-1 sm:flex-none sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all min-h-[48px] ${
                     selectedOption !== null
                       ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_4px_0_#46a302] active:translate-y-0.5 active:shadow-none'
                       : 'bg-[#2A373F] text-gray-500 cursor-not-allowed'
@@ -368,7 +368,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
               ) : (
                 <button
                   onClick={handleContinue}
-                  className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                  className={`flex-1 sm:flex-none sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 min-h-[48px] ${
                     isCorrect
                       ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_4px_0_#46a302] active:translate-y-0.5 active:shadow-none'
                       : 'bg-duo-red hover:bg-duo-redDark text-white shadow-[0_4px_0_#ea2b2b] active:translate-y-0.5 active:shadow-none'

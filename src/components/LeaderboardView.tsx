@@ -26,12 +26,12 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const leagues = ['Brązowa', 'Srebrna', 'Złota', 'Szafirowa', 'Rubinowa', 'Diamentowa'] as const;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-4 pb-24">
+    <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-8 select-none">
       {/* League Banner */}
-      <div className="rounded-3xl p-5 mb-6 bg-gradient-to-r from-[#1C2C35] to-[#17232A] border-2 border-yellow-500/50 shadow-lg text-center relative overflow-hidden">
+      <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-5 sm:mb-6 bg-gradient-to-r from-[#1C2C35] to-[#17232A] border-2 border-yellow-500/50 shadow-lg text-center relative overflow-hidden">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Trophy size={28} className="text-yellow-400 fill-yellow-400" />
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          <Trophy size={26} className="text-yellow-400 fill-yellow-400 shrink-0" />
+          <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
             Liga {userStats.league}
           </h2>
         </div>
@@ -45,7 +45,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         </div>
 
         {/* League Badges Row */}
-        <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-white/10">
+        <div className="flex items-center justify-center gap-1 sm:gap-2 mt-4 pt-3 border-t border-white/10 overflow-x-auto scrollbar-none touch-pan-x">
           {leagues.map((lg) => {
             const isCurrent = lg === userStats.league;
             return (

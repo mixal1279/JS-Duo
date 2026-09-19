@@ -72,10 +72,10 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#172127] border-2 border-[#2A373F] rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto safe-area-pad select-none">
+      <div className="bg-[#172127] border-2 border-[#2A373F] rounded-2xl sm:rounded-3xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-5 my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#2A373F] pb-4">
+        <div className="flex items-center justify-between border-b border-[#2A373F] pb-3 sm:pb-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-duo-blue/20 text-duo-blue border border-duo-blue/40">
               <Bell size={22} />
