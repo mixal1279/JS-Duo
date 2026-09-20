@@ -1,38 +1,50 @@
 import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, AppTheme } from '../types';
 import { INITIAL_LEADERBOARD, INITIAL_FRIENDS, INITIAL_CHAT_MESSAGES } from '../data/mockUsers';
 
-const STATS_KEY = 'js_duo_user_stats_v1';
-const QUESTS_KEY = 'js_duo_daily_quests_v1';
-const LEADERBOARD_KEY = 'js_duo_leaderboard_v1';
-const FRIENDS_KEY = 'js_duo_friends_v1';
-const CHAT_KEY = 'js_duo_chat_v1';
-const NOTIF_KEY = 'js_duo_notification_cfg_v1';
-const THEME_KEY = 'js_duo_theme_v1';
+const STATS_KEY = 'js_duo_user_stats_v3_clean';
+const QUESTS_KEY = 'js_duo_daily_quests_v3_clean';
+const LEADERBOARD_KEY = 'js_duo_leaderboard_v3_clean';
+const FRIENDS_KEY = 'js_duo_friends_v3_clean';
+const CHAT_KEY = 'js_duo_chat_v3_clean';
+const NOTIF_KEY = 'js_duo_notification_cfg_v3_clean';
+const THEME_KEY = 'js_duo_theme_v3_clean';
 
+// Automatyczne czyszczenie przestarzałych wersji z pamięci lokalnej
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    ['js_duo_user_stats_v1', 'js_duo_daily_quests_v1', 'js_duo_user_stats_v2', 'js_duo_daily_quests_v2'].forEach((k) => {
+      localStorage.removeItem(k);
+    });
+  } catch {
+    // ignore
+  }
+}
+
+// Czyste, świeże statystyki początkowe (Passa 0, 0 XP, Poziom 1, Liga Brązowa)
 export const DEFAULT_USER_STATS: UserStats = {
-  xp: 350,
-  level: 4,
-  streak: 5,
-  lastActiveDate: new Date().toISOString().split('T')[0],
-  gems: 180,
+  xp: 0,
+  level: 1,
+  streak: 0,
+  lastActiveDate: '',
+  gems: 50, // Początkowy pakiet startowy w stylu Duolingo
   hearts: 5,
   maxHearts: 5,
-  completedQuestionIds: [1, 2, 3, 4, 5],
-  unlockedUnit: 2,
-  duelWins: 4,
-  duelLosses: 1,
-  league: 'Złota',
+  completedQuestionIds: [],
+  unlockedUnit: 1,
+  duelWins: 0,
+  duelLosses: 0,
+  league: 'Brązowa',
 };
 
 export const DEFAULT_DAILY_QUESTS: DailyQuest[] = [
   {
     id: 'q1',
-    title: 'Codzienna dawka wiedzy',
-    description: 'Zdobądź dzisiaj 50 XP w lekcjach',
-    target: 50,
-    current: 25,
-    xpReward: 30,
-    gemsReward: 15,
+    title: 'Codzienna dawka kodu',
+    description: 'Zdobądź dzisiaj 30 XP w lekcjach',
+    target: 30,
+    current: 0,
+    xpReward: 25,
+    gemsReward: 10,
     claimed: false,
     type: 'xp',
   },
@@ -41,9 +53,9 @@ export const DEFAULT_DAILY_QUESTS: DailyQuest[] = [
     title: 'Bezbłędny programista',
     description: 'Rozwiąż 5 pytań bez utraty serca',
     target: 5,
-    current: 3,
-    xpReward: 40,
-    gemsReward: 20,
+    current: 0,
+    xpReward: 35,
+    gemsReward: 15,
     claimed: false,
     type: 'perfect',
   },
@@ -52,8 +64,8 @@ export const DEFAULT_DAILY_QUESTS: DailyQuest[] = [
     title: 'Mistrz Ścieżki',
     description: 'Ukończ 2 pełne lekcje',
     target: 2,
-    current: 1,
-    xpReward: 35,
+    current: 0,
+    xpReward: 30,
     gemsReward: 15,
     claimed: false,
     type: 'lessons',
@@ -86,7 +98,7 @@ export const storageService = {
     } catch {
       // fallback
     }
-    return DEFAULT_USER_STATS;
+    return { ...DEFAULT_USER_STATS };
   },
 
   saveStats(stats: UserStats) {
@@ -95,6 +107,19 @@ export const storageService = {
     } catch (e) {
       console.error(e);
     }
+  },
+
+  resetAllProgress(): UserStats {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(STATS_KEY);
+        localStorage.removeItem(QUESTS_KEY);
+        localStorage.removeItem(LEADERBOARD_KEY);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return { ...DEFAULT_USER_STATS };
   },
 
   getQuests(): DailyQuest[] {

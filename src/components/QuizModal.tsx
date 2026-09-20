@@ -44,6 +44,11 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [results, setResults] = useState<QuestionResult[]>([]);
 
+  const [combo, setCombo] = useState(0);
+  const [heartShaking, setHeartShaking] = useState(false);
+  const [outOfHeartsModal, setOutOfHeartsModal] = useState(false);
+  const [currentGems, setCurrentGems] = useState(userStats.gems);
+
   const currentQ = questions[currentIndex];
   const progressPercent = ((currentIndex) / questions.length) * 100;
 
@@ -66,6 +71,8 @@ export const QuizModal: React.FC<QuizModalProps> = ({
         return;
       }
 
+      if (outOfHeartsModal) return;
+
       if (!isAnswerChecked) {
         if (['1', '2', '3', '4'].includes(e.key)) {
           const idx = parseInt(e.key, 10) - 1;
@@ -85,7 +92,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, selectedOption, isAnswerChecked, isLessonFinished, earnedXp, perfectLesson, solvedIds]);
+  }, [currentIndex, selectedOption, isAnswerChecked, isLessonFinished, earnedXp, perfectLesson, solvedIds, outOfHeartsModal]);
 
   const handleSelect = (idx: number) => {
     if (isAnswerChecked) return;
@@ -113,18 +120,34 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     ]);
 
     if (correct) {
-      soundService.playCorrect();
+      const nextCombo = combo + 1;
+      setCombo(nextCombo);
+      if (nextCombo >= 2) {
+        soundService.playCombo();
+      } else {
+        soundService.playCorrect();
+      }
       setEarnedXp((prev) => prev + currentQ.points);
       setSolvedIds((prev) => [...prev, currentQ.id]);
     } else {
-      soundService.playWrong();
+      setCombo(0);
+      soundService.playHeartLoss();
       setPerfectLesson(false);
-      setHearts((prev) => Math.max(0, prev - 1));
+      setHeartShaking(true);
+      setTimeout(() => setHeartShaking(false), 800);
+
+      const nextHearts = Math.max(0, hearts - 1);
+      setHearts(nextHearts);
     }
   };
 
   const handleContinue = () => {
-    if (currentIndex + 1 < questions.length && hearts > 0) {
+    if (hearts <= 0) {
+      setOutOfHeartsModal(true);
+      return;
+    }
+
+    if (currentIndex + 1 < questions.length) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
       setIsAnswerChecked(false);
@@ -139,6 +162,21 @@ export const QuizModal: React.FC<QuizModalProps> = ({
         spread: 70,
         origin: { y: 0.6 },
       });
+    }
+  };
+
+  const handleFreeHeartRefill = () => {
+    setHearts(1);
+    setOutOfHeartsModal(false);
+    soundService.playClick();
+  };
+
+  const handleGemHeartRefill = () => {
+    if (currentGems >= 50) {
+      setCurrentGems((g) => g - 50);
+      setHearts(5);
+      setOutOfHeartsModal(false);
+      soundService.playLevelUp();
     }
   };
 
@@ -173,9 +211,17 @@ export const QuizModal: React.FC<QuizModalProps> = ({
             </div>
           </div>
 
+          {/* Combo Badge */}
+          {combo >= 2 && (
+            <div className="flex items-center gap-1 font-black text-xs px-2.5 py-1 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 animate-pulse shrink-0">
+              <span>🔥</span>
+              <span>x{combo}</span>
+            </div>
+          )}
+
           {/* Hearts */}
-          <div className="flex items-center gap-1 font-extrabold text-duo-red shrink-0">
-            <Heart size={20} className="fill-duo-red" />
+          <div className={`flex items-center gap-1 font-extrabold text-duo-red shrink-0 ${heartShaking ? 'animate-bounce' : ''}`}>
+            <Heart size={20} className={`fill-duo-red ${heartShaking ? 'scale-125 text-red-400' : ''} transition-transform`} />
             <span className="text-sm sm:text-base">{hearts}</span>
           </div>
         </div>
@@ -207,13 +253,29 @@ export const QuizModal: React.FC<QuizModalProps> = ({
 
             <div className="flex items-start gap-3">
               <MascotOwl
-                mood={isAnswerChecked ? (isCorrect ? 'excited' : 'sad') : 'thinking'}
+                mood={isAnswerChecked ? (isCorrect ? 'excited' : 'sad') : combo >= 3 ? 'excited' : 'thinking'}
                 size={58}
-                className="shrink-0 hidden sm:block"
+                className="shrink-0"
               />
-              <h2 className="text-lg sm:text-xl font-extrabold text-white leading-snug">
-                {currentQ.question}
-              </h2>
+              <div className="flex-1">
+                {/* Duo Speech Bubble */}
+                <div className="relative bg-[#1C2830] border-2 border-[#2C3B45] rounded-2xl p-2.5 sm:p-3 mb-2 shadow-md">
+                  <div className="text-xs font-black text-duo-green flex items-center gap-1 mb-0.5">
+                    <span>Sowa Duo:</span>
+                    {combo >= 2 && isCorrect && <span className="text-orange-400">🔥 Combo x{combo}!</span>}
+                  </div>
+                  <p className="text-xs text-gray-300 font-medium">
+                    {!isAnswerChecked
+                      ? 'Wskaż prawidłowy kod lub odpowiedź w JavaScript:'
+                      : isCorrect
+                      ? (combo >= 3 ? 'Niesamowicie! Kod płynie w Twoich żyłach! 🚀' : 'Świetnie! Czysta logika programisty!')
+                      : 'Ojej! Tracisz serce 💔, ale przeanalizuj błąd i czytaj wyjaśnienie.'}
+                  </p>
+                </div>
+                <h2 className="text-base sm:text-lg font-extrabold text-white leading-snug">
+                  {currentQ.question}
+                </h2>
+              </div>
             </div>
           </div>
 
@@ -291,8 +353,52 @@ export const QuizModal: React.FC<QuizModalProps> = ({
           totalQuestions={questions.length}
           durationSeconds={durationSeconds}
           results={results}
+          streak={userStats.streak === 0 ? 1 : userStats.streak}
           onContinue={handleFinish}
         />
+      )}
+
+      {/* Out of Hearts Modal (Duolingo Style) */}
+      {outOfHeartsModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#172127] border-2 border-red-500/50 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4 animate-scale-up">
+            <div className="w-16 h-16 rounded-3xl bg-red-500/20 border-2 border-red-500 mx-auto flex items-center justify-center">
+              <Heart size={36} className="text-duo-red fill-duo-red animate-pulse" />
+            </div>
+
+            <h3 className="text-xl font-black text-white">
+              Skończyły Ci się serca!
+            </h3>
+            <p className="text-xs text-gray-300">
+              Aby kontynuować tę lekcję kodu, potrzebujesz przynajmniej jednego serca.
+            </p>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                onClick={handleFreeHeartRefill}
+                className="w-full py-3 px-4 rounded-2xl bg-duo-green hover:bg-duo-greenDark text-black font-extrabold text-sm uppercase tracking-wider shadow-[0_4px_0_#46a302] active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Darmowy restart (+1 ❤️)</span>
+              </button>
+
+              {currentGems >= 50 && (
+                <button
+                  onClick={handleGemHeartRefill}
+                  className="w-full py-3 px-4 rounded-2xl bg-[#202F36] hover:bg-[#2A3F49] text-duo-blue font-extrabold text-sm uppercase tracking-wider border-2 border-duo-blue/40 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Odnów wszystkie (50 💎)</span>
+                </button>
+              )}
+
+              <button
+                onClick={onClose}
+                className="w-full py-2.5 text-xs font-bold text-gray-400 hover:text-white transition-colors"
+              >
+                Zakończ lekcję i wróć do ścieżki
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Bottom Action Footer */}

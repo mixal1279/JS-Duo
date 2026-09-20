@@ -18,7 +18,8 @@ import {
   Moon,
   Sun,
   Palette,
-  Check
+  Check,
+  RotateCcw,
 } from 'lucide-react';
 import { UserStats, Achievement, AppTheme } from '../types';
 import { storageService } from '../services/storageService';
@@ -32,6 +33,7 @@ interface ProfileViewProps {
   onOpenLeaderboard?: () => void;
   currentTheme?: AppTheme;
   onToggleTheme?: (theme: AppTheme) => void;
+  onResetProgress?: () => void;
 }
 
 const AVATAR_OPTIONS = [
@@ -50,6 +52,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onOpenLeaderboard,
   currentTheme,
   onToggleTheme,
+  onResetProgress,
 }) => {
   const [selectedAvatar, setSelectedAvatar] = useState<string>(() => {
     return localStorage.getItem('js_duo_avatar_v1') || '🦉';
@@ -57,6 +60,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [filterCategory, setFilterCategory] = useState<'all' | 'unlocked' | 'locked' | 'streak' | 'skills'>('all');
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const activeTheme = currentTheme || storageService.getTheme();
 
@@ -686,6 +690,74 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             >
               Zamknij
             </button>
+          </div>
+        </div>
+      )}
+      {/* Reset Progress & Data Section */}
+      <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-5 shadow-sm space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
+            <RotateCcw size={20} />
+          </div>
+          <div>
+            <h3 className="text-base font-black text-white">Reset statystyk i passy</h3>
+            <p className="text-xs text-gray-400 font-medium">
+              Chcesz zacząć naukę od nowa z czystą passą i 0 XP?
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            soundService.playClick();
+            setShowResetModal(true);
+          }}
+          className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-red-950/40 hover:bg-red-900/60 border-2 border-red-500/50 text-red-300 hover:text-white text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer active:translate-y-0.5"
+        >
+          <RotateCcw size={16} />
+          <span>Wyczyść passę i wszystkie statystyki do zera</span>
+        </button>
+      </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#172127] border-2 border-red-500/50 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4 animate-scale-up">
+            <div className="w-16 h-16 rounded-3xl bg-red-500/20 border-2 border-red-500 mx-auto flex items-center justify-center text-red-400">
+              <RotateCcw size={32} />
+            </div>
+
+            <h3 className="text-xl font-black text-white">
+              Wyczyścić wszystkie statystyki?
+            </h3>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              Wszystkie punkty XP, passa dni, odznaki oraz lista rozwiązanych pytań zostaną zresetowane do zera. Rozpoczniesz kurs JavaScript od samego początku.
+            </p>
+
+            <div className="space-y-2 pt-2">
+              <button
+                onClick={() => {
+                  soundService.playClick();
+                  if (onResetProgress) {
+                    onResetProgress();
+                  } else {
+                    storageService.resetAllProgress();
+                    window.location.reload();
+                  }
+                  setShowResetModal(false);
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_0_#991b1b] active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                Tak, wyczyść wszystko do zera
+              </button>
+
+              <button
+                onClick={() => setShowResetModal(false)}
+                className="w-full py-2.5 text-xs font-bold text-gray-400 hover:text-white transition-colors"
+              >
+                Anuluj
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Flame, Gem, Heart, Sparkles, BookOpen, Bell } from 'lucide-react';
 import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, Question, AppTheme } from './types';
-import { storageService } from './services/storageService';
+import { storageService, DEFAULT_DAILY_QUESTS } from './services/storageService';
 import { notificationService } from './services/notificationService';
+import { soundService } from './services/soundService';
+import { INITIAL_LEADERBOARD } from './data/mockUsers';
 import { ALL_QUESTIONS, getQuestionsByLesson } from './data/questionsData';
 import { UNITS } from './data/units';
 import { Navbar } from './components/Navbar';
@@ -174,6 +176,34 @@ export const App: React.FC = () => {
     const newCompleted = Array.from(new Set([...stats.completedQuestionIds, ...results.completedQuestionIds]));
     const newLevel = storageService.calculateLevel(newXp).level;
 
+    // Duolingo Streak Logic
+    const today = new Date().toISOString().split('T')[0];
+    let newStreak = stats.streak;
+    let streakIncreased = false;
+
+    if (!stats.lastActiveDate || stats.streak === 0) {
+      newStreak = 1;
+      streakIncreased = true;
+    } else if (stats.lastActiveDate === today) {
+      newStreak = Math.max(1, stats.streak);
+    } else {
+      const lastDate = new Date(stats.lastActiveDate);
+      const currDate = new Date(today);
+      const diffDays = Math.round((currDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
+
+      if (diffDays === 1) {
+        newStreak = stats.streak + 1;
+        streakIncreased = true;
+      } else {
+        newStreak = 1;
+        streakIncreased = true;
+      }
+    }
+
+    if (streakIncreased) {
+      setTimeout(() => setShowStreakToast(true), 600);
+    }
+
     // Check if next unit is unlocked (every 50 questions = new unit)
     const highestQuestion = Math.max(0, ...newCompleted);
     const newUnlockedUnit = Math.max(stats.unlockedUnit, Math.min(10, Math.floor(highestQuestion / 50) + 1));
@@ -182,6 +212,8 @@ export const App: React.FC = () => {
       ...stats,
       xp: newXp,
       level: newLevel,
+      streak: newStreak,
+      lastActiveDate: today,
       gems: newGems,
       completedQuestionIds: newCompleted,
       unlockedUnit: newUnlockedUnit,
@@ -201,8 +233,17 @@ export const App: React.FC = () => {
 
     // Update Leaderboard
     setLeaderboard((prev) =>
-      prev.map((u) => (u.isCurrentUser ? { ...u, xp: newXp, level: newLevel } : u))
+      prev.map((u) => (u.isCurrentUser ? { ...u, xp: newXp, level: newLevel, streak: newStreak } : u))
     );
+  };
+
+  // Reset progress and stats to clean 0
+  const handleResetProgress = () => {
+    const cleanStats = storageService.resetAllProgress();
+    setStats(cleanStats);
+    setQuests(DEFAULT_DAILY_QUESTS);
+    setLeaderboard(INITIAL_LEADERBOARD);
+    soundService.playLevelUp();
   };
 
   // Claim Daily Quest
@@ -490,6 +531,7 @@ export const App: React.FC = () => {
                 onOpenLeaderboard={() => setCurrentTab('leaderboard')}
                 currentTheme={theme}
                 onToggleTheme={setTheme}
+                onResetProgress={handleResetProgress}
               />
             )}
           </main>

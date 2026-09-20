@@ -23,7 +23,8 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
-  HelpCircle
+  HelpCircle,
+  Flame,
 } from 'lucide-react';
 import { MascotOwl } from './MascotOwl';
 
@@ -45,6 +46,7 @@ export interface LessonSummaryProps {
   totalQuestions: number;
   durationSeconds: number;
   results: QuestionResult[];
+  streak: number;
   onContinue: () => void;
 }
 
@@ -57,6 +59,7 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
   totalQuestions,
   durationSeconds,
   results,
+  streak,
   onContinue,
 }) => {
   const [chartType, setChartType] = useState<'donut' | 'bar'>('donut');
@@ -72,6 +75,9 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
     if (mins === 0) return `${secs} sek.`;
     return `${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
   };
+
+  const daysOfWeek = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'];
+  const todayIdx = (new Date().getDay() + 6) % 7; // 0=Pn ... 6=Nd
 
   // Recharts data sets
   const pieData = [
@@ -147,6 +153,65 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
           <Zap size={22} className="text-duo-yellow fill-duo-yellow mb-1" />
           <span className="text-[10px] font-extrabold uppercase text-gray-400">Punkty XP</span>
           <span className="text-lg font-black text-white">+{earnedXp}</span>
+        </div>
+      </div>
+
+      {/* Duolingo Streak Celebration Card */}
+      <div className="bg-gradient-to-r from-[#2B1B17] to-[#1C262C] border-2 border-orange-500/60 rounded-3xl p-4 sm:p-5 mb-5 shadow-lg relative overflow-hidden">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-orange-500/20 border-2 border-orange-500/50 flex items-center justify-center text-orange-400 animate-pulse shrink-0">
+              <Flame size={28} className="fill-orange-500 text-orange-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base sm:text-lg font-black text-white">
+                  {streak === 1 ? '1 DZIEŃ PASSY!' : `${streak} DNI PASSY!`}
+                </span>
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40">
+                  Aktywna
+                </span>
+              </div>
+              <p className="text-xs text-gray-300 font-medium">
+                {streak === 1
+                  ? 'Pierwszy krok zrobiony! Wróć jutro, aby utrzymać płomień.'
+                  : 'Niesamowita dyscyplina! Twój płomień kodowania płonie coraz jaśniej.'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 7-Day Mini Calendar Strip */}
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 pt-3 border-t border-white/10">
+          {daysOfWeek.map((day, idx) => {
+            const isToday = idx === todayIdx;
+            const isPast = idx < todayIdx;
+            return (
+              <div
+                key={day}
+                className={`flex flex-col items-center py-2 px-1 rounded-xl border text-center transition-all ${
+                  isToday
+                    ? 'bg-orange-500/30 border-orange-500 text-white font-black shadow-md scale-105'
+                    : isPast
+                    ? 'bg-black/30 border-white/10 text-gray-400 font-bold'
+                    : 'bg-black/20 border-transparent text-gray-500 font-medium'
+                }`}
+              >
+                <span className="text-[10px] uppercase mb-1">{day}</span>
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                    isToday
+                      ? 'bg-orange-500 text-black font-black'
+                      : isPast
+                      ? 'bg-orange-500/30 text-orange-400'
+                      : 'bg-white/5 text-gray-600'
+                  }`}
+                >
+                  {isToday ? <Flame size={14} className="fill-black" /> : isPast ? '✓' : '•'}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

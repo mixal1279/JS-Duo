@@ -1,18 +1,16 @@
 import { LeaderboardUser, Friend, ChatMessage } from '../types';
 
 export const INITIAL_LEADERBOARD: LeaderboardUser[] = [
-  { id: 'u1', name: 'KamilDev', avatar: '🦊', xp: 1420, level: 14, streak: 21, badge: '🔥 Mistrz JS' },
-  { id: 'u2', name: 'Zosia_React', avatar: '🐱', xp: 1280, level: 12, streak: 15, badge: '⚡ Async Ninja' },
-  { id: 'u3', name: 'Piotr_Koder', avatar: '🐼', xp: 1150, level: 11, streak: 12, badge: '💎 ES6 Pro' },
-  { id: 'u4', name: 'Michał (Ty)', avatar: '🦉', xp: 950, level: 9, streak: 7, isCurrentUser: true, badge: '🚀 Awans!' },
-  { id: 'u5', name: 'Ola_Frontend', avatar: '🦄', xp: 910, level: 9, streak: 9, badge: '🎨 CSS Guru' },
-  { id: 'u6', name: 'Bartek_V8', avatar: '🦁', xp: 840, level: 8, streak: 6 },
-  { id: 'u7', name: 'Natalia_TS', avatar: '🐨', xp: 790, level: 7, streak: 5 },
-  { id: 'u8', name: 'Tomek_Node', avatar: '🐸', xp: 710, level: 7, streak: 4 },
-  { id: 'u9', name: 'Karol_Stack', avatar: '🐯', xp: 620, level: 6, streak: 3 },
-  { id: 'u10', name: 'Ania_Codes', avatar: '🐰', xp: 580, level: 5, streak: 2 },
-  { id: 'u11', name: 'Marcin_Debug', avatar: '🐻', xp: 490, level: 4, streak: 1 },
-  { id: 'u12', name: 'Wojtek_Byte', avatar: '🐺', xp: 410, level: 4, streak: 0 },
+  { id: 'u1', name: 'KamilDev', avatar: '🦊', xp: 60, level: 1, streak: 2, badge: '🔥 Aktywny' },
+  { id: 'u2', name: 'Zosia_React', avatar: '🐱', xp: 45, level: 1, streak: 1, badge: '⚡ Szybki start' },
+  { id: 'u3', name: 'Piotr_Koder', avatar: '🐼', xp: 30, level: 1, streak: 1 },
+  { id: 'u4', name: 'Michał (Ty)', avatar: '🦉', xp: 0, level: 1, streak: 0, isCurrentUser: true, badge: '🌱 Nowicjusz' },
+  { id: 'u5', name: 'Ola_Frontend', avatar: '🦄', xp: 0, level: 1, streak: 0 },
+  { id: 'u6', name: 'Bartek_V8', avatar: '🦁', xp: 0, level: 1, streak: 0 },
+  { id: 'u7', name: 'Natalia_TS', avatar: '🐨', xp: 0, level: 1, streak: 0 },
+  { id: 'u8', name: 'Tomek_Node', avatar: '🐸', xp: 0, level: 1, streak: 0 },
+  { id: 'u9', name: 'Karol_Stack', avatar: '🐯', xp: 0, level: 1, streak: 0 },
+  { id: 'u10', name: 'Ania_Codes', avatar: '🐰', xp: 0, level: 1, streak: 0 },
 ];
 
 export const INITIAL_FRIENDS: Friend[] = [
