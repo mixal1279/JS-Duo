@@ -31,10 +31,30 @@ export const PathView: React.FC<PathViewProps> = ({
     (id) => id >= questionsInUnitRangeStart && id <= questionsInUnitRangeEnd
   ).length;
 
-  const unitProgressPercent = Math.min(100, Math.round((completedInUnit / 50) * 100));
+  // Helper to verify if a lesson is completed
+  const isLessonCompleted = (unitId: number, lessonIdx: number): boolean => {
+    if (userStats.completedLessonKeys?.includes(`${unitId}-${lessonIdx}`)) {
+      return true;
+    }
+    return completedInUnit >= lessonIdx * 5;
+  };
 
-  // Determine current active lesson in this unit (1..10)
-  const currentLessonIndex = Math.min(10, Math.floor(completedInUnit / 5) + 1);
+  // Find the first uncompleted lesson in this unit (1..10)
+  let currentLessonIndex = 1;
+  for (let l = 1; l <= totalLessons; l++) {
+    if (!isLessonCompleted(currentUnit.id, l)) {
+      currentLessonIndex = l;
+      break;
+    }
+    if (l === totalLessons) {
+      currentLessonIndex = totalLessons;
+    }
+  }
+
+  const completedLessonsInUnit = Array.from({ length: totalLessons }).filter((_, i) =>
+    isLessonCompleted(currentUnit.id, i + 1)
+  ).length;
+  const unitProgressPercent = Math.min(100, Math.round((completedLessonsInUnit / totalLessons) * 100));
 
   // Horizontal S-curve offsets for Duolingo serpentine path
   const getOffsetClass = (index: number) => {
@@ -54,7 +74,8 @@ export const PathView: React.FC<PathViewProps> = ({
   };
 
   const handleNodeClick = (lessonIdx: number) => {
-    if (lessonIdx > currentLessonIndex && selectedUnitId >= userStats.unlockedUnit) {
+    const isCompleted = isLessonCompleted(currentUnit.id, lessonIdx);
+    if (!isCompleted && lessonIdx > currentLessonIndex && selectedUnitId >= userStats.unlockedUnit) {
       // Locked
       soundService.playWrong();
       return;
@@ -151,9 +172,9 @@ export const PathView: React.FC<PathViewProps> = ({
       <div className="flex flex-col items-center space-y-7 relative py-4">
         {Array.from({ length: totalLessons }).map((_, idx) => {
           const lessonIdx = idx + 1;
-          const isCompleted = lessonIdx < currentLessonIndex || completedInUnit >= lessonIdx * 5;
+          const isCompleted = isLessonCompleted(currentUnit.id, lessonIdx);
           const isCurrent = lessonIdx === currentLessonIndex && !isCompleted;
-          const isLocked = lessonIdx > currentLessonIndex;
+          const isLocked = !isCompleted && lessonIdx > currentLessonIndex;
           const isChest = lessonIdx === 5; // mid-unit treasure chest
 
           const offsetClass = getOffsetClass(idx);

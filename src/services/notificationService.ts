@@ -53,13 +53,31 @@ class NotificationService {
     return false;
   }
 
-  // Request permission from the user
+  // Get granular status: 'granted' | 'denied' | 'default' | 'unsupported'
+  getPermissionState(): 'granted' | 'denied' | 'default' | 'unsupported' {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission;
+    }
+    return 'unsupported';
+  }
+
+  // Request permission from the user and send welcome push if granted
   async requestPermission(): Promise<boolean> {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       try {
         const result = await Notification.requestPermission();
-        return result === 'granted';
-      } catch {
+        if (result === 'granted') {
+          // Send instant confirmation notification
+          await this.sendPushNotification('🎉 Powiadomienia włączone!', {
+            body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
+            icon: '/favicon.svg',
+            tag: 'welcome-notification',
+          });
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.warn('Error requesting notification permission:', err);
         return false;
       }
     }

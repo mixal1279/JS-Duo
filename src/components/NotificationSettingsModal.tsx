@@ -20,7 +20,8 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const [enabled, setEnabled] = useState(config.enabled);
   const [time, setTime] = useState(config.time || '18:00');
   const [tone, setTone] = useState<NotificationConfig['tone']>(config.tone || 'friendly');
-  const [permissionGranted, setPermissionGranted] = useState(notificationService.checkPermission());
+  const [permissionState, setPermissionState] = useState<'granted' | 'denied' | 'default' | 'unsupported'>(() => notificationService.getPermissionState());
+  const [permissionGranted, setPermissionGranted] = useState(() => notificationService.checkPermission());
   const [testSent, setTestSent] = useState(false);
   const [simulating24h, setSimulating24h] = useState(false);
   const [hoursInactive, setHoursInactive] = useState(() => Math.round(notificationService.getHoursSinceLastLogin() * 10) / 10);
@@ -38,9 +39,12 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const handleRequestPermission = async () => {
     soundService.playClick();
     const granted = await notificationService.requestPermission();
+    const newState = notificationService.getPermissionState();
+    setPermissionState(newState);
     setPermissionGranted(granted);
     if (granted) {
       setEnabled(true);
+      soundService.playLevelUp();
     }
   };
 
@@ -96,28 +100,49 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
         </div>
 
         {/* Permission Status */}
-        <div className="p-3 rounded-2xl bg-[#1C262C] border border-[#2A373F] flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            {permissionGranted ? (
-              <Check size={18} className="text-duo-green" />
-            ) : (
-              <AlertCircle size={18} className="text-yellow-400" />
-            )}
-            <span className="text-xs font-bold text-gray-200">
-              {permissionGranted
-                ? 'Powiadomienia przeglądarki aktywne'
-                : 'Wymagana zgoda na powiadomienia'}
-            </span>
-          </div>
+        <div className="p-3.5 rounded-2xl bg-[#1C262C] border border-[#2A373F] space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              {permissionGranted ? (
+                <div className="w-7 h-7 rounded-xl bg-duo-green/20 border border-duo-green/40 flex items-center justify-center text-duo-green">
+                  <Check size={16} />
+                </div>
+              ) : permissionState === 'denied' ? (
+                <div className="w-7 h-7 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400">
+                  <AlertCircle size={16} />
+                </div>
+              ) : (
+                <div className="w-7 h-7 rounded-xl bg-duo-blue/20 border border-duo-blue/40 flex items-center justify-center text-duo-blue">
+                  <Bell size={16} />
+                </div>
+              )}
+              <div>
+                <span className="text-xs font-black text-white block">
+                  {permissionGranted
+                    ? 'Powiadomienia przeglądarki aktywne'
+                    : permissionState === 'denied'
+                    ? 'Powiadomienia zablokowane'
+                    : 'Zgoda na powiadomienia'}
+                </span>
+                <span className="text-[11px] text-gray-400">
+                  {permissionGranted
+                    ? 'Przeglądarka ma pełną zgodę na wysyłanie przypomnień'
+                    : permissionState === 'denied'
+                    ? 'Zezwól na powiadomienia w ustawieniach witryny (kłódka 🔒)'
+                    : 'Wymagane do otrzymywania powiadomień Push o passie'}
+                </span>
+              </div>
+            </div>
 
-          {!permissionGranted && (
-            <button
-              onClick={handleRequestPermission}
-              className="px-3 py-1.5 rounded-xl bg-duo-blue hover:bg-duo-blueDark text-white text-xs font-black uppercase tracking-wider"
-            >
-              Włącz
-            </button>
-          )}
+            {!permissionGranted && permissionState !== 'denied' && (
+              <button
+                onClick={handleRequestPermission}
+                className="px-3.5 py-2 rounded-xl bg-duo-blue hover:bg-duo-blueDark text-white text-xs font-black uppercase tracking-wider shadow-[0_3px_0_#1899d6] active:translate-y-0.5 cursor-pointer shrink-0"
+              >
+                Zezwól
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Toggle Enabled */}

@@ -22,6 +22,8 @@ import { NotificationSettingsModal } from './components/NotificationSettingsModa
 import { HeartRefillModal } from './components/HeartRefillModal';
 import { ProfileView } from './components/ProfileView';
 import { StreakToast } from './components/StreakToast';
+import { NotificationBanner } from './components/NotificationBanner';
+import { InAppNotificationToast } from './components/InAppNotificationToast';
 
 export const App: React.FC = () => {
   // Application State
@@ -39,6 +41,7 @@ export const App: React.FC = () => {
   // Modal & Toast States
   const [showStreakToast, setShowStreakToast] = useState(false);
   const [activeLesson, setActiveLesson] = useState<{
+    unitId: number;
     questions: Question[];
     unitTitle: string;
     lessonIndex: number;
@@ -154,6 +157,7 @@ export const App: React.FC = () => {
 
     if (lessonQuestions.length > 0) {
       setActiveLesson({
+        unitId,
         questions: lessonQuestions,
         unitTitle: unit.title,
         lessonIndex,
@@ -166,6 +170,8 @@ export const App: React.FC = () => {
     earnedXp: number;
     perfect: boolean;
     completedQuestionIds: number[];
+    unitId: number;
+    lessonIndex: number;
   }) => {
     setActiveLesson(null);
     notificationService.recordActivity();
@@ -175,6 +181,11 @@ export const App: React.FC = () => {
     const newGems = stats.gems + (results.perfect ? 15 : 10);
     const newCompleted = Array.from(new Set([...stats.completedQuestionIds, ...results.completedQuestionIds]));
     const newLevel = storageService.calculateLevel(newXp).level;
+
+    // Track completed lesson key (e.g. "1-1")
+    const lessonKey = `${results.unitId}-${results.lessonIndex}`;
+    const prevLessons = stats.completedLessonKeys || [];
+    const newCompletedLessons = Array.from(new Set([...prevLessons, lessonKey]));
 
     // Duolingo Streak Logic
     const today = new Date().toISOString().split('T')[0];
@@ -216,8 +227,10 @@ export const App: React.FC = () => {
       lastActiveDate: today,
       gems: newGems,
       completedQuestionIds: newCompleted,
+      completedLessonKeys: newCompletedLessons,
       unlockedUnit: newUnlockedUnit,
     };
+    storageService.saveStats(updatedStats);
     setStats(updatedStats);
 
     // Update Quests progress
@@ -273,6 +286,7 @@ export const App: React.FC = () => {
     // Pick 1 random question for practice
     const randomQ = ALL_QUESTIONS[Math.floor(Math.random() * ALL_QUESTIONS.length)];
     setActiveLesson({
+      unitId: 1,
       questions: [randomQ],
       unitTitle: 'Darmowy Trening Serc',
       lessonIndex: 0,
@@ -468,6 +482,12 @@ export const App: React.FC = () => {
         {/* Central Learning Content & Desktop Right Panel */}
         <div className="flex-1 flex justify-center w-full">
           <main className="flex-1 w-full max-w-2xl px-2.5 sm:px-4 pt-2 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:py-6 overflow-y-auto">
+            {/* Global Notification Permission Banner */}
+            <NotificationBanner
+              streak={stats.streak}
+              onOpenSettings={() => setShowNotifications(true)}
+            />
+
             {currentTab === 'path' && (
               <PathView
                 userStats={stats}
@@ -554,6 +574,7 @@ export const App: React.FC = () => {
       {/* Quiz Lesson Modal */}
       {activeLesson && (
         <QuizModal
+          unitId={activeLesson.unitId}
           questions={activeLesson.questions}
           unitTitle={activeLesson.unitTitle}
           lessonIndex={activeLesson.lessonIndex}
@@ -609,6 +630,9 @@ export const App: React.FC = () => {
           }}
         />
       )}
+
+      {/* Global In-App Floating Notification Banner */}
+      <InAppNotificationToast />
     </div>
   );
 };

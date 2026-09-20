@@ -30,6 +30,7 @@ export const DEFAULT_USER_STATS: UserStats = {
   hearts: 5,
   maxHearts: 5,
   completedQuestionIds: [],
+  completedLessonKeys: [],
   unlockedUnit: 1,
   duelWins: 0,
   duelLosses: 0,

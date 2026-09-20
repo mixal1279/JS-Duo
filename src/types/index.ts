@@ -35,6 +35,7 @@ export interface UserStats {
   hearts: number;
   maxHearts: number;
   completedQuestionIds: number[];
+  completedLessonKeys?: string[]; // e.g. ["1-1", "1-2"]
   unlockedUnit: number;
   duelWins: number;
   duelLosses: number;
