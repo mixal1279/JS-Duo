@@ -40,6 +40,7 @@ export interface UserStats {
   duelWins: number;
   duelLosses: number;
   league: 'Brązowa' | 'Srebrna' | 'Złota' | 'Szafirowa' | 'Rubinowa' | 'Diamentowa';
+  streakFreeze?: number;
 }
 
 export interface DailyQuest {
@@ -87,6 +88,7 @@ export interface ChatMessage {
   linkedQuestionId?: number;
   timestamp: string;
   reactions: { [emoji: string]: number };
+  userReactions?: string[];
 }
 
 export interface NotificationConfig {
@@ -94,6 +96,8 @@ export interface NotificationConfig {
   time: string; // '18:00'
   tone: 'friendly' | 'strict' | 'coder';
   hasBrowserPermission: boolean;
+  notifyOnHeartsFull?: boolean;
+  notifyOnStreakFreeze?: boolean;
 }
 
 export type AchievementCategory = 'streak' | 'skills' | 'duels' | 'mastery';

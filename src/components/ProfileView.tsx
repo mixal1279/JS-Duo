@@ -244,8 +244,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <Flame size={20} className="text-[#FF9600] fill-[#FF9600]" />
             </div>
             <div>
-              <span className="text-2xl font-black text-white">{userStats.streak}</span>
-              <span className="text-xs font-bold text-gray-400 ml-1">dni z rzędu</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-black text-white">{userStats.streak}</span>
+                <span className="text-xs font-bold text-gray-400">dni z rzędu</span>
+              </div>
+              {(userStats.streakFreeze || 0) > 0 ? (
+                <div className="text-[10px] font-bold text-duo-blue flex items-center gap-1 mt-0.5">
+                  <span>🛡️ Zamrożenie aktywne ({userStats.streakFreeze})</span>
+                </div>
+              ) : userStats.streak === 0 ? (
+                <div className="text-[10px] text-gray-500 mt-0.5">
+                  <span>Zrób lekcję, by odpalić passę</span>
+                </div>
+              ) : null}
             </div>
           </div>
 

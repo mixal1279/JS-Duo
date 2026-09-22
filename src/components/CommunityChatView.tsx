@@ -151,21 +151,25 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
               )}
 
               {/* Reactions Bar */}
-              <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-white/5">
+              <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-white/5 flex-wrap">
                 {availableEmojis.map((emoji) => {
                   const count = msg.reactions[emoji] || 0;
+                  const isSelectedByMe = Boolean(msg.userReactions?.includes(emoji));
                   return (
                     <button
                       key={emoji}
                       onClick={() => onReact(msg.id, emoji)}
-                      className={`text-[11px] px-2 py-0.5 rounded-full border transition-transform active:scale-90 flex items-center gap-1 ${
-                        count > 0
-                          ? 'bg-white/10 border-white/20 text-white'
-                          : 'bg-black/20 border-transparent text-gray-400 hover:text-white'
+                      title={isSelectedByMe ? `Kliknij ponownie, aby cofnąć reakcję ${emoji}` : `Dodaj reakcję ${emoji}`}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer ${
+                        isSelectedByMe
+                          ? 'bg-duo-green/20 border-duo-green text-duo-green font-black shadow-[0_0_8px_rgba(88,204,2,0.3)]'
+                          : count > 0
+                          ? 'bg-white/10 border-white/20 text-white font-bold hover:border-white/40'
+                          : 'bg-black/20 border-transparent text-gray-400 hover:text-white hover:bg-white/5'
                       }`}
                     >
                       <span>{emoji}</span>
-                      {count > 0 && <span className="font-bold">{count}</span>}
+                      {count > 0 && <span className="font-extrabold text-[11px]">{count}</span>}
                     </button>
                   );
                 })}

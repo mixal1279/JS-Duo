@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Flame, Gem, Heart, Sparkles, BookOpen, Bell } from 'lucide-react';
 import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, Question, AppTheme } from './types';
-import { storageService, DEFAULT_DAILY_QUESTS } from './services/storageService';
+import { storageService, DEFAULT_DAILY_QUESTS, getLocalDateString, getDaysDifference } from './services/storageService';
 import { notificationService } from './services/notificationService';
 import { soundService } from './services/soundService';
 import { INITIAL_LEADERBOARD } from './data/mockUsers';
@@ -21,6 +21,7 @@ import { QuestionDetailModal } from './components/QuestionDetailModal';
 import { NotificationSettingsModal } from './components/NotificationSettingsModal';
 import { HeartRefillModal } from './components/HeartRefillModal';
 import { ProfileView } from './components/ProfileView';
+import { CodePlaygroundView } from './components/CodePlaygroundView';
 import { StreakToast } from './components/StreakToast';
 import { NotificationBanner } from './components/NotificationBanner';
 import { InAppNotificationToast } from './components/InAppNotificationToast';
@@ -91,29 +92,75 @@ export const App: React.FC = () => {
     storageService.saveTheme(theme);
   }, [theme]);
 
-  // Push Notification & 24h Inactivity Monitoring
+  // Push Notification & Unified Daily/Inactivity Monitoring
   useEffect(() => {
     // Record login/activity session
     notificationService.recordActivity();
 
-    // Start 24-hour inactivity monitor
-    const cleanupMonitor = notificationService.startInactivityMonitor(
-      () => stats.streak,
-      () => notifConfig.tone,
-      () => notifConfig.enabled
-    );
+    // Start unified background monitor (Daily reminder + 24h absence + Hearts restoration)
+    const cleanupMonitor = notificationService.startUnifiedMonitor({
+      getStreak: () => stats.streak,
+      getTone: () => notifConfig.tone,
+      getEnabled: () => notifConfig.enabled,
+      getTime: () => notifConfig.time,
+      getLastActiveDate: () => stats.lastActiveDate,
+      getHearts: () => stats.hearts,
+      getMaxHearts: () => stats.maxHearts,
+      onPracticeRequested: () => {
+        setCurrentTab('path');
+        window.focus();
+      },
+    });
 
     return () => {
       cleanupMonitor();
     };
-  }, [stats.streak, notifConfig.tone, notifConfig.enabled]);
+  }, [stats.streak, stats.lastActiveDate, stats.hearts, stats.maxHearts, notifConfig.tone, notifConfig.enabled, notifConfig.time]);
 
-  // Toast informujący o passie (streak) tuż po zalogowaniu / uruchomieniu aplikacji
+  // Automatyczne sprawdzanie i synchronizacja passy (reset, jeśli ominięto choć jeden dzień)
   useEffect(() => {
-    const toastTimer = setTimeout(() => {
-      setShowStreakToast(true);
-    }, 600);
-    return () => clearTimeout(toastTimer);
+    const checkStreak = () => {
+      setStats((prev) => {
+        const { stats: updatedStats, wasReset, freezeUsed } = storageService.validateAndSyncStreak(prev);
+        if (wasReset && prev.streak > 0) {
+          notificationService.triggerNotification(
+            '⚠️ Twoja passa wygasła!',
+            `Ominięto dzień bez lekcji w JS Duo. Passa (${prev.streak} dni) została zresetowana. Ukończ lekcję dzisiaj, aby zacząć od nowa!`
+          );
+        } else if (freezeUsed) {
+          notificationService.triggerNotification(
+            '🛡️ Zamrożenie passy aktywne!',
+            'Twoje zamrożenie uratowało Twój streak przed resetem! Wykonaj dzisiejszą lekcję, by kontynuować naukę.'
+          );
+        }
+        return updatedStats;
+      });
+    };
+
+    checkStreak();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkStreak();
+      }
+    };
+
+    window.addEventListener('focus', checkStreak);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', checkStreak);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Toast informujący o passie (streak) tuż po zalogowaniu / uruchomieniu aplikacji (gdy passa > 0)
+  useEffect(() => {
+    if (stats.streak > 0) {
+      const toastTimer = setTimeout(() => {
+        setShowStreakToast(true);
+      }, 600);
+      return () => clearTimeout(toastTimer);
+    }
   }, []);
 
   // Desktop keyboard shortcuts (when no modal is open and user isn't typing in an input)
@@ -128,11 +175,12 @@ export const App: React.FC = () => {
       }
 
       if (e.key === '1') setCurrentTab('path');
-      else if (e.key === '2') setCurrentTab('quests');
-      else if (e.key === '3') setCurrentTab('leaderboard');
-      else if (e.key === '4') setCurrentTab('duels');
-      else if (e.key === '5') setCurrentTab('chat');
-      else if (e.key === '6') setCurrentTab('profile');
+      else if (e.key === '2') setCurrentTab('playground');
+      else if (e.key === '3') setCurrentTab('quests');
+      else if (e.key === '4') setCurrentTab('leaderboard');
+      else if (e.key === '5') setCurrentTab('duels');
+      else if (e.key === '6') setCurrentTab('chat');
+      else if (e.key === '7') setCurrentTab('profile');
       else if (e.key === 'q' || e.key === 'Q') {
         setExplorerQuestionId(null);
         setShowExplorer(true);
@@ -187,8 +235,8 @@ export const App: React.FC = () => {
     const prevLessons = stats.completedLessonKeys || [];
     const newCompletedLessons = Array.from(new Set([...prevLessons, lessonKey]));
 
-    // Duolingo Streak Logic
-    const today = new Date().toISOString().split('T')[0];
+    // Duolingo Streak Logic (używamy lokalnej daty)
+    const today = getLocalDateString();
     let newStreak = stats.streak;
     let streakIncreased = false;
 
@@ -198,14 +246,14 @@ export const App: React.FC = () => {
     } else if (stats.lastActiveDate === today) {
       newStreak = Math.max(1, stats.streak);
     } else {
-      const lastDate = new Date(stats.lastActiveDate);
-      const currDate = new Date(today);
-      const diffDays = Math.round((currDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
+      const diffDays = getDaysDifference(stats.lastActiveDate, today);
 
       if (diffDays === 1) {
+        // Kontynuacja passy z wczoraj
         newStreak = stats.streak + 1;
         streakIncreased = true;
       } else {
+        // Ominięto dzień lub więcej - passa została przerwana i rozpoczyna się od nowa (1)
         newStreak = 1;
         streakIncreased = true;
       }
@@ -302,17 +350,25 @@ export const App: React.FC = () => {
     if (stats.gems < cost) return;
 
     if (type === 'hearts') {
-      setStats((prev) => ({
-        ...prev,
-        gems: prev.gems - cost,
-        hearts: prev.maxHearts,
-      }));
+      const updated: UserStats = {
+        ...stats,
+        gems: stats.gems - cost,
+        hearts: stats.maxHearts,
+      };
+      setStats(updated);
+      storageService.saveStats(updated);
       setShowHeartRefill(false);
+      soundService.playLevelUp();
     } else if (type === 'freeze') {
-      setStats((prev) => ({
-        ...prev,
-        gems: prev.gems - cost,
-      }));
+      const currentFreezes = stats.streakFreeze || 0;
+      const updated: UserStats = {
+        ...stats,
+        gems: stats.gems - cost,
+        streakFreeze: currentFreezes + 1,
+      };
+      setStats(updated);
+      storageService.saveStats(updated);
+      soundService.playLevelUp();
     }
   };
 
@@ -384,26 +440,57 @@ export const App: React.FC = () => {
       linkedQuestionId: msg.linkedQuestionId,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       reactions: {},
+      userReactions: [],
     };
 
-    setChatMessages((prev) => [...prev, newMsg]);
+    setChatMessages((prev) => {
+      const updated = [...prev, newMsg];
+      storageService.saveChatMessages(updated);
+      return updated;
+    });
   };
 
-  // Reaction on chat message
+  // Reakcja na wiadomość w czacie - ponowne kliknięcie usuwa reakcję
   const handleReactToMessage = (messageId: string, emoji: string) => {
-    setChatMessages((prev) =>
-      prev.map((m) => {
+    soundService.playClick();
+    setChatMessages((prev) => {
+      const updated = prev.map((m) => {
         if (m.id !== messageId) return m;
+
+        const userReactions = m.userReactions || [];
+        const hasReacted = userReactions.includes(emoji);
+
         const currentCount = m.reactions[emoji] || 0;
+        let newCount: number;
+        let newUserReactions: string[];
+
+        if (hasReacted) {
+          // Ponowne kliknięcie: usuwamy reakcję
+          newCount = Math.max(0, currentCount - 1);
+          newUserReactions = userReactions.filter((e) => e !== emoji);
+        } else {
+          // Dodanie reakcji
+          newCount = currentCount + 1;
+          newUserReactions = [...userReactions, emoji];
+        }
+
+        const newReactions = { ...m.reactions };
+        if (newCount <= 0) {
+          delete newReactions[emoji];
+        } else {
+          newReactions[emoji] = newCount;
+        }
+
         return {
           ...m,
-          reactions: {
-            ...m.reactions,
-            [emoji]: currentCount + 1,
-          },
+          reactions: newReactions,
+          userReactions: newUserReactions,
         };
-      })
-    );
+      });
+
+      storageService.saveChatMessages(updated);
+      return updated;
+    });
   };
 
   // Open explorer at specific question
@@ -498,6 +585,10 @@ export const App: React.FC = () => {
                 }}
                 onClaimChest={handleClaimChest}
               />
+            )}
+
+            {currentTab === 'playground' && (
+              <CodePlaygroundView />
             )}
 
             {currentTab === 'quests' && (

@@ -11,7 +11,8 @@ import {
   Keyboard,
   Sparkles,
   User,
-  Award
+  Award,
+  Code2
 } from 'lucide-react';
 import { TabType } from './BottomNavigation';
 import { UserStats } from '../types';
@@ -40,11 +41,12 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   const navItems = [
     { id: 'path' as TabType, label: 'Nauka', icon: Compass, shortcut: '1' },
-    { id: 'quests' as TabType, label: 'Wyzwania', icon: Target, shortcut: '2' },
-    { id: 'leaderboard' as TabType, label: 'Ranking', icon: Trophy, shortcut: '3' },
-    { id: 'duels' as TabType, label: 'Pojedynki 1v1', icon: Swords, shortcut: '4' },
-    { id: 'chat' as TabType, label: 'Społeczność', icon: MessageSquareText, badge: unreadChatCount, shortcut: '5' },
-    { id: 'profile' as TabType, label: 'Osiągnięcia & Profil', icon: Award, shortcut: '6' },
+    { id: 'playground' as TabType, label: 'Laboratorium JS', icon: Code2, shortcut: '2' },
+    { id: 'quests' as TabType, label: 'Wyzwania', icon: Target, shortcut: '3' },
+    { id: 'leaderboard' as TabType, label: 'Ranking', icon: Trophy, shortcut: '4' },
+    { id: 'duels' as TabType, label: 'Pojedynki 1v1', icon: Swords, shortcut: '5' },
+    { id: 'chat' as TabType, label: 'Społeczność', icon: MessageSquareText, badge: unreadChatCount, shortcut: '6' },
+    { id: 'profile' as TabType, label: 'Osiągnięcia & Profil', icon: Award, shortcut: '7' },
   ];
 
   return (

@@ -35,6 +35,25 @@ export const DEFAULT_USER_STATS: UserStats = {
   duelWins: 0,
   duelLosses: 0,
   league: 'Brązowa',
+  streakFreeze: 0,
+};
+
+export const getLocalDateString = (date: Date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const getDaysDifference = (fromDateStr: string, toDateStr: string): number => {
+  if (!fromDateStr || !toDateStr) return 0;
+  const parts1 = fromDateStr.split('-').map(Number);
+  const parts2 = toDateStr.split('-').map(Number);
+  if (parts1.length < 3 || parts2.length < 3) return 0;
+  const utc1 = Date.UTC(parts1[0], parts1[1] - 1, parts1[2]);
+  const utc2 = Date.UTC(parts2[0], parts2[1] - 1, parts2[2]);
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  return Math.floor((utc2 - utc1) / MS_PER_DAY);
 };
 
 export const DEFAULT_DAILY_QUESTS: DailyQuest[] = [
@@ -92,10 +111,55 @@ export const DEFAULT_NOTIF_CONFIG: NotificationConfig = {
 };
 
 export const storageService = {
+  validateAndSyncStreak(stats: UserStats): { stats: UserStats; wasReset: boolean; freezeUsed: boolean } {
+    if (!stats.lastActiveDate || stats.streak === 0) {
+      return { stats, wasReset: false, freezeUsed: false };
+    }
+
+    const today = getLocalDateString();
+    const diffDays = getDaysDifference(stats.lastActiveDate, today);
+
+    // diffDays <= 0: active today (or future time), streak is safe
+    // diffDays === 1: active yesterday, today is pending practice, streak is still alive!
+    if (diffDays <= 1) {
+      return { stats, wasReset: false, freezeUsed: false };
+    }
+
+    // diffDays >= 2: The user missed at least one full day!
+    // Check if user has streak freeze
+    const freezes = stats.streakFreeze || 0;
+    if (freezes > 0 && diffDays === 2) {
+      // 1 freeze protects exactly 1 missed day (yesterday)
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = getLocalDateString(yesterday);
+
+      const protectedStats: UserStats = {
+        ...stats,
+        streakFreeze: freezes - 1,
+        lastActiveDate: yesterdayStr, // freeze marks yesterday as saved
+      };
+      this.saveStats(protectedStats);
+      return { stats: protectedStats, wasReset: false, freezeUsed: true };
+    }
+
+    // Passa została przerwana - reset do 0
+    const resetStats: UserStats = {
+      ...stats,
+      streak: 0,
+    };
+    this.saveStats(resetStats);
+    return { stats: resetStats, wasReset: true, freezeUsed: false };
+  },
+
   getStats(): UserStats {
     try {
       const data = localStorage.getItem(STATS_KEY);
-      if (data) return JSON.parse(data);
+      if (data) {
+        const parsed: UserStats = JSON.parse(data);
+        const { stats } = this.validateAndSyncStreak(parsed);
+        return stats;
+      }
     } catch {
       // fallback
     }

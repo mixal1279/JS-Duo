@@ -200,6 +200,31 @@ class SoundService {
       // Ignore
     }
   }
+
+  playNotification() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      // Duolingo-style pleasant 3-tone chime (F#5 -> A#5 -> C#6)
+      const notes = [739.99, 932.33, 1108.73];
+      notes.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+        gain.gain.setValueAtTime(0.16, now + idx * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.28);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.28);
+      });
+    } catch {
+      // Ignore
+    }
+  }
 }
 
 export const soundService = new SoundService();

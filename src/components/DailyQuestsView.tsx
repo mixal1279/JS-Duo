@@ -226,14 +226,25 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
                 <ShieldAlert size={22} />
               </div>
               <div>
-                <h4 className="font-extrabold text-sm text-white">Zamrożenie Passy</h4>
-                <p className="text-xs text-gray-400">Chroni streak na 1 dzień</p>
+                <h4 className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                  <span>Zamrożenie Passy</span>
+                  {(userStats.streakFreeze || 0) > 0 && (
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-500/20 text-duo-blue border border-duo-blue/30">
+                      Posiadasz: {userStats.streakFreeze}
+                    </span>
+                  )}
+                </h4>
+                <p className="text-xs text-gray-400">
+                  {(userStats.streakFreeze || 0) > 0
+                    ? `Aktywna ochrona! Chroni passę przed resetem na 1 dzień.`
+                    : 'Chroni passę przed zresetowaniem, gdy opuścisz 1 dzień'}
+                </p>
               </div>
             </div>
             <button
               onClick={() => onBuyItem('freeze', 80)}
               disabled={userStats.gems < 80}
-              className="px-3 py-1.5 rounded-xl bg-duo-blue hover:bg-duo-blueDark text-white text-xs font-extrabold flex items-center gap-1 shadow disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded-xl bg-duo-blue hover:bg-duo-blueDark text-white text-xs font-extrabold flex items-center gap-1 shadow disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <Gem size={13} className="fill-white" />
               <span>80</span>
