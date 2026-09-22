@@ -1,5 +1,8 @@
 import { NotificationConfig } from '../types';
 import { soundService } from './soundService';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications, Token, ActionPerformed, PushNotificationSchema } from '@capacitor/push-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export interface InactivityCheckResult {
   notified: boolean;
@@ -40,10 +43,68 @@ class NotificationService {
   private practiceRequestedListeners: Array<() => void> = [];
   private previousHeartsCount: number | null = null;
 
+  private isCapacitor = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+  private pushToken: string | null = null;
+
   constructor() {
+    this.initCapacitorNotifications();
     this.initServiceWorker();
     this.ensureInitialLoginTimestamp();
     this.initServiceWorkerMessageListener();
+  }
+
+  // Initialize native Capacitor Push & Local Notifications
+  private async initCapacitorNotifications() {
+    if (!this.isCapacitor) return;
+
+    try {
+      // 1. Setup Push Notifications listeners
+      PushNotifications.addListener('registration', (token: Token) => {
+        console.log('Capacitor Push registration success, token:', token.value);
+        this.pushToken = token.value;
+      });
+
+      PushNotifications.addListener('registrationError', (error: any) => {
+        console.warn('Capacitor Push registration error:', error);
+      });
+
+      // When push notification is received while app is open or closed
+      PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+        console.log('Capacitor Push received:', notification);
+        soundService.playNotification();
+        this.inAppListeners.forEach((l) =>
+          l({
+            title: notification.title || 'JS Duo',
+            body: notification.body || '',
+          })
+        );
+      });
+
+      // When user clicks the push notification in system bar
+      PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
+        console.log('Capacitor Push action performed:', action);
+        this.practiceRequestedListeners.forEach((l) => l());
+      });
+
+      // 2. Setup Local Notifications listeners
+      LocalNotifications.addListener('localNotificationActionPerformed', (notificationAction) => {
+        console.log('Capacitor Local notification clicked:', notificationAction);
+        this.practiceRequestedListeners.forEach((l) => l());
+      });
+
+      // Request or check permissions if already granted
+      const perm = await PushNotifications.checkPermissions();
+      if (perm.receive === 'granted') {
+        await PushNotifications.register();
+      }
+    } catch (e) {
+      console.warn('Error initializing Capacitor push notifications:', e);
+    }
+  }
+
+  // Get current Push Token (FCM / APNS)
+  getPushToken(): string | null {
+    return this.pushToken;
   }
 
   // Register service worker if available in browser
@@ -103,8 +164,12 @@ class NotificationService {
     }
   }
 
-  // Check if browser notifications permission is granted
+  // Check if native app or browser notifications permission is granted
   checkPermission(): boolean {
+    if (this.isCapacitor) {
+      // In native apps, we check synchronously with fallback to localStorage cache or default true once granted
+      return localStorage.getItem('js_duo_native_permission_granted') === 'true';
+    }
     if (typeof window !== 'undefined' && 'Notification' in window) {
       return Notification.permission === 'granted';
     }
@@ -113,6 +178,12 @@ class NotificationService {
 
   // Get granular status: 'granted' | 'denied' | 'default' | 'unsupported'
   getPermissionState(): 'granted' | 'denied' | 'default' | 'unsupported' {
+    if (this.isCapacitor) {
+      const stored = localStorage.getItem('js_duo_native_permission_state');
+      if (stored === 'granted' || stored === 'denied' || stored === 'prompt') {
+        return stored === 'prompt' ? 'default' : (stored as any);
+      }
+    }
     if (typeof window !== 'undefined' && 'Notification' in window) {
       return Notification.permission;
     }
@@ -121,13 +192,29 @@ class NotificationService {
 
   // Request permission from the user and send welcome push if granted
   async requestPermission(): Promise<boolean> {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
+    // 1. Native Capacitor Push & Local Notifications flow
+    if (this.isCapacitor) {
       try {
-        const result = await Notification.requestPermission();
-        if (result === 'granted') {
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+          permStatus = await PushNotifications.requestPermissions();
+        }
+
+        // Also request local notification permissions for offline background alarms
+        try {
+          await LocalNotifications.requestPermissions();
+        } catch (e) {
+          console.warn('LocalNotifications permission request warning:', e);
+        }
+
+        const granted = permStatus.receive === 'granted';
+        localStorage.setItem('js_duo_native_permission_state', permStatus.receive);
+        localStorage.setItem('js_duo_native_permission_granted', granted ? 'true' : 'false');
+
+        if (granted) {
+          await PushNotifications.register();
           soundService.playLevelUp();
-          // Send instant confirmation notification
-          await this.sendPushNotification('🎉 Powiadomienia włączone!', {
+          await this.sendPushNotification('🎉 Powiadomienia włączone w aplikacji!', {
             body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
             icon: '/favicon.svg',
             tag: 'welcome-notification',
@@ -136,12 +223,50 @@ class NotificationService {
           return true;
         }
         return false;
-      } catch (err) {
-        console.warn('Error requesting notification permission:', err);
-        return false;
+      } catch (capErr) {
+        console.warn('Error requesting Capacitor push permissions:', capErr);
       }
     }
-    return false;
+
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return false;
+    }
+
+    try {
+      // Support both Promise-based and legacy callback-based requestPermission
+      let result: NotificationPermission;
+      try {
+        const promise = Notification.requestPermission();
+        if (promise && typeof promise.then === 'function') {
+          result = await promise;
+        } else {
+          result = await new Promise<NotificationPermission>((resolve) => {
+            Notification.requestPermission((status) => resolve(status));
+          });
+        }
+      } catch {
+        // Fallback for older browsers
+        result = await new Promise<NotificationPermission>((resolve) => {
+          Notification.requestPermission((status) => resolve(status));
+        });
+      }
+
+      if (result === 'granted') {
+        soundService.playLevelUp();
+        // Send instant confirmation notification
+        await this.sendPushNotification('🎉 Powiadomienia włączone!', {
+          body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
+          icon: '/favicon.svg',
+          tag: 'welcome-notification',
+          type: 'welcome',
+        });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.warn('Error requesting notification permission:', err);
+      return false;
+    }
   }
 
   // In-app listener subscription for toast or modal popups
@@ -264,7 +389,33 @@ class NotificationService {
       type: options?.type || 'test',
     });
 
-    // 2. Dispatch native browser notification if permitted
+    // 2. Dispatch via Capacitor Native Notification (shows on OS status bar even when app is closed / backgrounded)
+    if (this.isCapacitor) {
+      try {
+        const notifId = Math.floor(Math.random() * 1000000) + 1;
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title,
+              body: notifOptions.body || '',
+              id: notifId,
+              schedule: { at: new Date(Date.now() + 100) },
+              sound: 'beep.wav',
+              actionTypeId: 'OPEN_PRACTICE',
+              extra: {
+                tag: notifOptions.tag,
+                type: options?.type || 'test',
+              },
+            },
+          ],
+        });
+        return true;
+      } catch (nativeErr) {
+        console.warn('Capacitor native notification dispatch failed, falling back:', nativeErr);
+      }
+    }
+
+    // 3. Dispatch native browser notification if permitted (Web / PWA)
     if (this.checkPermission()) {
       try {
         // Preferred: Active Service Worker
@@ -368,6 +519,62 @@ class NotificationService {
   // General motivational message based on tone
   getMotivationalMessage(tone: NotificationConfig['tone'], streak: number): { title: string; body: string } {
     return this.getDailyReminderMessage(streak, tone);
+  }
+
+  /**
+   * Schedule offline alarms via Capacitor LocalNotifications so that notifications fire even when app is closed
+   */
+  async scheduleNativeBackgroundAlarms(timeStr: string, streak: number, tone: NotificationConfig['tone']) {
+    if (!this.isCapacitor) return;
+
+    try {
+      // Cancel previous scheduled alarms
+      const pending = await LocalNotifications.getPending();
+      if (pending.notifications.length > 0) {
+        await LocalNotifications.cancel({ notifications: pending.notifications });
+      }
+
+      const next = this.getNextReminderTime(timeStr);
+      const msg = this.getDailyReminderMessage(streak, tone);
+
+      // Schedule daily reminder at specified hour
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: msg.title,
+            body: msg.body,
+            id: 1001,
+            schedule: {
+              at: next.date,
+              allowWhileIdle: true,
+            },
+            sound: 'beep.wav',
+            actionTypeId: 'OPEN_PRACTICE',
+            extra: {
+              type: 'daily',
+            },
+          },
+          // Schedule 24h inactivity warning
+          {
+            title: `⚠️ Twój streak (${streak} dni) wisi na włosku!`,
+            body: 'Minęły 24 godziny od ostatniej nauki w JS Duo! Rozwiąż 1 lekcję i uratuj passę.',
+            id: 1002,
+            schedule: {
+              at: new Date(Date.now() + 24 * 60 * 60 * 1000),
+              allowWhileIdle: true,
+            },
+            sound: 'beep.wav',
+            actionTypeId: 'OPEN_PRACTICE',
+            extra: {
+              type: 'inactivity',
+            },
+          },
+        ],
+      });
+      console.log('Capacitor native background alarms successfully scheduled for:', next.date);
+    } catch (e) {
+      console.warn('Error scheduling Capacitor native alarms:', e);
+    }
   }
 
   // Calculate next scheduled reminder time string and date object
@@ -588,6 +795,11 @@ class NotificationService {
       const tone = getTone();
       const time = getTime();
       const lastActive = getLastActiveDate();
+
+      // Ensure native offline alarms are scheduled in Android/iOS so notifications fire when app is closed
+      if (this.isCapacitor) {
+        this.scheduleNativeBackgroundAlarms(time, streak, tone);
+      }
 
       // 1. Daily scheduled reminder
       this.checkDailyReminderAndNotify(streak, time, tone, lastActive);

@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Trash2,
   ShieldCheck,
+  ExternalLink,
 } from 'lucide-react';
 import { NotificationConfig } from '../types';
 import { notificationService, NotificationHistoryItem } from '../services/notificationService';
@@ -68,6 +69,8 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     setHistory(notificationService.getNotificationHistory());
   };
 
+  const isInsideIframe = typeof window !== 'undefined' && window.self !== window.top;
+
   const handleRequestPermission = async () => {
     soundService.playClick();
     const granted = await notificationService.requestPermission();
@@ -77,6 +80,8 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     if (granted) {
       setEnabled(true);
       refreshHistory();
+    } else if (newState === 'denied' || isInsideIframe) {
+      setShowHelpUnblock(true);
     }
   };
 
@@ -112,6 +117,9 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
 
   const handleSave = () => {
     soundService.playClick();
+    if (enabled) {
+      notificationService.scheduleNativeBackgroundAlarms(time, streak, tone);
+    }
     onSave({
       enabled,
       time,
@@ -143,10 +151,10 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
                 <span>Powiadomienia Push</span>
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-duo-green/20 text-duo-green border border-duo-green/40">
-                  Web Push
+                  Systemowe Push & App
                 </span>
               </h3>
-              <p className="text-xs text-gray-400">Pilnowanie passy, serc i codziennych lekcji JS</p>
+              <p className="text-xs text-gray-400">Powiadomienia na pulpicie i telefonie nad innymi aplikacjami</p>
             </div>
           </div>
           <button
@@ -157,7 +165,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
           </button>
         </div>
 
-        {/* Browser Permission Status Card */}
+        {/* Browser / App Permission Status Card */}
         <div className="p-3.5 sm:p-4 rounded-2xl bg-[#1C262C] border border-[#2A373F] space-y-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
@@ -177,56 +185,82 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               <div>
                 <span className="text-xs sm:text-sm font-black text-white block">
                   {permissionGranted
-                    ? 'Powiadomienia w przeglądarce są aktywne'
+                    ? 'Powiadomienia systemowe są włączone'
                     : permissionState === 'denied'
-                    ? 'Powiadomienia zostały zablokowane'
-                    : 'Wymagana zgoda na powiadomienia'}
+                    ? 'Powiadomienia systemowe są zablokowane'
+                    : 'Wymagana zgoda na alerty systemowe'}
                 </span>
                 <span className="text-[11px] text-gray-400">
                   {permissionGranted
-                    ? 'Otrzymujesz systemowe powiadomienia Push nawet przy zminimalizowanej karcie.'
+                    ? 'Dostaniesz powiadomienie na ekranie nawet gdy używasz innych aplikacji.'
                     : permissionState === 'denied'
-                    ? 'Przeglądarka ma wyłączone powiadomienia dla tej witryny.'
-                    : 'Zezwól na powiadomienia, by Sowa Duo mogła wysyłać alerty Push.'}
+                    ? 'Zezwól na powiadomienia w ustawieniach systemu/aplikacji.'
+                    : 'Zezwól, aby otrzymywać powiadomienia nad innymi aplikacjami.'}
                 </span>
               </div>
             </div>
 
             {!permissionGranted && permissionState !== 'denied' && (
-              <button
-                onClick={handleRequestPermission}
-                className="px-3.5 py-2 rounded-xl bg-duo-blue hover:bg-duo-blueDark text-white text-xs font-black uppercase tracking-wider shadow-[0_3px_0_#1899d6] active:translate-y-0.5 cursor-pointer shrink-0"
-              >
-                Zezwól
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handleRequestPermission}
+                  className="px-3.5 py-2 rounded-xl bg-duo-blue hover:bg-duo-blueDark text-white text-xs font-black uppercase tracking-wider shadow-[0_3px_0_#1899d6] active:translate-y-0.5 cursor-pointer"
+                >
+                  Zezwól
+                </button>
+              </div>
             )}
 
-            {permissionState === 'denied' && (
+            {(permissionState === 'denied' || isInsideIframe) && (
               <button
                 onClick={() => setShowHelpUnblock(!showHelpUnblock)}
                 className="px-3 py-1.5 rounded-xl bg-amber-600/30 hover:bg-amber-600/40 text-amber-300 border border-amber-500/40 text-xs font-bold shrink-0 cursor-pointer"
               >
-                Pomoc
+                {showHelpUnblock ? 'Ukryj pomoc' : 'Instrukcja'}
               </button>
             )}
           </div>
 
-          {/* Unblock guide if denied */}
-          {showHelpUnblock && permissionState === 'denied' && (
+          {/* Unblock / Direct URL guide if in iframe or denied */}
+          {showHelpUnblock && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="text-xs text-amber-200 bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 space-y-1.5"
+              className="text-xs text-amber-200 bg-amber-950/40 border border-amber-500/30 rounded-xl p-3.5 space-y-2.5"
             >
               <div className="font-bold flex items-center gap-1.5 text-amber-300">
-                <HelpCircle size={14} />
-                <span>Jak odblokować powiadomienia Push:</span>
+                <HelpCircle size={15} />
+                <span>Dlaczego przeglądarka może blokować powiadomienia?</span>
               </div>
-              <ol className="list-decimal pl-4 space-y-1 text-gray-300 text-[11px]">
-                <li>Kliknij ikonę kłódki 🔒 lub suwaków obok adresu URL w pasku przeglądarki.</li>
-                <li>Znajdź sekcję <b>Powiadomienia (Notifications)</b> i zmień na <b>Zezwalaj (Allow)</b>.</li>
-                <li>Odśwież stronę, aby zastosować nowe uprawnienia.</li>
-              </ol>
+
+              {isInsideIframe && (
+                <div className="bg-[#1A262D] p-2.5 rounded-lg border border-amber-500/40 space-y-1.5">
+                  <p className="text-gray-200 text-[11px] leading-relaxed">
+                    <b>Przeglądarki (Chrome, Safari, Firefox, Edge)</b> ze względów bezpieczeństwa blokują wyświetlanie systemowego okna zgody na powiadomienia wewnątrz ramki (iframe) edytora.
+                  </p>
+                  <p className="text-gray-300 text-[11px]">
+                    Otwórz aplikację bezpośrednio w nowej karcie przeglądarki, aby nadać uprawnienie:
+                  </p>
+                  <a
+                    href={typeof window !== 'undefined' ? window.location.href : '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-duo-green hover:bg-duo-greenDark text-black font-extrabold text-xs shadow transition-colors"
+                  >
+                    <span>Otwórz w nowej karcie</span>
+                    <ExternalLink size={13} />
+                  </a>
+                </div>
+              )}
+
+              <div className="space-y-1 text-gray-300 text-[11px]">
+                <p className="font-bold text-gray-200">Jeśli powiadomienia są zablokowane w przeglądarce:</p>
+                <ol className="list-decimal pl-4 space-y-1">
+                  <li>Kliknij ikonę kłódki 🔒 lub suwaków (Ustawienia witryny) obok adresu URL w pasku przeglądarki.</li>
+                  <li>Znajdź sekcję <b>Powiadomienia (Notifications)</b> i zmień na <b>Zezwalaj (Allow)</b>.</li>
+                  <li>Upewnij się, że w systemie operacyjnym (Windows / macOS / Android) Twoja przeglądarka nie ma wyłączonych powiadomień w ustawieniach systemowych (np. Tryb skupienia / Nie przeszkadzać).</li>
+                </ol>
+              </div>
             </motion.div>
           )}
         </div>
