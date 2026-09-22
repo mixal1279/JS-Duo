@@ -47,10 +47,26 @@ class NotificationService {
   private pushToken: string | null = null;
 
   constructor() {
-    this.initCapacitorNotifications();
-    this.initServiceWorker();
-    this.ensureInitialLoginTimestamp();
-    this.initServiceWorkerMessageListener();
+    try {
+      this.initCapacitorNotifications();
+    } catch (e) {
+      console.warn('Capacitor init failed gracefully:', e);
+    }
+    try {
+      this.initServiceWorker();
+    } catch (e) {
+      console.warn('SW init failed gracefully:', e);
+    }
+    try {
+      this.ensureInitialLoginTimestamp();
+    } catch (e) {
+      console.warn('Login timestamp init failed gracefully:', e);
+    }
+    try {
+      this.initServiceWorkerMessageListener();
+    } catch (e) {
+      console.warn('SW listener failed gracefully:', e);
+    }
   }
 
   // Initialize native Capacitor Push & Local Notifications
@@ -58,44 +74,52 @@ class NotificationService {
     if (!this.isCapacitor) return;
 
     try {
-      // 1. Setup Push Notifications listeners
-      PushNotifications.addListener('registration', (token: Token) => {
-        console.log('Capacitor Push registration success, token:', token.value);
-        this.pushToken = token.value;
-      });
+      if (Capacitor.isPluginAvailable('PushNotifications')) {
+        // 1. Setup Push Notifications listeners
+        PushNotifications.addListener('registration', (token: Token) => {
+          console.log('Capacitor Push registration success, token:', token.value);
+          this.pushToken = token.value;
+        });
 
-      PushNotifications.addListener('registrationError', (error: any) => {
-        console.warn('Capacitor Push registration error:', error);
-      });
+        PushNotifications.addListener('registrationError', (error: any) => {
+          console.warn('Capacitor Push registration error:', error);
+        });
 
-      // When push notification is received while app is open or closed
-      PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
-        console.log('Capacitor Push received:', notification);
-        soundService.playNotification();
-        this.inAppListeners.forEach((l) =>
-          l({
-            title: notification.title || 'JS Duo',
-            body: notification.body || '',
-          })
-        );
-      });
+        // When push notification is received while app is open or closed
+        PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+          console.log('Capacitor Push received:', notification);
+          soundService.playNotification();
+          this.inAppListeners.forEach((l) =>
+            l({
+              title: notification.title || 'JS Duo',
+              body: notification.body || '',
+            })
+          );
+        });
 
-      // When user clicks the push notification in system bar
-      PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
-        console.log('Capacitor Push action performed:', action);
-        this.practiceRequestedListeners.forEach((l) => l());
-      });
+        // When user clicks the push notification in system bar
+        PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
+          console.log('Capacitor Push action performed:', action);
+          this.practiceRequestedListeners.forEach((l) => l());
+        });
 
-      // 2. Setup Local Notifications listeners
-      LocalNotifications.addListener('localNotificationActionPerformed', (notificationAction) => {
-        console.log('Capacitor Local notification clicked:', notificationAction);
-        this.practiceRequestedListeners.forEach((l) => l());
-      });
+        // Check if already granted without crashing if not
+        try {
+          const perm = await PushNotifications.checkPermissions();
+          if (perm && perm.receive === 'granted') {
+            await PushNotifications.register().catch(() => {});
+          }
+        } catch (permErr) {
+          console.warn('Could not check push permissions:', permErr);
+        }
+      }
 
-      // Request or check permissions if already granted
-      const perm = await PushNotifications.checkPermissions();
-      if (perm.receive === 'granted') {
-        await PushNotifications.register();
+      if (Capacitor.isPluginAvailable('LocalNotifications')) {
+        // 2. Setup Local Notifications listeners
+        LocalNotifications.addListener('localNotificationActionPerformed', (notificationAction) => {
+          console.log('Capacitor Local notification clicked:', notificationAction);
+          this.practiceRequestedListeners.forEach((l) => l());
+        });
       }
     } catch (e) {
       console.warn('Error initializing Capacitor push notifications:', e);
@@ -788,6 +812,8 @@ class NotificationService {
       this.onPracticeRequested(onPracticeRequested);
     }
 
+    let lastScheduledTime = '';
+
     const runChecks = () => {
       if (!getEnabled()) return;
 
@@ -796,8 +822,9 @@ class NotificationService {
       const time = getTime();
       const lastActive = getLastActiveDate();
 
-      // Ensure native offline alarms are scheduled in Android/iOS so notifications fire when app is closed
-      if (this.isCapacitor) {
+      // Ensure native offline alarms are scheduled in Android/iOS so notifications fire when app is closed (only once per time change)
+      if (this.isCapacitor && lastScheduledTime !== time) {
+        lastScheduledTime = time;
         this.scheduleNativeBackgroundAlarms(time, streak, tone);
       }
 
