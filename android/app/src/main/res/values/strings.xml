@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">JS Duo</string>
+    <string name="title_activity_main">JS Duo</string>
+    <string name="package_name">com.jsduo.app</string>
+    <string name="custom_url_scheme">com.jsduo.app</string>
+</resources>

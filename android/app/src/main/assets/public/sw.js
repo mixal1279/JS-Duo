@@ -1,7 +1,7 @@
 // JS Duo Service Worker for Browser Push Notifications
-const CACHE_NAME = 'js-duo-cache-v1';
+const CACHE_NAME = 'js-duo-cache-v2';
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -13,13 +13,23 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
+  // If user clicked the 'dismiss' button, just close and do nothing
+  if (event.action === 'dismiss') {
+    return;
+  }
+
   const targetUrl = (event.notification.data && event.notification.data.url) || '/';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If a window is already open, focus it
+      // If an existing window is open, focus it and notify it
       for (const client of clientList) {
         if ('focus' in client) {
+          client.postMessage({
+            type: 'NOTIFICATION_CLICKED',
+            action: event.action || 'open',
+            tag: event.notification.tag,
+          });
           return client.focus();
         }
       }
@@ -31,6 +41,11 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
+// Handle notification close event
+self.addEventListener('notificationclose', () => {
+  // Can be used for analytics or telemetry if required
+});
+
 // Handle incoming background Push events
 self.addEventListener('push', (event) => {
   let data = {
@@ -38,24 +53,34 @@ self.addEventListener('push', (event) => {
     body: 'Minęły 24 godziny od Twojej ostatniej sesji. Zrób 1 lekcję i uratuj streak!',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
+    tag: 'js-duo-daily-reminder',
+    data: { url: '/' },
   };
 
   if (event.data) {
     try {
-      data = event.data.json();
+      data = { ...data, ...event.data.json() };
     } catch {
       data.body = event.data.text();
     }
   }
 
+  const notificationOptions = {
+    body: data.body,
+    icon: data.icon || '/favicon.svg',
+    badge: data.badge || '/favicon.svg',
+    tag: data.tag || 'js-duo-daily-reminder',
+    renotify: true,
+    requireInteraction: true,
+    vibrate: [200, 100, 200],
+    data: data.data || { url: '/' },
+    actions: [
+      { action: 'practice', title: 'Ćwicz teraz 🚀' },
+      { action: 'dismiss', title: 'Później' },
+    ],
+  };
+
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: data.icon || '/favicon.svg',
-      badge: data.badge || '/favicon.svg',
-      tag: 'js-duo-daily-reminder',
-      renotify: true,
-      data: { url: '/' },
-    })
+    self.registration.showNotification(data.title, notificationOptions)
   );
 });

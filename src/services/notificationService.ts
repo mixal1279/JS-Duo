@@ -219,24 +219,35 @@ class NotificationService {
     // 1. Native Capacitor Push & Local Notifications flow
     if (this.isCapacitor) {
       try {
-        let permStatus = await PushNotifications.checkPermissions();
-        if (permStatus.receive === 'prompt') {
-          permStatus = await PushNotifications.requestPermissions();
+        let granted = false;
+
+        if (Capacitor.isPluginAvailable('PushNotifications')) {
+          let permStatus = await PushNotifications.checkPermissions();
+          if (permStatus.receive === 'prompt') {
+            permStatus = await PushNotifications.requestPermissions();
+          }
+          granted = permStatus.receive === 'granted';
+          localStorage.setItem('js_duo_native_permission_state', permStatus.receive);
+          if (granted) {
+            await PushNotifications.register().catch(() => {});
+          }
         }
 
         // Also request local notification permissions for offline background alarms
-        try {
-          await LocalNotifications.requestPermissions();
-        } catch (e) {
-          console.warn('LocalNotifications permission request warning:', e);
+        if (Capacitor.isPluginAvailable('LocalNotifications')) {
+          try {
+            const localPerm = await LocalNotifications.requestPermissions();
+            if (localPerm.display === 'granted') {
+              granted = true;
+            }
+          } catch (e) {
+            console.warn('LocalNotifications permission request warning:', e);
+          }
         }
 
-        const granted = permStatus.receive === 'granted';
-        localStorage.setItem('js_duo_native_permission_state', permStatus.receive);
         localStorage.setItem('js_duo_native_permission_granted', granted ? 'true' : 'false');
 
         if (granted) {
-          await PushNotifications.register();
           soundService.playLevelUp();
           await this.sendPushNotification('🎉 Powiadomienia włączone w aplikacji!', {
             body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
@@ -414,7 +425,7 @@ class NotificationService {
     });
 
     // 2. Dispatch via Capacitor Native Notification (shows on OS status bar even when app is closed / backgrounded)
-    if (this.isCapacitor) {
+    if (this.isCapacitor && Capacitor.isPluginAvailable('LocalNotifications')) {
       try {
         const notifId = Math.floor(Math.random() * 1000000) + 1;
         await LocalNotifications.schedule({
@@ -424,8 +435,6 @@ class NotificationService {
               body: notifOptions.body || '',
               id: notifId,
               schedule: { at: new Date(Date.now() + 100) },
-              sound: 'beep.wav',
-              actionTypeId: 'OPEN_PRACTICE',
               extra: {
                 tag: notifOptions.tag,
                 type: options?.type || 'test',
@@ -549,7 +558,7 @@ class NotificationService {
    * Schedule offline alarms via Capacitor LocalNotifications so that notifications fire even when app is closed
    */
   async scheduleNativeBackgroundAlarms(timeStr: string, streak: number, tone: NotificationConfig['tone']) {
-    if (!this.isCapacitor) return;
+    if (!this.isCapacitor || !Capacitor.isPluginAvailable('LocalNotifications')) return;
 
     try {
       // Cancel previous scheduled alarms
@@ -570,10 +579,7 @@ class NotificationService {
             id: 1001,
             schedule: {
               at: next.date,
-              allowWhileIdle: true,
             },
-            sound: 'beep.wav',
-            actionTypeId: 'OPEN_PRACTICE',
             extra: {
               type: 'daily',
             },
@@ -585,10 +591,7 @@ class NotificationService {
             id: 1002,
             schedule: {
               at: new Date(Date.now() + 24 * 60 * 60 * 1000),
-              allowWhileIdle: true,
             },
-            sound: 'beep.wav',
-            actionTypeId: 'OPEN_PRACTICE',
             extra: {
               type: 'inactivity',
             },
