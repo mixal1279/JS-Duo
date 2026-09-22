@@ -1,7 +1,6 @@
 import { NotificationConfig } from '../types';
 import { soundService } from './soundService';
 import { Capacitor } from '@capacitor/core';
-import { PushNotifications, Token, ActionPerformed, PushNotificationSchema } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 export interface InactivityCheckResult {
@@ -44,7 +43,6 @@ class NotificationService {
   private previousHeartsCount: number | null = null;
 
   private isCapacitor = typeof window !== 'undefined' && Capacitor.isNativePlatform();
-  private pushToken: string | null = null;
 
   constructor() {
     try {
@@ -69,66 +67,20 @@ class NotificationService {
     }
   }
 
-  // Initialize native Capacitor Push & Local Notifications
+  // Initialize native Capacitor Local Notifications
   private async initCapacitorNotifications() {
     if (!this.isCapacitor) return;
 
     try {
-      if (Capacitor.isPluginAvailable('PushNotifications')) {
-        // 1. Setup Push Notifications listeners
-        PushNotifications.addListener('registration', (token: Token) => {
-          console.log('Capacitor Push registration success, token:', token.value);
-          this.pushToken = token.value;
-        });
-
-        PushNotifications.addListener('registrationError', (error: any) => {
-          console.warn('Capacitor Push registration error:', error);
-        });
-
-        // When push notification is received while app is open or closed
-        PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
-          console.log('Capacitor Push received:', notification);
-          soundService.playNotification();
-          this.inAppListeners.forEach((l) =>
-            l({
-              title: notification.title || 'JS Duo',
-              body: notification.body || '',
-            })
-          );
-        });
-
-        // When user clicks the push notification in system bar
-        PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
-          console.log('Capacitor Push action performed:', action);
-          this.practiceRequestedListeners.forEach((l) => l());
-        });
-
-        // Check if already granted without crashing if not
-        try {
-          const perm = await PushNotifications.checkPermissions();
-          if (perm && perm.receive === 'granted') {
-            await PushNotifications.register().catch(() => {});
-          }
-        } catch (permErr) {
-          console.warn('Could not check push permissions:', permErr);
-        }
-      }
-
       if (Capacitor.isPluginAvailable('LocalNotifications')) {
-        // 2. Setup Local Notifications listeners
         LocalNotifications.addListener('localNotificationActionPerformed', (notificationAction) => {
           console.log('Capacitor Local notification clicked:', notificationAction);
           this.practiceRequestedListeners.forEach((l) => l());
         });
       }
     } catch (e) {
-      console.warn('Error initializing Capacitor push notifications:', e);
+      console.warn('Error initializing Capacitor local notifications:', e);
     }
-  }
-
-  // Get current Push Token (FCM / APNS)
-  getPushToken(): string | null {
-    return this.pushToken;
   }
 
   // Register service worker if available in browser
@@ -216,24 +168,11 @@ class NotificationService {
 
   // Request permission from the user and send welcome push if granted
   async requestPermission(): Promise<boolean> {
-    // 1. Native Capacitor Push & Local Notifications flow
+    // 1. Native Capacitor Local Notifications flow
     if (this.isCapacitor) {
       try {
         let granted = false;
 
-        if (Capacitor.isPluginAvailable('PushNotifications')) {
-          let permStatus = await PushNotifications.checkPermissions();
-          if (permStatus.receive === 'prompt') {
-            permStatus = await PushNotifications.requestPermissions();
-          }
-          granted = permStatus.receive === 'granted';
-          localStorage.setItem('js_duo_native_permission_state', permStatus.receive);
-          if (granted) {
-            await PushNotifications.register().catch(() => {});
-          }
-        }
-
-        // Also request local notification permissions for offline background alarms
         if (Capacitor.isPluginAvailable('LocalNotifications')) {
           try {
             const localPerm = await LocalNotifications.requestPermissions();
@@ -259,7 +198,7 @@ class NotificationService {
         }
         return false;
       } catch (capErr) {
-        console.warn('Error requesting Capacitor push permissions:', capErr);
+        console.warn('Error requesting Capacitor local permissions:', capErr);
       }
     }
 
