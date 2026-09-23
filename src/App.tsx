@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Gem, Heart, Sparkles, BookOpen, Bell } from 'lucide-react';
 import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, Question, AppTheme } from './types';
 import { storageService, DEFAULT_DAILY_QUESTS, getLocalDateString, getDaysDifference } from './services/storageService';
@@ -583,77 +584,88 @@ export const App: React.FC = () => {
               onOpenSettings={() => setShowNotifications(true)}
             />
 
-            {currentTab === 'path' && (
-              <PathView
-                userStats={stats}
-                onStartLesson={handleStartLesson}
-                onOpenExplorer={() => {
-                  setExplorerQuestionId(null);
-                  setShowExplorer(true);
-                }}
-                onClaimChest={handleClaimChest}
-              />
-            )}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={currentTab}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="w-full"
+              >
+                {currentTab === 'path' && (
+                  <PathView
+                    userStats={stats}
+                    onStartLesson={handleStartLesson}
+                    onOpenExplorer={() => {
+                      setExplorerQuestionId(null);
+                      setShowExplorer(true);
+                    }}
+                    onClaimChest={handleClaimChest}
+                  />
+                )}
 
-            {currentTab === 'playground' && (
-              <CodePlaygroundView />
-            )}
+                {currentTab === 'playground' && (
+                  <CodePlaygroundView />
+                )}
 
-            {currentTab === 'quests' && (
-              <DailyQuestsView
-                quests={quests}
-                userStats={stats}
-                onClaimQuest={handleClaimQuest}
-                onBuyItem={handleBuyItem}
-              />
-            )}
+                {currentTab === 'quests' && (
+                  <DailyQuestsView
+                    quests={quests}
+                    userStats={stats}
+                    onClaimQuest={handleClaimQuest}
+                    onBuyItem={handleBuyItem}
+                  />
+                )}
 
-            {currentTab === 'leaderboard' && (
-              <LeaderboardView userStats={stats} users={leaderboard} />
-            )}
+                {currentTab === 'leaderboard' && (
+                  <LeaderboardView userStats={stats} users={leaderboard} />
+                )}
 
-            {currentTab === 'duels' && (
-              <DuelView
-                friends={friends}
-                userStats={stats}
-                onUpdateStats={(newSt) => {
-                  setStats((prev) => ({ ...prev, ...newSt }));
-                  if (newSt.duelWins) {
-                    // Update duel quest progress
-                    setQuests((prev) =>
-                      prev.map((q) =>
-                        q.type === 'duel' ? { ...q, current: Math.min(q.target, q.current + 1) } : q
-                      )
-                    );
-                  }
-                }}
-              />
-            )}
+                {currentTab === 'duels' && (
+                  <DuelView
+                    friends={friends}
+                    userStats={stats}
+                    onUpdateStats={(newSt) => {
+                      setStats((prev) => ({ ...prev, ...newSt }));
+                      if (newSt.duelWins) {
+                        // Update duel quest progress
+                        setQuests((prev) =>
+                          prev.map((q) =>
+                            q.type === 'duel' ? { ...q, current: Math.min(q.target, q.current + 1) } : q
+                          )
+                        );
+                      }
+                    }}
+                  />
+                )}
 
-            {currentTab === 'chat' && (
-              <CommunityChatView
-                messages={chatMessages}
-                onSendMessage={handleSendMessage}
-                onReact={handleReactToMessage}
-                onSelectQuestion={handleOpenExplorerAt}
-                onClearChat={handleClearChat}
-              />
-            )}
+                {currentTab === 'chat' && (
+                  <CommunityChatView
+                    messages={chatMessages}
+                    onSendMessage={handleSendMessage}
+                    onReact={handleReactToMessage}
+                    onSelectQuestion={handleOpenExplorerAt}
+                    onClearChat={handleClearChat}
+                  />
+                )}
 
-            {currentTab === 'profile' && (
-              <ProfileView
-                userStats={stats}
-                onUpdateStats={(newSt) => setStats((prev) => ({ ...prev, ...newSt }))}
-                onOpenExplorer={() => {
-                  setExplorerQuestionId(null);
-                  setShowExplorer(true);
-                }}
-                onOpenLeaderboard={() => setCurrentTab('leaderboard')}
-                currentTheme={theme}
-                onToggleTheme={setTheme}
-                onResetProgress={handleResetProgress}
-              />
-            )}
+                {currentTab === 'profile' && (
+                  <ProfileView
+                    userStats={stats}
+                    onUpdateStats={(newSt) => setStats((prev) => ({ ...prev, ...newSt }))}
+                    onOpenExplorer={() => {
+                      setExplorerQuestionId(null);
+                      setShowExplorer(true);
+                    }}
+                    onOpenLeaderboard={() => setCurrentTab('leaderboard')}
+                    currentTheme={theme}
+                    onToggleTheme={setTheme}
+                    onResetProgress={handleResetProgress}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </main>
 
           {/* Desktop Right Panel (visible on lg and up) */}
