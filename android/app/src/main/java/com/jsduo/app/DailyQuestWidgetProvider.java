@@ -49,6 +49,8 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         int streak = 0;
         int hearts = 5;
         int xp = 0;
+        int dailyXp = 0;
+        int dailyXpTarget = 30;
         String lastActiveDate = "";
 
         try {
@@ -60,6 +62,8 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
                 hearts = parseJsonInt(statsJson, "\"hearts\":", 5);
                 xp = parseJsonInt(statsJson, "\"xp\":", 0);
                 lastActiveDate = parseJsonString(statsJson, "\"lastActiveDate\":");
+            dailyXp = prefs.getInt("daily_xp", 0);
+            dailyXpTarget = prefs.getInt("daily_xp_target", 30);
             }
         } catch (Exception e) {
             // fallback
@@ -73,18 +77,20 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         // Update Views
         views.setTextViewText(R.id.widget_streak_count, String.valueOf(streak));
         views.setTextViewText(R.id.widget_hearts_count, hearts + "/5");
+        views.setTextViewText(R.id.widget_xp_count, dailyXp + "/" + dailyXpTarget + " XP");
+        views.setProgressBar(R.id.widget_xp_progress, Math.max(1, dailyXpTarget), Math.min(dailyXpTarget, dailyXp), false);
 
         if (practicedToday) {
             views.setTextViewText(R.id.widget_status_title, "Dzisiejsza lekcja zaliczona!");
-            views.setTextViewText(R.id.widget_status_desc, "Świetna robota! Passa " + streak + " dni jest bezpieczna.");
+            views.setTextViewText(R.id.widget_status_desc, "Świetna robota! Dzisiejszy cel XP jest ukończony.");
             views.setTextViewText(R.id.widget_action_button, "Powtórz materiał");
             views.setImageViewResource(R.id.widget_status_icon, R.drawable.ic_widget_check);
         } else {
             views.setTextViewText(R.id.widget_status_title, "Nie zapomnij o dzisiejszej lekcji!");
             if (streak > 0) {
-                views.setTextViewText(R.id.widget_status_desc, "Twoja passa (" + streak + " dni) jest zagrożona! Zrób lekcję.");
+                views.setTextViewText(R.id.widget_status_desc, "Masz " + dailyXp + "/" + dailyXpTarget + " XP. Zrób krótką lekcję i utrzymaj passę.");
             } else {
-                views.setTextViewText(R.id.widget_status_desc, "Poświęć 3 minuty na JavaScript i rozpocznij nową passę!");
+                views.setTextViewText(R.id.widget_status_desc, "Poświęć kilka minut na JavaScript i zdobądź dzisiejsze XP.");
             }
             views.setTextViewText(R.id.widget_action_button, "Rozpocznij lekcję teraz ⚡");
             views.setImageViewResource(R.id.widget_status_icon, R.drawable.ic_widget_flame);
