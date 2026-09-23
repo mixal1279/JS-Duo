@@ -42,6 +42,16 @@ public class WidgetBridgePlugin extends Plugin {
                 editor.putString("lastActiveDate", lastActiveDate);
             }
 
+            Integer dailyXp = call.getInt("dailyXp");
+            if (dailyXp != null) {
+                editor.putInt("daily_xp", dailyXp);
+            }
+
+            Integer dailyXpTarget = call.getInt("dailyXpTarget");
+            if (dailyXpTarget != null) {
+                editor.putInt("daily_xp_target", dailyXpTarget);
+            }
+
             editor.apply();
 
             // Trigger widget update broadcast
