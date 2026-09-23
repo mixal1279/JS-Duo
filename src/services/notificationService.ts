@@ -517,8 +517,10 @@ class NotificationService {
             body: msg.body,
             id: 1001,
             schedule: {
-              at: next.date,
-              every: 'day',
+              on: {
+                hour: next.date.getHours(),
+                minute: next.date.getMinutes(),
+              },
             },
             extra: {
               type: 'daily',
