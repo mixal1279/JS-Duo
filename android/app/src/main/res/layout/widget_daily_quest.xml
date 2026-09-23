@@ -60,6 +60,29 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- Daily XP Pill -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/widget_stat_pill_bg"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp">
+
+            <TextView
+                android:id="@+id/widget_xp_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0/30 XP"
+                android:textColor="#58CC02"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <!-- Hearts Pill -->
         <LinearLayout
             android:layout_width="wrap_content"
@@ -90,6 +113,17 @@
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/widget_xp_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="8dp"
+        android:progress="0"
+        android:max="30"
+        android:progressTint="#58CC02"
+        android:progressBackgroundTint="#2A373F" />
 
     <!-- Motivational Content in Middle -->
     <LinearLayout
