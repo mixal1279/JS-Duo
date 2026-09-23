@@ -9,5 +9,7 @@
     android:initialLayout="@layout/widget_daily_quest"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:description="@string/widget_description">
+    android:description="@string/widget_description"
+    android:previewLayout="@layout/widget_daily_quest"
+    android:widgetFeatures="reconfigurable|configuration_optional">
 </appwidget-provider>
