@@ -51,8 +51,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: '🦉 Czas na codzienną dawkę JavaScriptu!',
     body: 'Minęły 24 godziny od Twojej ostatniej sesji. Zrób 1 lekcję i uratuj streak!',
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: '/favicon.png',
+    badge: '/favicon.png',
     tag: 'js-duo-daily-reminder',
     data: { url: '/' },
   };
@@ -67,8 +67,8 @@ self.addEventListener('push', (event) => {
 
   const notificationOptions = {
     body: data.body,
-    icon: data.icon || '/favicon.svg',
-    badge: data.badge || '/favicon.svg',
+    icon: data.icon || '/favicon.png',
+    badge: data.badge || '/favicon.png',
     tag: data.tag || 'js-duo-daily-reminder',
     renotify: true,
     requireInteraction: true,

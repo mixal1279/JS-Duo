@@ -19,7 +19,7 @@ export const CyberCatLogo: React.FC<CyberCatLogoProps> = ({
       }}
     >
       <img
-        src="/favicon.svg"
+        src="/favicon.png"
         alt="JS Duo Cyber Icon"
         className="w-full h-full object-cover transform scale-110 pointer-events-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]"
       />
