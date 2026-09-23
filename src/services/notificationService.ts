@@ -465,7 +465,7 @@ class NotificationService {
     if (tone === 'strict') {
       return {
         title: `⏰ Czas na lekcję! Nie zawiedź Sowy Duo.`,
-        body: `Twój streak wynosi ${streak} dni. Zrób dzisiejszą sesję zanim minie północ, inaczej stracisz swoje postępy!`,
+        body: `Twój streak wynosi ${streak} dni. Zrób dzisiejszą sesję zanim minie północ, inaczej możesz przerwać swoją passę!`,
       };
     } else if (tone === 'coder') {
       return {
@@ -518,6 +518,7 @@ class NotificationService {
             id: 1001,
             schedule: {
               at: next.date,
+              every: 'day',
             },
             extra: {
               type: 'daily',
@@ -754,7 +755,7 @@ class NotificationService {
       this.onPracticeRequested(onPracticeRequested);
     }
 
-    let lastScheduledTime = '';
+    let lastScheduledKey = '';
 
     const runChecks = () => {
       if (!getEnabled()) return;
@@ -765,8 +766,9 @@ class NotificationService {
       const lastActive = getLastActiveDate();
 
       // Ensure native offline alarms are scheduled in Android/iOS so notifications fire when app is closed (only once per time change)
-      if (this.isCapacitor && lastScheduledTime !== time) {
-        lastScheduledTime = time;
+      const scheduleKey = `${time}|${streak}|${tone}`;
+      if (this.isCapacitor && lastScheduledKey !== scheduleKey) {
+        lastScheduledKey = scheduleKey;
         this.scheduleNativeBackgroundAlarms(time, streak, tone);
       }
 
