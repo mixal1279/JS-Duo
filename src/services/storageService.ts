@@ -3,6 +3,7 @@ import { INITIAL_LEADERBOARD, INITIAL_FRIENDS, INITIAL_CHAT_MESSAGES } from '../
 
 const STATS_KEY = 'js_duo_user_stats_v3_clean';
 const QUESTS_KEY = 'js_duo_daily_quests_v3_clean';
+const QUESTS_DATE_KEY = 'js_duo_daily_quests_date_v1';
 const LEADERBOARD_KEY = 'js_duo_leaderboard_v3_clean';
 const FRIENDS_KEY = 'js_duo_friends_v3_clean';
 const CHAT_KEY = 'js_duo_chat_v4_clean';
@@ -191,18 +192,32 @@ export const storageService = {
   },
 
   getQuests(): DailyQuest[] {
+    const today = getLocalDateString();
     try {
+      const savedDate = localStorage.getItem(QUESTS_DATE_KEY);
       const data = localStorage.getItem(QUESTS_KEY);
-      if (data) return JSON.parse(data);
+
+      if (savedDate !== today) {
+        const fresh = DEFAULT_DAILY_QUESTS.map((quest) => ({ ...quest }));
+        localStorage.setItem(QUESTS_KEY, JSON.stringify(fresh));
+        localStorage.setItem(QUESTS_DATE_KEY, today);
+        return fresh;
+      }
+
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) return parsed;
+      }
     } catch {
       // fallback
     }
-    return DEFAULT_DAILY_QUESTS;
+    return DEFAULT_DAILY_QUESTS.map((quest) => ({ ...quest }));
   },
 
   saveQuests(quests: DailyQuest[]) {
     try {
       localStorage.setItem(QUESTS_KEY, JSON.stringify(quests));
+      localStorage.setItem(QUESTS_DATE_KEY, getLocalDateString());
     } catch (e) {
       console.error(e);
     }
