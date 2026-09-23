@@ -1,5 +1,5 @@
-import React from 'react';
-import { Flame, Gem, Heart, Bell, BookOpen, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Flame, Gem, Heart, Bell, BookOpen, Sparkles, WifiOff } from 'lucide-react';
 import { UserStats } from '../types';
 import { storageService } from '../services/storageService';
 import { CyberCatLogo } from './CyberCatLogo';
@@ -23,6 +23,20 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const levelInfo = storageService.calculateLevel(stats.xp);
   const currentXpProgress = Math.min(100, ((stats.xp - levelInfo.currentLevelXp) / (levelInfo.nextLevelXp - levelInfo.currentLevelXp)) * 100);
+
+  const [isOffline, setIsOffline] = useState(() => typeof navigator !== 'undefined' && !navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 bg-[#131F24]/95 backdrop-blur border-b border-[#2A373F] px-2.5 sm:px-4 py-1.5 sm:py-2.5 safe-top select-none">
@@ -102,6 +116,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               />
             </div>
           </div>
+
+          {/* Offline Mode Indicator */}
+          {isOffline && (
+            <div
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs shrink-0 animate-pulse"
+              title="Brak połączenia z internetem - aplikacja działa w pełnym trybie offline dzięki pamięci pytań"
+            >
+              <WifiOff size={13} />
+              <span className="hidden sm:inline">Offline</span>
+            </div>
+          )}
 
           {/* 500 Questions Bank Explorer Button */}
           <button

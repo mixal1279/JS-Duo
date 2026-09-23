@@ -15,10 +15,13 @@ import {
   Trash2,
   ShieldCheck,
   ExternalLink,
+  LayoutGrid,
 } from 'lucide-react';
 import { NotificationConfig } from '../types';
 import { notificationService, NotificationHistoryItem } from '../services/notificationService';
 import { soundService } from '../services/soundService';
+import { storageService } from '../services/storageService';
+import { syncWidgetStats } from '../services/widgetBridge';
 
 interface NotificationSettingsModalProps {
   config: NotificationConfig;
@@ -47,6 +50,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const [testingDaily, setTestingDaily] = useState(false);
   const [testingInactivity, setTestingInactivity] = useState(false);
   const [testingHearts, setTestingHearts] = useState(false);
+  const [widgetSynced, setWidgetSynced] = useState(false);
   const [showHelpUnblock, setShowHelpUnblock] = useState(false);
   const [history, setHistory] = useState<NotificationHistoryItem[]>(() =>
     notificationService.getNotificationHistory()
@@ -107,6 +111,14 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     await notificationService.simulateHeartsRestored();
     refreshHistory();
     setTimeout(() => setTestingHearts(false), 2500);
+  };
+
+  const handleSyncWidget = async () => {
+    soundService.playLevelUp();
+    setWidgetSynced(true);
+    const stats = storageService.getStats();
+    await syncWidgetStats(stats);
+    setTimeout(() => setWidgetSynced(false), 2500);
   };
 
   const handleClearHistory = () => {
@@ -380,6 +392,54 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               onChange={(e) => setNotifyOnHeartsFull(e.target.checked)}
               className="w-4 h-4 accent-duo-green rounded cursor-pointer"
             />
+          </div>
+        </div>
+
+        {/* Android Home Screen Widget Info Card */}
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-[#182329] border-2 border-emerald-500/40 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <LayoutGrid size={17} />
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5">
+                  <span>Widget na ekran główny</span>
+                  <span className="text-[9px] bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/40 font-bold">
+                    Nowość
+                  </span>
+                </h4>
+                <p className="text-[11px] text-gray-300">
+                  Przypomnienie o codziennej lekcji zawsze widoczne na pulpicie telefonu!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-[#111A1F] border border-[#233139] text-[11px] text-gray-300 space-y-1">
+            <div className="font-bold text-white flex items-center gap-1">
+              <span>💡 Jak dodać widget do ekranu głównego:</span>
+            </div>
+            <ol className="list-decimal list-inside space-y-0.5 text-gray-400 pl-1">
+              <li>Przytrzymaj palec na wolnym miejscu pulpitu telefonu.</li>
+              <li>Wybierz <span className="text-white font-semibold">Widżety (Widgets)</span>.</li>
+              <li>Znajdź aplikację <span className="text-emerald-400 font-semibold">JS Duo</span> i przeciągnij widget <span className="text-white font-semibold">"Codzienna Lekcja"</span> na ekran.</li>
+            </ol>
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[10px] text-gray-400">
+              Widget wyświetla aktualną passę, serca oraz motywujące wezwanie do lekcji.
+            </span>
+            <button
+              type="button"
+              onClick={handleSyncWidget}
+              disabled={widgetSynced}
+              className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 text-[11px] font-bold transition-all active:scale-95 cursor-pointer shrink-0 flex items-center gap-1"
+            >
+              <CheckCircle2 size={13} />
+              <span>{widgetSynced ? 'Zsynchronizowano!' : 'Synchronizuj dane'}</span>
+            </button>
           </div>
         </div>
 

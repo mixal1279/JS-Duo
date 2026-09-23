@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, BookOpen, CheckCircle2, ChevronDown, Filter, HelpCircle, MessageSquareShare } from 'lucide-react';
+import { X, Search, BookOpen, CheckCircle2, ChevronDown, Filter, HelpCircle, MessageSquareShare, WifiOff, HardDriveDownload } from 'lucide-react';
 import { Question } from '../types';
 import { ALL_QUESTIONS } from '../data/questionsData';
 import { UNITS } from '../data/units';
 import { CodeBlock } from './CodeBlock';
+import { storageService } from '../services/storageService';
 
 interface QuestionDetailModalProps {
   initialQuestionId?: number | null;
@@ -55,11 +56,15 @@ export const QuestionDetailModal: React.FC<QuestionDetailModalProps> = ({
               <BookOpen size={18} />
             </div>
             <div>
-              <h2 className="text-base sm:text-xl font-black text-white leading-tight">
-                Baza 500 Pytań JavaScript
+              <h2 className="text-base sm:text-xl font-black text-white leading-tight flex items-center gap-2">
+                <span>Baza 500 Pytań JavaScript</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <HardDriveDownload size={11} />
+                  <span>Offline Ready (LocalStorage)</span>
+                </span>
               </h2>
               <p className="text-[11px] sm:text-xs text-gray-400 line-clamp-1">
-                Wszystkie pytania z pełnymi technicznymi wyjaśnieniami
+                Wszystkie pytania z pełnymi wyjaśnieniami zapamiętane w telefonie
               </p>
             </div>
           </div>

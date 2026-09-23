@@ -4,4 +4,6 @@
     <string name="title_activity_main">JS Duo</string>
     <string name="package_name">com.jsduo.app</string>
     <string name="custom_url_scheme">com.jsduo.app</string>
+    <string name="widget_name">Codzienna Lekcja JS Duo</string>
+    <string name="widget_description">Widget przypominający o codziennej lekcji JavaScript i chroniący Twoją passę.</string>
 </resources>

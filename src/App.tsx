@@ -25,6 +25,7 @@ import { CodePlaygroundView } from './components/CodePlaygroundView';
 import { StreakToast } from './components/StreakToast';
 import { NotificationBanner } from './components/NotificationBanner';
 import { InAppNotificationToast } from './components/InAppNotificationToast';
+import { syncWidgetStats } from './services/widgetBridge';
 
 export const App: React.FC = () => {
   // Application State
@@ -56,6 +57,7 @@ export const App: React.FC = () => {
   // Sync to LocalStorage on changes
   useEffect(() => {
     storageService.saveStats(stats);
+    syncWidgetStats(stats);
   }, [stats]);
 
   useEffect(() => {

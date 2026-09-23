@@ -1,4 +1,4 @@
-import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, AppTheme } from '../types';
+import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, AppTheme, Question } from '../types';
 import { INITIAL_LEADERBOARD, INITIAL_FRIENDS, INITIAL_CHAT_MESSAGES } from '../data/mockUsers';
 
 const STATS_KEY = 'js_duo_user_stats_v3_clean';
@@ -8,6 +8,9 @@ const FRIENDS_KEY = 'js_duo_friends_v3_clean';
 const CHAT_KEY = 'js_duo_chat_v4_clean';
 const NOTIF_KEY = 'js_duo_notification_cfg_v3_clean';
 const THEME_KEY = 'js_duo_theme_v3_clean';
+const QUESTIONS_CACHE_KEY = 'js_duo_cached_questions_v1';
+const QUESTIONS_CACHE_VERSION_KEY = 'js_duo_cached_questions_version';
+const CURRENT_QUESTIONS_VERSION = '1.0.2';
 
 // Automatyczne czyszczenie przestarzałych wersji z pamięci lokalnej
 if (typeof window !== 'undefined' && window.localStorage) {
@@ -292,6 +295,53 @@ export const storageService = {
       localStorage.setItem(THEME_KEY, theme);
     } catch (e) {
       console.error(e);
+    }
+  },
+
+  /**
+   * Pamięć podręczna offline dla pytań w localStorage
+   */
+  getCachedQuestions(): Question[] | null {
+    try {
+      if (typeof localStorage === 'undefined') return null;
+      const cachedVersion = localStorage.getItem(QUESTIONS_CACHE_VERSION_KEY);
+      if (cachedVersion !== CURRENT_QUESTIONS_VERSION) {
+        return null;
+      }
+      const data = localStorage.getItem(QUESTIONS_CACHE_KEY);
+      if (data) {
+        const parsed: Question[] = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Nie udało się odczytać pytań z localStorage:', e);
+    }
+    return null;
+  },
+
+  cacheQuestions(questions: Question[]): boolean {
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      if (!Array.isArray(questions) || questions.length === 0) return false;
+      localStorage.setItem(QUESTIONS_CACHE_KEY, JSON.stringify(questions));
+      localStorage.setItem(QUESTIONS_CACHE_VERSION_KEY, CURRENT_QUESTIONS_VERSION);
+      return true;
+    } catch (e) {
+      console.warn('Nie udało się zapisać pytań do localStorage cache:', e);
+      return false;
+    }
+  },
+
+  isQuestionsCacheValid(): boolean {
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      const cachedVersion = localStorage.getItem(QUESTIONS_CACHE_VERSION_KEY);
+      const hasData = !!localStorage.getItem(QUESTIONS_CACHE_KEY);
+      return cachedVersion === CURRENT_QUESTIONS_VERSION && hasData;
+    } catch {
+      return false;
     }
   },
 

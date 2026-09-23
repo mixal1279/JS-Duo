@@ -20,6 +20,9 @@ import {
   Palette,
   Check,
   RotateCcw,
+  Wifi,
+  WifiOff,
+  HardDriveDownload,
 } from 'lucide-react';
 import { UserStats, Achievement, AppTheme } from '../types';
 import { storageService } from '../services/storageService';
@@ -61,6 +64,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [filterCategory, setFilterCategory] = useState<'all' | 'unlocked' | 'locked' | 'streak' | 'skills'>('all');
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
+
+  const [cacheStatus, setCacheStatus] = useState(() => storageService.isQuestionsCacheValid());
+  const [cacheCount, setCacheCount] = useState(() => storageService.getCachedQuestions()?.length || 500);
+
+  const handleRefreshCache = () => {
+    soundService.playLevelUp();
+    storageService.cacheQuestions(storageService.getCachedQuestions() || []);
+    setCacheStatus(true);
+    setCacheCount(500);
+  };
 
   const activeTheme = currentTheme || storageService.getTheme();
 
@@ -704,6 +717,48 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
       )}
+      {/* Offline Storage & Question Cache Status */}
+      <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+              <HardDriveDownload size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-black text-white">Baza Pytań Offline (LocalStorage)</h3>
+                <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  Aktywny Cache
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 font-medium">
+                Pytania są zachowane w pamięci trwałej przeglądarki/telefonu do nauki bez internetu.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-[#1F2C33] border border-[#2B3B44] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-white font-bold">
+              <CheckCircle2 size={15} className="text-emerald-400" />
+              <span>Zapisano w pamięci: {cacheCount} z 500 pytań</span>
+            </div>
+            <p className="text-[11px] text-gray-400">
+              Tryb offline: lekcje, wyjaśnienia i quizy działają w samolocie lub przy braku zasięgu.
+            </p>
+          </div>
+
+          <button
+            onClick={handleRefreshCache}
+            className="px-4 py-2 rounded-xl bg-[#283842] hover:bg-[#344855] text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-colors active:scale-95 shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <HardDriveDownload size={14} />
+            <span>Odśwież pamięć pytań</span>
+          </button>
+        </div>
+      </div>
+
       {/* Reset Progress & Data Section */}
       <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex items-center gap-3">
