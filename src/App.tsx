@@ -66,6 +66,11 @@ export const App: React.FC = () => {
   }, [quests]);
 
   useEffect(() => {
+    // Keep the Android home-screen widget in sync with the real daily XP quest.
+    syncWidgetStats(stats);
+  }, [quests, stats]);
+
+  useEffect(() => {
     storageService.saveLeaderboard(leaderboard);
   }, [leaderboard]);
 
