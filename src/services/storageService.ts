@@ -5,14 +5,14 @@ const STATS_KEY = 'js_duo_user_stats_v3_clean';
 const QUESTS_KEY = 'js_duo_daily_quests_v3_clean';
 const LEADERBOARD_KEY = 'js_duo_leaderboard_v3_clean';
 const FRIENDS_KEY = 'js_duo_friends_v3_clean';
-const CHAT_KEY = 'js_duo_chat_v3_clean';
+const CHAT_KEY = 'js_duo_chat_v4_clean';
 const NOTIF_KEY = 'js_duo_notification_cfg_v3_clean';
 const THEME_KEY = 'js_duo_theme_v3_clean';
 
 // Automatyczne czyszczenie przestarzałych wersji z pamięci lokalnej
 if (typeof window !== 'undefined' && window.localStorage) {
   try {
-    ['js_duo_user_stats_v1', 'js_duo_daily_quests_v1', 'js_duo_user_stats_v2', 'js_duo_daily_quests_v2'].forEach((k) => {
+    ['js_duo_user_stats_v1', 'js_duo_daily_quests_v1', 'js_duo_user_stats_v2', 'js_duo_daily_quests_v2', 'js_duo_chat_v3_clean'].forEach((k) => {
       localStorage.removeItem(k);
     });
   } catch {

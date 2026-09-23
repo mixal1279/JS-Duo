@@ -450,6 +450,12 @@ export const App: React.FC = () => {
     });
   };
 
+  // Wyczyść wszystkie wiadomości w czacie
+  const handleClearChat = () => {
+    setChatMessages([]);
+    storageService.saveChatMessages([]);
+  };
+
   // Reakcja na wiadomość w czacie - ponowne kliknięcie usuwa reakcję
   const handleReactToMessage = (messageId: string, emoji: string) => {
     soundService.playClick();
@@ -628,6 +634,7 @@ export const App: React.FC = () => {
                 onSendMessage={handleSendMessage}
                 onReact={handleReactToMessage}
                 onSelectQuestion={handleOpenExplorerAt}
+                onClearChat={handleClearChat}
               />
             )}
 

@@ -1,13 +1,176 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="46" fill="#58CC02"/>
-  <circle cx="34" cy="42" r="16" fill="#FFFFFF"/>
-  <circle cx="66" cy="42" r="16" fill="#FFFFFF"/>
-  <circle cx="36" cy="42" r="8" fill="#131F24"/>
-  <circle cx="64" cy="42" r="8" fill="#131F24"/>
-  <circle cx="38" cy="40" r="3" fill="#FFFFFF"/>
-  <circle cx="66" cy="40" r="3" fill="#FFFFFF"/>
-  <polygon points="50,48 42,60 58,60" fill="#FF9600"/>
-  <path d="M 30 76 Q 50 86 70 76" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <rect x="70" y="20" width="22" height="22" rx="4" fill="#F7DF1E"/>
-  <text x="74" y="37" font-family="sans-serif" font-weight="900" font-size="14" fill="#000000">JS</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background rounded squircle gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#1E163B" />
+      <stop offset="50%" stop-color="#0E1126" />
+      <stop offset="100%" stop-color="#05060E" />
+    </radialGradient>
+
+    <!-- Outer Squircle border neon glow -->
+    <linearGradient id="neonBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9d4edd" />
+      <stop offset="40%" stop-color="#3a86ff" />
+      <stop offset="100%" stop-color="#00f5d4" />
+    </linearGradient>
+
+    <!-- Cat Neon Outline Gradient -->
+    <linearGradient id="catNeon" x1="0%" y1="10%" x2="100%" y2="90%">
+      <stop offset="0%" stop-color="#d946ef" />
+      <stop offset="35%" stop-color="#8b5cf6" />
+      <stop offset="75%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+
+    <!-- Cyan Glow Filter -->
+    <filter id="cyanGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur1" />
+      <feGaussianBlur stdDeviation="16" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Purple/Blue Halo Filter -->
+    <filter id="purpleGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Eyes gradient -->
+    <linearGradient id="eyeGradLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+    <linearGradient id="eyeGradRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+
+    <!-- Laptop Lid Gradient -->
+    <linearGradient id="laptopLid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a3356" />
+      <stop offset="100%" stop-color="#141829" />
+    </linearGradient>
+
+    <!-- Laptop Base Gradient -->
+    <linearGradient id="laptopBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b2038" />
+      <stop offset="100%" stop-color="#0a0c17" />
+    </linearGradient>
+
+    <!-- Neon Code < / > Gradient -->
+    <linearGradient id="codeGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#22d3ee" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base Icon Squircle (Dark Glass with Border) -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bgGlow)" />
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="none" stroke="url(#neonBorder)" stroke-width="4.5" opacity="0.65" />
+
+  <!-- Background Halo Ring behind Cat -->
+  <circle cx="260" cy="235" r="160" fill="none" stroke="url(#catNeon)" stroke-width="6" opacity="0.4" filter="url(#purpleGlow)" />
+
+  <!-- Code Floating Card 1 (Top Right) -->
+  <g opacity="0.85">
+    <rect x="350" y="105" width="105" height="95" rx="16" fill="#151b33" stroke="#3b82f6" stroke-width="3" filter="url(#purpleGlow)" />
+    <!-- Code lines -->
+    <rect x="364" y="123" width="7" height="7" rx="3.5" fill="#60a5fa" />
+    <rect x="378" y="124" width="60" height="5.5" rx="2.75" fill="#818cf8" />
+    <rect x="364" y="139" width="7" height="7" rx="3.5" fill="#60a5fa" />
+    <rect x="378" y="140" width="46" height="5.5" rx="2.75" fill="#38bdf8" />
+    <rect x="364" y="155" width="7" height="7" rx="3.5" fill="#60a5fa" />
+    <rect x="378" y="156" width="54" height="5.5" rx="2.75" fill="#a78bfa" />
+    <rect x="378" y="171" width="36" height="5.5" rx="2.75" fill="#38bdf8" />
+  </g>
+
+  <!-- Terminal Floating Card 2 (Middle Right) -->
+  <g opacity="0.9">
+    <rect x="385" y="215" width="78" height="70" rx="14" fill="#0f1629" stroke="#00f5d4" stroke-width="3" filter="url(#cyanGlow)" />
+    <!-- Prompt > _ -->
+    <path d="M 400 238 L 413 249 L 400 260" fill="none" stroke="#22d3ee" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+    <line x1="421" y1="260" x2="442" y2="260" stroke="#22d3ee" stroke-width="4" stroke-linecap="round" />
+  </g>
+
+  <!-- Books Stack (Bottom Left) -->
+  <!-- Bottom Book (Cyan) -->
+  <g>
+    <rect x="68" y="360" width="145" height="52" rx="12" fill="#0d192e" stroke="#06b6d4" stroke-width="4.5" filter="url(#cyanGlow)" />
+    <path d="M 78 375 L 140 375" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" />
+    <!-- Book pages edge -->
+    <path d="M 160 365 L 202 365 C 208 365 210 370 210 386 C 210 402 208 407 202 407 L 160 407 Z" fill="#1c2b45" />
+    <line x1="165" y1="386" x2="198" y2="386" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+  </g>
+  <!-- Top Book (Purple/Pink) -->
+  <g>
+    <rect x="72" y="325" width="130" height="46" rx="12" fill="#1e1136" stroke="#d946ef" stroke-width="4" filter="url(#purpleGlow)" />
+    <path d="M 82 342 L 135 342" stroke="#f472b6" stroke-width="5" stroke-linecap="round" />
+    <!-- Book pages edge -->
+    <path d="M 150 330 L 190 330 C 196 330 198 334 198 348 C 198 362 196 366 190 366 L 150 366 Z" fill="#2d1d4d" />
+    <line x1="154" y1="348" x2="186" y2="348" stroke="#c084fc" stroke-width="3" stroke-linecap="round" />
+  </g>
+
+  <!-- Cyber Cat Silhouette + Neon Glow -->
+  <!-- Cat Body and Head Outer Glow Path -->
+  <g filter="url(#cyanGlow)">
+    <!-- Cat Ears & Head outline -->
+    <path d="
+      M 245 350
+      C 220 340 185 320 180 280
+      C 175 255 190 230 195 215
+      C 185 218 165 220 155 208
+      C 145 195 155 180 162 165
+      C 148 165 138 152 142 138
+      C 148 120 170 115 192 128
+      L 170 70
+      C 195 82 232 110 248 140
+      C 268 135 292 135 312 142
+      C 328 112 365 84 390 70
+      L 368 128
+      C 390 115 412 120 418 138
+      C 422 152 412 165 398 165
+      C 405 180 415 195 405 208
+      C 395 220 375 218 365 215
+      C 370 230 385 255 380 280
+      C 375 320 340 340 315 350
+      Z"
+      fill="#070913"
+      stroke="url(#catNeon)"
+      stroke-width="7"
+      stroke-linejoin="round"
+    />
+
+    <!-- Glowing Cat Eyes -->
+    <!-- Left Eye (Fierce Neon Purple) -->
+    <path d="M 200 242 C 220 250 238 272 244 282 C 228 284 205 272 195 256 Z" fill="url(#eyeGradLeft)" filter="url(#purpleGlow)" />
+    <!-- Right Eye (Fierce Neon Cyan) -->
+    <path d="M 360 242 C 340 250 322 272 316 282 C 332 284 355 272 365 256 Z" fill="url(#eyeGradRight)" filter="url(#cyanGlow)" />
+  </g>
+
+  <!-- Laptop (Foreground Perspective) -->
+  <g>
+    <!-- Laptop Base / Keyboard deck -->
+    <polygon points="175,395 385,372 445,410 180,438" fill="url(#laptopBase)" stroke="#3b82f6" stroke-width="2" />
+
+    <!-- Laptop Screen (Angled towards viewer) -->
+    <polygon points="225,295 448,282 430,432 230,442" fill="url(#laptopLid)" stroke="#22d3ee" stroke-width="4.5" filter="url(#cyanGlow)" />
+
+    <!-- Code Display on Laptop screen: < / > -->
+    <g filter="url(#cyanGlow)">
+      <!-- < -->
+      <path d="M 330 342 L 302 362 L 330 382" fill="none" stroke="url(#codeGlow)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+      <!-- / -->
+      <line x1="358" y1="332" x2="334" y2="392" stroke="url(#codeGlow)" stroke-width="10" stroke-linecap="round" />
+      <!-- > -->
+      <path d="M 362 342 L 390 362 L 362 382" fill="none" stroke="url(#codeGlow)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
 </svg>

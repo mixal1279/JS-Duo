@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Code, MessageSquare, Hash, Sparkles, HelpCircle, Heart, Flame, ThumbsUp, Lightbulb } from 'lucide-react';
+import { Send, Code, MessageSquare, Hash, Sparkles, HelpCircle, Heart, Flame, ThumbsUp, Lightbulb, Trash2 } from 'lucide-react';
 import { ChatMessage, Question } from '../types';
 import { CodeBlock } from './CodeBlock';
 import { soundService } from '../services/soundService';
@@ -14,6 +14,7 @@ interface CommunityChatViewProps {
   }) => void;
   onReact: (messageId: string, emoji: string) => void;
   onSelectQuestion?: (questionId: number) => void;
+  onClearChat?: () => void;
 }
 
 export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
@@ -21,11 +22,13 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
   onSendMessage,
   onReact,
   onSelectQuestion,
+  onClearChat,
 }) => {
   const [activeChannel, setActiveChannel] = useState<string>('help');
   const [inputText, setInputText] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [inputCode, setInputCode] = useState('');
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const channels = [
     { id: 'help', name: 'pomoc-w-zadaniach', icon: HelpCircle, desc: 'Wspólne rozwiązywanie trudnych pytań z JS' },
@@ -50,6 +53,14 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
     setInputText('');
     setInputCode('');
     setShowCodeInput(false);
+  };
+
+  const handleConfirmClear = () => {
+    soundService.playClick();
+    if (onClearChat) {
+      onClearChat();
+    }
+    setConfirmClear(false);
   };
 
   const availableEmojis = ['👍', '🔥', '💡', '❤️'];
@@ -86,14 +97,55 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
           <span className="text-xs font-black text-white">#{currentChannelInfo.name}</span>
           <p className="text-[11px] text-gray-400">{currentChannelInfo.desc}</p>
         </div>
-        <span className="text-[10px] font-bold text-duo-blue bg-duo-blue/10 px-2 py-0.5 rounded-full border border-duo-blue/30">
-          Wspólne debugowanie
-        </span>
+        <div className="flex items-center gap-2">
+          {onClearChat && (
+            confirmClear ? (
+              <div className="flex items-center gap-1 bg-red-500/20 p-1 rounded-xl border border-red-500/30">
+                <span className="text-[10px] font-bold text-red-300 px-1">Wyczyścić czat?</span>
+                <button
+                  onClick={handleConfirmClear}
+                  className="px-2 py-0.5 bg-red-500 hover:bg-red-600 text-white text-[10px] font-black rounded-lg transition-colors"
+                >
+                  Tak
+                </button>
+                <button
+                  onClick={() => setConfirmClear(false)}
+                  className="px-1.5 py-0.5 text-gray-400 hover:text-white text-[10px]"
+                >
+                  Nie
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmClear(true)}
+                title="Wyczyść wiadomości czatu"
+                className="flex items-center gap-1 text-[11px] font-bold text-gray-400 hover:text-red-400 bg-[#1C262C] hover:bg-red-500/10 px-2 py-1 rounded-lg border border-[#2A373F] transition-colors"
+              >
+                <Trash2 size={13} />
+                <span className="hidden sm:inline">Wyczyść czat</span>
+              </button>
+            )
+          )}
+          <span className="text-[10px] font-bold text-duo-blue bg-duo-blue/10 px-2 py-0.5 rounded-full border border-duo-blue/30">
+            Wspólne debugowanie
+          </span>
+        </div>
       </div>
 
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-2">
-        {channelMessages.map((msg) => (
+        {channelMessages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 space-y-3 select-none">
+            <div className="w-14 h-14 rounded-2xl bg-[#1C262C] border border-[#2A373F] flex items-center justify-center text-2xl shadow-inner">
+              💬
+            </div>
+            <div>
+              <p className="font-bold text-white text-sm">Czat jest pusty</p>
+              <p className="text-xs text-gray-500 mt-1">Brak wiadomości na kanale #{currentChannelInfo.name}. Bądź pierwszy i zadaj pytanie!</p>
+            </div>
+          </div>
+        ) : (
+          channelMessages.map((msg) => (
           <div
             key={msg.id}
             className={`flex flex-col ${
@@ -176,7 +228,7 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
               </div>
             </div>
           </div>
-        ))}
+        )))}
       </div>
 
       {/* Code Input Box (Collapsible) */}
