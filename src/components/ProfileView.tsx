@@ -23,11 +23,14 @@ import {
   Wifi,
   WifiOff,
   HardDriveDownload,
+  RefreshCw,
+  Download,
 } from 'lucide-react';
 import { UserStats, Achievement, AppTheme } from '../types';
 import { storageService } from '../services/storageService';
 import { soundService } from '../services/soundService';
 import { calculateAchievements } from '../data/achievementsData';
+import { AppUpdateInfo, CURRENT_APP_VERSION, checkForUpdates } from '../services/updateService';
 
 interface ProfileViewProps {
   userStats: UserStats;
@@ -64,6 +67,26 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [filterCategory, setFilterCategory] = useState<'all' | 'unlocked' | 'locked' | 'streak' | 'skills'>('all');
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateError, setUpdateError] = useState(false);
+
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateError(false);
+    try {
+      const result = await checkForUpdates({ force: true });
+      setUpdateInfo(result);
+    } catch {
+      setUpdateError(true);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  React.useEffect(() => {
+    checkForUpdates().then(setUpdateInfo).catch(() => undefined);
+  }, []);
 
   const [cacheStatus, setCacheStatus] = useState(() => storageService.isQuestionsCacheValid());
   const [cacheCount, setCacheCount] = useState(() => storageService.getCachedQuestions()?.length || 500);
@@ -757,6 +780,66 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             <span>Odśwież pamięć pytań</span>
           </button>
         </div>
+      </div>
+
+      {/* App Updates */}
+      <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-duo-blue/20 border border-duo-blue/40 flex items-center justify-center text-duo-blue shrink-0">
+              <Download size={20} />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-white">Aktualizacja aplikacji</h3>
+              <p className="text-xs text-gray-400 font-medium">Sprawdzaj nowe wydania JS Duo z GitHuba.</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-[#1F2C33] text-gray-300 border border-[#2B3B44]">
+            v{CURRENT_APP_VERSION}
+          </span>
+        </div>
+
+        {updateInfo ? (
+          <div className="rounded-2xl border-2 border-duo-green/50 bg-duo-green/10 p-4 space-y-3">
+            <div>
+              <div className="text-sm font-black text-white">Nowa wersja v{updateInfo.latestVersion} jest dostępna!</div>
+              <p className="text-xs text-gray-300 mt-1">Pobierz APK z oficjalnego wydania GitHub.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {updateInfo.apkUrl && (
+                <a
+                  href={updateInfo.apkUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-duo-green text-black font-black text-xs uppercase tracking-wider text-center shadow-[0_3px_0_#388402] active:translate-y-0.5"
+                >
+                  Pobierz APK
+                </a>
+              )}
+              <a
+                href={updateInfo.releaseUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#283842] hover:bg-[#344855] text-white border border-[#3A4C57] font-black text-xs uppercase tracking-wider text-center"
+              >
+                Zobacz wydanie
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-[#1F2C33] border border-[#2B3B44] p-3.5 text-xs text-gray-300">
+            {updateError ? 'Nie udało się sprawdzić aktualizacji. Spróbuj ponownie.' : 'Masz najnowszą dostępną wersję.'}
+          </div>
+        )}
+
+        <button
+          onClick={handleCheckForUpdates}
+          disabled={isCheckingUpdate}
+          className="w-full px-4 py-2.5 rounded-xl bg-[#283842] hover:bg-[#344855] disabled:opacity-60 text-cyan-300 border border-cyan-500/30 text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <RefreshCw size={14} className={isCheckingUpdate ? 'animate-spin' : ''} />
+          {isCheckingUpdate ? 'Sprawdzanie...' : 'Sprawdź teraz'}
+        </button>
       </div>
 
       {/* Reset Progress & Data Section */}
