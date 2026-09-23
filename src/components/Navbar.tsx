@@ -2,6 +2,7 @@ import React from 'react';
 import { Flame, Gem, Heart, Bell, BookOpen, Sparkles } from 'lucide-react';
 import { UserStats } from '../types';
 import { storageService } from '../services/storageService';
+import { CyberCatLogo } from './CyberCatLogo';
 
 interface NavbarProps {
   stats: UserStats;
@@ -32,12 +33,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-2 cursor-pointer group shrink-0"
           title="Kliknij, aby otworzyć Profil i Osiągnięcia"
         >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-duo-green flex items-center justify-center shadow-[0_3px_0_#46a302] transform active:translate-y-0.5 group-hover:scale-105 transition-all">
-            <span className="font-mono font-black text-black text-xs sm:text-sm tracking-tighter">JS</span>
-          </div>
+          <CyberCatLogo size={36} className="transform active:translate-y-0.5 group-hover:scale-105 transition-all shadow-[0_0_12px_rgba(168,85,247,0.4)]" />
           <div>
             <div className="flex items-center gap-1">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-white font-sans group-hover:text-duo-green transition-colors">
+              <span className="font-extrabold text-sm sm:text-base tracking-tight text-white font-sans group-hover:text-cyan-400 transition-colors">
                 JS Duo
               </span>
               <span className="text-[9px] uppercase font-bold bg-[#FFD700]/20 text-[#FFD700] px-1 py-0.2 rounded border border-[#FFD700]/40 hidden xs:inline-block sm:hidden">

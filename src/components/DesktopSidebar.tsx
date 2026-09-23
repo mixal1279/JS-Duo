@@ -17,6 +17,7 @@ import {
 import { TabType } from './BottomNavigation';
 import { UserStats } from '../types';
 import { storageService } from '../services/storageService';
+import { CyberCatLogo } from './CyberCatLogo';
 
 interface DesktopSidebarProps {
   currentTab: TabType;
@@ -53,9 +54,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     <aside className="hidden md:flex flex-col w-64 lg:w-72 shrink-0 border-r border-[#2A373F] bg-[#131F24] p-4 sticky top-0 h-screen overflow-y-auto select-none z-20">
       {/* Brand Header */}
       <div className="flex items-center gap-3 px-3 py-3 mb-6">
-        <div className="w-11 h-11 rounded-2xl bg-duo-green flex items-center justify-center shadow-[0_4px_0_#46a302] cursor-pointer transform hover:scale-105 active:translate-y-1 transition-all">
-          <span className="font-mono font-black text-black text-lg tracking-tighter">JS</span>
-        </div>
+        <CyberCatLogo size={46} className="cursor-pointer transform hover:scale-105 active:translate-y-1 transition-all shadow-[0_0_15px_rgba(168,85,247,0.5)]" />
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-black text-2xl tracking-tight text-white font-sans">
