@@ -44,29 +44,218 @@ jobs:
       - name: Przygotowanie projektu Capacitor Android
         run: |
           if [ ! -f "android/settings.gradle" ] && [ ! -f "android/settings.gradle.kts" ]; then
-            echo "Projekt Android nie istnieje lub jest niekompletny."
+            echo "Brak poprawnego projektu Android."
             rm -rf android
             npx cap add android
           else
             echo "Znaleziono istniejący projekt Android."
           fi
 
-          echo "Synchronizacja Capacitor..."
           npx cap sync android
 
-          echo "Sprawdzanie struktury projektu:"
-          ls -la android
-
-          echo "Sprawdzanie Gradle:"
-          ls -la android/gradlew
-
           echo "android.builder.sdkDownload=true" >> android/gradle.properties
+
+      # ============================================================
+      # GENEROWANIE IKON ANDROID Z public/favicon-512.png
+      # ============================================================
+
+      - name: Instalacja Pillow
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install Pillow
+
+      - name: Generowanie ikon Android z favicon-512.png
+        run: |
+          python3 <<'PY'
+          from PIL import Image, ImageOps
+          from pathlib import Path
+
+          source = Path("public/favicon-512.png")
+
+          if not source.exists():
+              raise SystemExit("ERROR: Brak pliku public/favicon-512.png")
+
+          img = Image.open(source).convert("RGBA")
+
+          print(f"Źródłowa ikona: {source}")
+          print(f"Rozmiar źródła: {img.size}")
+
+          # --------------------------------------------------------
+          # Android launcher icon sizes
+          # --------------------------------------------------------
+
+          sizes = {
+              "mipmap-mdpi": 48,
+              "mipmap-hdpi": 72,
+              "mipmap-xhdpi": 96,
+              "mipmap-xxhdpi": 144,
+              "mipmap-xxxhdpi": 192,
+          }
+
+          res = Path("android/app/src/main/res")
+
+          for folder, size in sizes.items():
+              directory = res / folder
+              directory.mkdir(parents=True, exist_ok=True)
+
+              resized = ImageOps.contain(
+                  img,
+                  (size, size),
+                  Image.Resampling.LANCZOS
+              )
+
+              # Przezroczyste tło
+              canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+
+              x = (size - resized.width) // 2
+              y = (size - resized.height) // 2
+
+              canvas.alpha_composite(resized, (x, y))
+
+              canvas.save(
+                  directory / "ic_launcher.png",
+                  "PNG",
+                  optimize=True
+              )
+
+              canvas.save(
+                  directory / "ic_launcher_round.png",
+                  "PNG",
+                  optimize=True
+              )
+
+              print(f"Generated {folder}: {size}x{size}")
+
+          # --------------------------------------------------------
+          # Adaptive icon foreground
+          #
+          # Android używa tego zamiast zwykłego ic_launcher.png
+          # na nowszych wersjach systemu.
+          # --------------------------------------------------------
+
+          foreground_sizes = {
+              "mipmap-mdpi": 108,
+              "mipmap-hdpi": 162,
+              "mipmap-xhdpi": 216,
+              "mipmap-xxhdpi": 324,
+              "mipmap-xxxhdpi": 432,
+          }
+
+          for folder, size in foreground_sizes.items():
+              directory = res / folder
+
+              # Powiększamy grafikę tak, aby dobrze mieściła się
+              # w bezpiecznym obszarze adaptive icon.
+              foreground = ImageOps.contain(
+                  img,
+                  (int(size * 0.72), int(size * 0.72)),
+                  Image.Resampling.LANCZOS
+              )
+
+              canvas = Image.new(
+                  "RGBA",
+                  (size, size),
+                  (0, 0, 0, 0)
+              )
+
+              x = (size - foreground.width) // 2
+              y = (size - foreground.height) // 2
+
+              canvas.alpha_composite(foreground, (x, y))
+
+              canvas.save(
+                  directory / "ic_launcher_foreground.png",
+                  "PNG",
+                  optimize=True
+              )
+
+              print(f"Generated adaptive foreground: {folder}")
+
+          # --------------------------------------------------------
+          # Adaptive icon background
+          # --------------------------------------------------------
+
+          for folder in foreground_sizes:
+              directory = res / folder
+
+              background = Image.new(
+                  "RGBA",
+                  (108, 108),
+                  (8, 11, 20, 255)
+              )
+
+              background.save(
+                  directory / "ic_launcher_background.png",
+                  "PNG",
+                  optimize=True
+              )
+
+          print("Ikony Android zostały wygenerowane.")
+          PY
+
+      # ============================================================
+      # NADPISANIE ADAPTIVE ICON XML
+      # ============================================================
+
+      - name: Konfiguracja adaptive icon
+        run: |
+          mkdir -p android/app/src/main/res/mipmap-anydpi-v26
+
+          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background" />
+              <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+          </adaptive-icon>
+          EOF
+
+          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background" />
+              <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+          </adaptive-icon>
+          EOF
+
+          mkdir -p android/app/src/main/res/values
+
+          cat > android/app/src/main/res/values/ic_launcher_background.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="ic_launcher_background">#080B14</color>
+          </resources>
+          EOF
+
+      # ============================================================
+      # SPRAWDZENIE IKON PRZED BUILD
+      # ============================================================
+
+      - name: Sprawdzenie ikon
+        run: |
+          echo "=== ICON FILES ==="
+
+          find android/app/src/main/res \
+            -path "*/mipmap-*/*ic_launcher*" \
+            -type f \
+            -print
+
+          echo ""
+          echo "=== SOURCE ICON ==="
+          file public/favicon-512.png
+
+      # ============================================================
+      # BUILD APK
+      # ============================================================
 
       - name: Kompilacja APK
         run: |
           chmod +x android/gradlew
           cd android
           ./gradlew assembleDebug --no-daemon --stacktrace
+
+      # ============================================================
+      # APK ARTIFACT
+      # ============================================================
 
       - name: Udostępnienie APK jako artefakt
         uses: actions/upload-artifact@v4
