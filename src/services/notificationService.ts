@@ -190,7 +190,7 @@ class NotificationService {
           soundService.playLevelUp();
           await this.sendPushNotification('🎉 Powiadomienia włączone w aplikacji!', {
             body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
-            icon: '/favicon.png',
+            icon: '/favicon.svg',
             tag: 'welcome-notification',
             type: 'welcome',
           });
@@ -230,7 +230,7 @@ class NotificationService {
         // Send instant confirmation notification
         await this.sendPushNotification('🎉 Powiadomienia włączone!', {
           body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
-          icon: '/favicon.png',
+          icon: '/favicon.svg',
           tag: 'welcome-notification',
           type: 'welcome',
         });
@@ -334,8 +334,8 @@ class NotificationService {
   ): Promise<boolean> {
     const notifOptions: NotificationOptions = {
       body: options?.body || '',
-      icon: options?.icon || '/favicon.png',
-      badge: options?.badge || '/favicon.png',
+      icon: options?.icon || '/favicon.svg',
+      badge: options?.badge || '/favicon.svg',
       tag: options?.tag || 'js-duo-notification',
       requireInteraction: options?.requireInteraction ?? true,
       data: options?.data || { url: typeof window !== 'undefined' ? window.location.href : '/' },
@@ -610,7 +610,7 @@ class NotificationService {
     const msg = this.getDailyReminderMessage(streak, tone);
     await this.sendPushNotification(msg.title, {
       body: msg.body,
-      icon: '/favicon.png',
+      icon: '/favicon.svg',
       tag: 'js-duo-daily-reminder',
       requireInteraction: true,
       type: 'daily',
@@ -644,7 +644,7 @@ class NotificationService {
       const msg = this.get24HourInactivityMessage(streak, tone);
       await this.sendPushNotification(msg.title, {
         body: msg.body,
-        icon: '/favicon.png',
+        icon: '/favicon.svg',
         tag: 'js-duo-24h-inactivity-reminder',
         requireInteraction: true,
         type: 'inactivity',
@@ -691,7 +691,7 @@ class NotificationService {
         const msg = this.getHeartsRestoredMessage();
         await this.sendPushNotification(msg.title, {
           body: msg.body,
-          icon: '/favicon.png',
+          icon: '/favicon.svg',
           tag: 'js-duo-hearts-full',
           type: 'hearts',
         });
@@ -727,7 +727,7 @@ class NotificationService {
     const msg = this.getHeartsRestoredMessage();
     return this.sendPushNotification(msg.title, {
       body: msg.body,
-      icon: '/favicon.png',
+      icon: '/favicon.svg',
       tag: 'js-duo-hearts-full-sim',
       type: 'hearts',
     });
