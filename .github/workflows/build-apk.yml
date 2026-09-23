@@ -27,6 +27,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Konfiguracja Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Akceptacja licencji Android SDK
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || yes | sdkmanager --licenses || true
@@ -37,21 +40,17 @@ jobs:
       - name: Budowanie aplikacji webowej
         run: npm run build
 
-      - name: Inicjalizacja i synchronizacja Capacitor Android
+      - name: Synchronizacja Capacitor Android (bez kasowania natywnego projektu)
         run: |
-          if [ ! -f "android/gradlew" ]; then
-            echo "Brak kompletnego katalogu android lub pliku gradlew - generowanie..."
-            rm -rf android
+          if [ ! -d "android" ]; then
+            echo "Brak katalogu android - generowanie od zera..."
             npx cap add android
           fi
           npx cap sync android
           echo "android.builder.sdkDownload=true" >> android/gradle.properties
-          chmod +x android/gradlew
 
       - name: Kompilacja pliku APK (assembleDebug)
-        run: |
-          cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug --no-daemon --stacktrace -p android
 
       - name: Znalezienie i udostępnienie pliku APK jako artefakt
         uses: actions/upload-artifact@v4
