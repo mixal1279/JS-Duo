@@ -61,7 +61,7 @@ jobs:
 
           # Restore the repository manifest after Capacitor sync.
           # This guarantees the AppWidgetProvider receiver remains present.
-          git checkout -- android/app/src/main/AndroidManifest.xml
+          git checkout -- android/app/src/main/AndroidManifest.xml android/app/src/main/res
 
           grep -q "DailyQuestWidgetProvider" android/app/src/main/AndroidManifest.xml || {
             echo "ERROR: DailyQuestWidgetProvider missing after manifest restore"
