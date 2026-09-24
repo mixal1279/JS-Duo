@@ -59,6 +59,15 @@ jobs:
 
           npx cap sync android
 
+          # Restore the repository manifest after Capacitor sync.
+          # This guarantees the AppWidgetProvider receiver remains present.
+          git checkout -- android/app/src/main/AndroidManifest.xml
+
+          grep -q "DailyQuestWidgetProvider" android/app/src/main/AndroidManifest.xml || {
+            echo "ERROR: DailyQuestWidgetProvider missing after manifest restore"
+            exit 1
+          }
+
           echo "android.builder.sdkDownload=true" >> android/gradle.properties
 
       # ============================================================
