@@ -46,27 +46,24 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         // Read streak and last active date from SharedPreferences
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         
-        int streak = 0;
-        int hearts = 5;
-        int xp = 0;
-        int dailyXp = 0;
-        int dailyXpTarget = 30;
-        String lastActiveDate = "";
+        // Read the direct values written by WidgetBridgePlugin first.
+        // This is more reliable than depending on parsing the WebView stats JSON.
+        int streak = prefs.getInt("streak", 0);
+        int hearts = prefs.getInt("hearts", 5);
+        int dailyXp = prefs.getInt("daily_xp", 0);
+        int dailyXpTarget = prefs.getInt("daily_xp_target", 30);
+        String lastActiveDate = prefs.getString("lastActiveDate", "");
 
+        // Keep JSON as a compatibility fallback for older installs.
         try {
-            // First check if user stats JSON or direct values are stored
             String statsJson = prefs.getString("js_duo_user_stats_v3_clean", null);
             if (statsJson != null) {
-                // Simple fast parsing of fields from JSON string
-                streak = parseJsonInt(statsJson, "\"streak\":", 0);
-                hearts = parseJsonInt(statsJson, "\"hearts\":", 5);
-                xp = parseJsonInt(statsJson, "\"xp\":", 0);
+                streak = parseJsonInt(statsJson, "\"streak\":", streak);
+                hearts = parseJsonInt(statsJson, "\"hearts\":", hearts);
                 lastActiveDate = parseJsonString(statsJson, "\"lastActiveDate\":");
-            dailyXp = prefs.getInt("daily_xp", 0);
-            dailyXpTarget = prefs.getInt("daily_xp_target", 30);
             }
-        } catch (Exception e) {
-            // fallback
+        } catch (Exception ignored) {
+            // Direct values above remain valid.
         }
 
         // Check if user has practiced today
