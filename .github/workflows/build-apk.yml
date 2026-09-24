@@ -345,6 +345,27 @@ jobs:
           sha256sum "$APK"
 
       # ============================================================
+      # WERYFIKACJA WIDGETU W FINALNYM APK
+      # ============================================================
+
+      - name: Sprawdzenie widgetu w APK
+        if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/release/')
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          AAPT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt"
+
+          echo "=== WIDGET W ŹRÓDŁOWYM MANIFEŚCIE ==="
+          grep -n -A12 -B2 "DailyQuestWidgetProvider" android/app/src/main/AndroidManifest.xml || true
+
+          echo "=== WIDGET W FINALNYM APK ==="
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -A30 -B5 "DailyQuestWidgetProvider" || true
+
+          if ! "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -q "DailyQuestWidgetProvider"; then
+            echo "ERROR: DailyQuestWidgetProvider NIE TRAFIŁ do finalnego APK."
+            exit 1
+          fi
+
+      # ============================================================
       # APK ARTIFACT
       # ============================================================
 
