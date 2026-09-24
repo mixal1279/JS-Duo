@@ -54,17 +54,6 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         int dailyXpTarget = prefs.getInt("daily_xp_target", 30);
         String lastActiveDate = prefs.getString("lastActiveDate", "");
 
-        // Keep JSON as a compatibility fallback for older installs.
-        try {
-            String statsJson = prefs.getString("js_duo_user_stats_v3_clean", null);
-            if (statsJson != null) {
-                streak = parseJsonInt(statsJson, "\"streak\":", streak);
-                hearts = parseJsonInt(statsJson, "\"hearts\":", hearts);
-                lastActiveDate = parseJsonString(statsJson, "\"lastActiveDate\":");
-            }
-        } catch (Exception ignored) {
-            // Direct values above remain valid.
-        }
 
         // Check if user has practiced today
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
