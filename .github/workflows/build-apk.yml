@@ -282,6 +282,40 @@ jobs:
           fi
 
       # ============================================================
+      # PODPIS APK
+      # Gradle może wygenerować wariant release jako unsigned.
+      # Podpisujemy finalny APK jawnie przez apksigner.
+      # ============================================================
+
+      - name: Podpisanie release APK
+        if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/release/')
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          APK_DIR="android/app/build/outputs/apk/release"
+          UNSIGNED="$APK_DIR/app-release-unsigned.apk"
+          SIGNED="$APK_DIR/app-release.apk"
+          APKSIGNER="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
+
+          if [ ! -f "$UNSIGNED" ]; then
+            echo "ERROR: Nie znaleziono unsigned APK: $UNSIGNED"
+            find "$APK_DIR" -maxdepth 2 -type f -print
+            exit 1
+          fi
+
+          "$APKSIGNER" sign \
+            --ks android/js-duo-release.jks \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --key-pass env:KEY_PASSWORD \
+            --out "$SIGNED" \
+            "$UNSIGNED"
+
+          ls -lh "$SIGNED"
+
+      # ============================================================
       # WERYFIKACJA APK PRZED PUBLIKACJĄ
       # ============================================================
 
