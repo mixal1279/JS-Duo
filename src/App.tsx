@@ -33,6 +33,46 @@ import { enqueueQuestionsForReview, clearReviewSchedule, getReviewRecords, repla
 import { ReviewView } from './components/ReviewView';
 import { ProjectLabView, clearProjectProgress, getCompletedProjectIds, replaceCompletedProjectIds } from './components/ProjectLabView';
 
+const mergeProgressStats = (local: UserStats, cloud: UserStats): UserStats => {
+  const xp = Math.max(Number(local.xp) || 0, Number(cloud.xp) || 0);
+  return {
+    ...cloud,
+    xp,
+    level: storageService.calculateLevel(xp).level,
+    streak: Math.max(Number(local.streak) || 0, Number(cloud.streak) || 0),
+    lastActiveDate: local.lastActiveDate > cloud.lastActiveDate ? local.lastActiveDate : cloud.lastActiveDate,
+    gems: Math.max(Number(local.gems) || 0, Number(cloud.gems) || 0),
+    hearts: Math.min(Number(local.hearts) || 0, Number(cloud.hearts) || 0),
+    maxHearts: Math.max(Number(local.maxHearts) || 5, Number(cloud.maxHearts) || 5),
+    completedQuestionIds: [...new Set([...(local.completedQuestionIds || []), ...(cloud.completedQuestionIds || [])])],
+    completedLessonKeys: [...new Set([...(local.completedLessonKeys || []), ...(cloud.completedLessonKeys || [])])],
+    unlockedUnit: Math.max(Number(local.unlockedUnit) || 1, Number(cloud.unlockedUnit) || 1),
+    duelWins: Math.max(Number(local.duelWins) || 0, Number(cloud.duelWins) || 0),
+    duelLosses: Math.max(Number(local.duelLosses) || 0, Number(cloud.duelLosses) || 0),
+    streakFreeze: Math.max(Number(local.streakFreeze) || 0, Number(cloud.streakFreeze) || 0),
+  };
+};
+
+const mergeReviewSchedules = (local: ReturnType<typeof getReviewRecords>, cloud: ReturnType<typeof getReviewRecords>) => {
+  const byQuestion = new Map(local.map((record) => [record.questionId, record]));
+  for (const record of cloud) {
+    const existing = byQuestion.get(record.questionId);
+    if (!existing || (record.lastReviewedAt || 0) > (existing.lastReviewedAt || 0)) byQuestion.set(record.questionId, record);
+  }
+  return [...byQuestion.values()];
+};
+
+const mergeDailyQuests = (local: DailyQuest[], cloud: DailyQuest[], cloudUpdatedAt: string): DailyQuest[] => {
+  if (cloudUpdatedAt.slice(0, 10) !== getLocalDateString()) return local;
+  const cloudById = new Map(cloud.map((quest) => [quest.id, quest]));
+  return local.map((quest) => {
+    const remote = cloudById.get(quest.id);
+    if (!remote) return quest;
+    return { ...quest, current: Math.min(quest.target, Math.max(quest.current, remote.current)), claimed: quest.claimed || remote.claimed };
+  });
+};
+
+
 export const App: React.FC = () => {
   // Application State
   const [stats, setStats] = useState<UserStats>(() => storageService.getStats());
@@ -120,11 +160,15 @@ export const App: React.FC = () => {
         const remote = await cloudSyncService.loadProgress(authSession);
         if (cancelled) return;
         if (remote) {
-          setStats(remote.stats);
-          setQuests(remote.quests);
-          replaceReviewRecords(remote.review_schedule || []);
-          replaceCompletedProjectIds(remote.completed_projects || []);
-          setCloudMessage(`Ostatnia synchronizacja danych z ${new Date(remote.updated_at).toLocaleString()}.`);
+          const mergedStats = mergeProgressStats(stats, remote.stats);
+          const mergedQuests = mergeDailyQuests(quests, remote.quests, remote.updated_at);
+          const mergedReviews = mergeReviewSchedules(getReviewRecords(), remote.review_schedule || []);
+          const mergedProjects = [...new Set([...getCompletedProjectIds(), ...(remote.completed_projects || [])])];
+          setStats(mergedStats);
+          setQuests(mergedQuests);
+          replaceReviewRecords(mergedReviews);
+          replaceCompletedProjectIds(mergedProjects);
+          setCloudMessage(`Połączono lokalne i chmurowe postępy. Ostatni zapis: ${new Date(remote.updated_at).toLocaleString()}.`);
         } else {
           await cloudSyncService.saveProgress(authSession, stats, quests, getReviewRecords(), getCompletedProjectIds());
           if (cancelled) return;
