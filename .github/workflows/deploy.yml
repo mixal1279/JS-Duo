@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - feature/full-coding-duolingo
   workflow_dispatch:
 
 # Uprawnienia wymagane do bezpiecznego wdrożenia na GitHub Pages za pomocą OIDC
@@ -40,6 +41,9 @@ jobs:
 
       - name: Budowanie projektu Vite
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Konfiguracja GitHub Pages
         uses: actions/configure-pages@v5
