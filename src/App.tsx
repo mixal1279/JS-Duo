@@ -130,6 +130,13 @@ export const App: React.FC = () => {
           if (cancelled) return;
           setCloudMessage('Zapisano lokalne postępy na koncie po raz pierwszy.');
         }
+        try {
+          const onlineLeaderboard = await cloudSyncService.loadLeaderboard(authSession);
+          if (!cancelled && onlineLeaderboard.length > 0) setLeaderboard(onlineLeaderboard);
+        } catch {
+          // Keep the local/mock leaderboard if the optional online leaderboard is unavailable.
+        }
+        if (cancelled) return;
         setCloudReady(true);
         setCloudState('synced');
       } catch (cause) {
