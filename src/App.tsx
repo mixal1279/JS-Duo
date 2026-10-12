@@ -168,7 +168,7 @@ export const App: React.FC = () => {
     setCloudState('loading');
     setCloudMessage('Wysyłanie lokalnych postępów do chmury…');
     try {
-      await cloudSyncService.saveProgress(authSession, stats, quests);
+      await cloudSyncService.saveProgress(authSession, stats, quests, getReviewRecords(), getCompletedProjectIds());
       setCloudReady(true);
       setCloudState('synced');
       setCloudMessage(`Synchronizacja zakończona o ${new Date().toLocaleTimeString()}.`);
