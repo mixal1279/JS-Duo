@@ -74,6 +74,14 @@ const PROJECTS: CodingProject[] = [
 
 const COMPLETED_KEY = 'js_duo_completed_projects_v1';
 
+export const getCompletedProjectIds = (): string[] => readCompleted();
+
+export const replaceCompletedProjectIds = (ids: string[]): void => {
+  if (!Array.isArray(ids)) return;
+  const valid = ids.filter((id): id is string => typeof id === 'string' && PROJECTS.some((project) => project.id === id));
+  try { localStorage.setItem(COMPLETED_KEY, JSON.stringify([...new Set(valid)])); } catch { /* no-op */ }
+};
+
 export const clearProjectProgress = (): void => {
   try { localStorage.removeItem(COMPLETED_KEY); } catch { /* no-op */ }
 };
