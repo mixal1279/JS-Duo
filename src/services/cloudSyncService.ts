@@ -1,4 +1,4 @@
-import { DailyQuest, UserStats } from '../types';
+import { DailyQuest, UserStats, LeaderboardUser } from '../types';
 import { ReviewRecord } from './reviewService';
 
 const SESSION_KEY = 'js_duo_auth_session_v1';
@@ -139,6 +139,23 @@ export const cloudSyncService = {
     const next = { ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + (result.expires_in || 3600) };
     this.saveSession(next);
     return next;
+  },
+
+  async loadLeaderboard(session: AuthSession): Promise<LeaderboardUser[]> {
+    const validSession = await this.refreshSession(session);
+    const rows = await restRequest(
+      'leaderboard_public?select=id,username,display_name,avatar_emoji,xp,level,streak&order=xp.desc&limit=100',
+      validSession
+    ) as Array<{ id: string; username: string; display_name: string; avatar_emoji: string; xp: number; level: number; streak: number }> | null;
+    return (Array.isArray(rows) ? rows : []).map((row) => ({
+      id: row.id,
+      name: row.display_name || row.username || 'Programista',
+      avatar: row.avatar_emoji || '🦉',
+      xp: Number.isFinite(row.xp) ? row.xp : 0,
+      level: Number.isFinite(row.level) ? row.level : 1,
+      streak: Number.isFinite(row.streak) ? row.streak : 0,
+      isCurrentUser: row.id === validSession.user.id,
+    }));
   },
 
   async loadProgress(session: AuthSession): Promise<CloudProgress | null> {
