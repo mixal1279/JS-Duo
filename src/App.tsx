@@ -29,7 +29,7 @@ import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
 import { enqueueQuestionsForReview, clearReviewSchedule } from './services/reviewService';
 import { ReviewView } from './components/ReviewView';
-import { ProjectLabView } from './components/ProjectLabView';
+import { ProjectLabView, clearProjectProgress } from './components/ProjectLabView';
 
 export const App: React.FC = () => {
   // Application State
@@ -317,6 +317,7 @@ export const App: React.FC = () => {
   // Reset progress and stats to clean 0
   const handleResetProgress = () => {
     clearReviewSchedule();
+    clearProjectProgress();
     const cleanStats = storageService.resetAllProgress();
     setStats(cleanStats);
     setQuests(DEFAULT_DAILY_QUESTS);
