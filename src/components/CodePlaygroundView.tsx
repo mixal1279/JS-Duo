@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { soundService } from '../services/soundService';
 import { storageService } from '../services/storageService';
+import { runJavaScriptInWorker } from '../services/codeRunner';
 
 interface ConsoleLogEntry {
   type: 'log' | 'info' | 'warn' | 'error' | 'result';
@@ -229,77 +230,35 @@ export const CodePlaygroundView: React.FC = () => {
     return String(arg);
   };
 
-  const runCode = () => {
+  const runCode = async () => {
     soundService.playClick();
     setIsRunning(true);
-
-    const startTime = performance.now();
-    const newLogs: ConsoleLogEntry[] = [];
-    const getTime = () =>
-      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-    // Custom console interception
-    const customConsole = {
-      log: (...args: unknown[]) => {
-        const text = args.map(formatLogArg).join(' ');
-        newLogs.push({ type: 'log', text, time: getTime() });
-      },
-      info: (...args: unknown[]) => {
-        const text = args.map(formatLogArg).join(' ');
-        newLogs.push({ type: 'info', text, time: getTime() });
-      },
-      warn: (...args: unknown[]) => {
-        const text = args.map(formatLogArg).join(' ');
-        newLogs.push({ type: 'warn', text, time: getTime() });
-      },
-      error: (...args: unknown[]) => {
-        const text = args.map(formatLogArg).join(' ');
-        newLogs.push({ type: 'error', text, time: getTime() });
-      },
-      table: (...args: unknown[]) => {
-        const text = args.map(formatLogArg).join(' ');
-        newLogs.push({ type: 'log', text: `[Table]:\n${text}`, time: getTime() });
-      },
-    };
+    const timestamp = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setLogs((prev) => [...prev, { type: 'info', text: 'Uruchamiam kod w odizolowanym Web Workerze…', time: timestamp() }]);
 
     try {
-      // Safe execution sandbox using Function constructor with custom console
-      const sandboxFn = new Function('console', `
-        "use strict";
-        try {
-          ${code}
-        } catch (innerErr) {
-          console.error(innerErr);
+      const result = await runJavaScriptInWorker(code, 3000);
+      setExecutionTime(result.durationMs);
+      const output: ConsoleLogEntry[] = result.logs.map((entry) => ({
+        type: entry.type,
+        text: entry.text,
+        time: timestamp(),
+      }));
+      if (result.timedOut) {
+        // The runner already includes a timeout message; don't report the run as successful.
+        soundService.playWrong();
+      } else if (output.some((entry) => entry.type === 'error')) {
+        soundService.playWrong();
+      } else {
+        if (output.length === 0) {
+          output.push({ type: 'info', text: 'Kod wykonał się pomyślnie (brak wywołań console.log).', time: timestamp() });
         }
-      `);
-
-      sandboxFn(customConsole);
-
-      const endTime = performance.now();
-      const elapsed = Math.round((endTime - startTime) * 100) / 100;
-      setExecutionTime(elapsed);
-
-      if (newLogs.length === 0) {
-        newLogs.push({
-          type: 'info',
-          text: 'Kod wykonał się pomyślnie (brak wywołań console.log).',
-          time: getTime(),
-        });
+        soundService.playCorrect();
       }
-
-      setLogs((prev) => [...prev, ...newLogs]);
-      soundService.playCorrect();
-    } catch (err: unknown) {
-      const endTime = performance.now();
-      setExecutionTime(Math.round((endTime - startTime) * 100) / 100);
-
-      const errMessage = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-      newLogs.push({
-        type: 'error',
-        text: `Błąd wykonania: ${errMessage}`,
-        time: getTime(),
-      });
-      setLogs((prev) => [...prev, ...newLogs]);
+      setLogs((prev) => [...prev.filter((entry) => entry.text !== 'Uruchamiam kod w odizolowanym Web Workerze…'), ...output]);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+      setLogs((prev) => [...prev, { type: 'error', text: `Błąd wykonania: ${message}`, time: timestamp() }]);
       soundService.playWrong();
     } finally {
       setIsRunning(false);
