@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { AccountView } from './components/AccountView';
+import { AuthSession, cloudSyncService } from './services/cloudSyncService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Gem, Heart, Sparkles, BookOpen, Bell } from 'lucide-react';
 import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, Question, AppTheme } from './types';
@@ -27,6 +29,49 @@ import { StreakToast } from './components/StreakToast';
 import { NotificationBanner } from './components/NotificationBanner';
 import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
+import { enqueueQuestionsForReview, clearReviewSchedule, getReviewRecords, replaceReviewRecords } from './services/reviewService';
+import { ReviewView } from './components/ReviewView';
+import { ProjectLabView, clearProjectProgress, getCompletedProjectIds, replaceCompletedProjectIds } from './components/ProjectLabView';
+
+const mergeProgressStats = (local: UserStats, cloud: UserStats): UserStats => {
+  const xp = Math.max(Number(local.xp) || 0, Number(cloud.xp) || 0);
+  return {
+    ...cloud,
+    xp,
+    level: storageService.calculateLevel(xp).level,
+    streak: Math.max(Number(local.streak) || 0, Number(cloud.streak) || 0),
+    lastActiveDate: local.lastActiveDate > cloud.lastActiveDate ? local.lastActiveDate : cloud.lastActiveDate,
+    gems: Math.max(Number(local.gems) || 0, Number(cloud.gems) || 0),
+    hearts: Math.min(Number(local.hearts) || 0, Number(cloud.hearts) || 0),
+    maxHearts: Math.max(Number(local.maxHearts) || 5, Number(cloud.maxHearts) || 5),
+    completedQuestionIds: [...new Set([...(local.completedQuestionIds || []), ...(cloud.completedQuestionIds || [])])],
+    completedLessonKeys: [...new Set([...(local.completedLessonKeys || []), ...(cloud.completedLessonKeys || [])])],
+    unlockedUnit: Math.max(Number(local.unlockedUnit) || 1, Number(cloud.unlockedUnit) || 1),
+    duelWins: Math.max(Number(local.duelWins) || 0, Number(cloud.duelWins) || 0),
+    duelLosses: Math.max(Number(local.duelLosses) || 0, Number(cloud.duelLosses) || 0),
+    streakFreeze: Math.max(Number(local.streakFreeze) || 0, Number(cloud.streakFreeze) || 0),
+  };
+};
+
+const mergeReviewSchedules = (local: ReturnType<typeof getReviewRecords>, cloud: ReturnType<typeof getReviewRecords>) => {
+  const byQuestion = new Map(local.map((record) => [record.questionId, record]));
+  for (const record of cloud) {
+    const existing = byQuestion.get(record.questionId);
+    if (!existing || (record.lastReviewedAt || 0) > (existing.lastReviewedAt || 0)) byQuestion.set(record.questionId, record);
+  }
+  return [...byQuestion.values()];
+};
+
+const mergeDailyQuests = (local: DailyQuest[], cloud: DailyQuest[], cloudUpdatedAt: string): DailyQuest[] => {
+  if (cloudUpdatedAt.slice(0, 10) !== getLocalDateString()) return local;
+  const cloudById = new Map(cloud.map((quest) => [quest.id, quest]));
+  return local.map((quest) => {
+    const remote = cloudById.get(quest.id);
+    if (!remote) return quest;
+    return { ...quest, current: Math.min(quest.target, Math.max(quest.current, remote.current)), claimed: quest.claimed || remote.claimed };
+  });
+};
+
 
 export const App: React.FC = () => {
   // Application State
@@ -37,6 +82,11 @@ export const App: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => storageService.getChatMessages());
   const [notifConfig, setNotifConfig] = useState<NotificationConfig>(() => storageService.getNotificationConfig());
   const [theme, setTheme] = useState<AppTheme>(() => storageService.getTheme());
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => cloudSyncService.getSession());
+  const [cloudReady, setCloudReady] = useState(false);
+  const [cloudRevision, setCloudRevision] = useState(0);
+  const [cloudState, setCloudState] = useState<'idle' | 'loading' | 'synced' | 'error' | 'offline'>('idle');
+  const [cloudMessage, setCloudMessage] = useState('Zaloguj się, aby włączyć synchronizację między urządzeniami.');
 
   // Navigation State
   const [currentTab, setCurrentTab] = useState<TabType>('path');
@@ -85,6 +135,112 @@ export const App: React.FC = () => {
   useEffect(() => {
     storageService.saveNotificationConfig(notifConfig);
   }, [notifConfig]);
+
+  // Restore cloud progress after authentication; local progress remains available offline.
+  useEffect(() => {
+    let cancelled = false;
+    if (!authSession) {
+      setCloudReady(false);
+      setCloudState('idle');
+      setCloudMessage('Zaloguj się, aby włączyć synchronizację między urządzeniami.');
+      return () => { cancelled = true; };
+    }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setCloudReady(false);
+      setCloudState('offline');
+      setCloudMessage('Brak połączenia. Lokalne postępy są zachowane; połącz się z internetem i wybierz synchronizację.');
+      return () => { cancelled = true; };
+    }
+
+    setCloudReady(false);
+    setCloudState('loading');
+    setCloudMessage('Pobieranie postępów z chmury…');
+    (async () => {
+      try {
+        const remote = await cloudSyncService.loadProgress(authSession);
+        if (cancelled) return;
+        if (remote) {
+          // Merge against the latest local state so activity during the network request is not discarded.
+          setStats((local) => mergeProgressStats(local, remote.stats));
+          setQuests((local) => mergeDailyQuests(local, remote.quests, remote.updated_at));
+          const mergedReviews = mergeReviewSchedules(getReviewRecords(), remote.review_schedule || []);
+          const mergedProjects = [...new Set([...getCompletedProjectIds(), ...(remote.completed_projects || [])])];
+          replaceReviewRecords(mergedReviews);
+          replaceCompletedProjectIds(mergedProjects);
+          setCloudMessage(`Połączono lokalne i chmurowe postępy. Ostatni zapis: ${new Date(remote.updated_at).toLocaleString()}.`);
+        } else {
+          await cloudSyncService.saveProgress(authSession, stats, quests, getReviewRecords(), getCompletedProjectIds());
+          if (cancelled) return;
+          setCloudMessage('Zapisano lokalne postępy na koncie po raz pierwszy.');
+        }
+        try {
+          const onlineLeaderboard = await cloudSyncService.loadLeaderboard(authSession);
+          if (!cancelled && onlineLeaderboard.length > 0) setLeaderboard(onlineLeaderboard);
+        } catch {
+          // Keep the local/mock leaderboard if the optional online leaderboard is unavailable.
+        }
+        if (cancelled) return;
+        setCloudReady(true);
+        setCloudState('synced');
+      } catch (cause) {
+        if (cancelled) return;
+        setCloudState('error');
+        setCloudMessage(cause instanceof Error ? cause.message : 'Nie udało się pobrać danych z chmury.');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authSession]);
+
+  // Debounced cloud writes avoid a request for every small state update.
+  useEffect(() => {
+    if (!authSession || !cloudReady) return;
+    const timer = window.setTimeout(async () => {
+      try {
+        setCloudState('loading');
+        await cloudSyncService.saveProgress(authSession, stats, quests, getReviewRecords(), getCompletedProjectIds());
+        setCloudState('synced');
+        setCloudMessage(`Zapisano ${new Date().toLocaleTimeString()}.`);
+      } catch (cause) {
+        setCloudState('error');
+        setCloudMessage(cause instanceof Error ? cause.message : 'Nie udało się zapisać postępów.');
+      }
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [authSession, cloudReady, cloudRevision, stats, quests]);
+
+  const handleManualCloudSync = async () => {
+    if (!authSession) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setCloudState('offline');
+      setCloudMessage('Brak internetu. Postęp jest bezpiecznie zachowany lokalnie.');
+      return;
+    }
+    setCloudState('loading');
+    setCloudMessage('Wysyłanie lokalnych postępów do chmury…');
+    try {
+      await cloudSyncService.saveProgress(authSession, stats, quests, getReviewRecords(), getCompletedProjectIds());
+      setCloudReady(true);
+      setCloudState('synced');
+      setCloudMessage(`Synchronizacja zakończona o ${new Date().toLocaleTimeString()}.`);
+    } catch (cause) {
+      setCloudState('error');
+      setCloudMessage(cause instanceof Error ? cause.message : 'Synchronizacja nie powiodła się.');
+    }
+  };
+
+  // Load persisted community messages when an authenticated learner opens chat.
+  useEffect(() => {
+    if (!authSession || currentTab !== 'chat' || !cloudReady) return;
+    let cancelled = false;
+    cloudSyncService.loadChatMessages(authSession)
+      .then((messages) => {
+        if (!cancelled) setChatMessages(messages);
+      })
+      .catch((cause) => {
+        if (!cancelled) console.error('Nie udało się pobrać czatu online:', cause);
+      });
+    return () => { cancelled = true; };
+  }, [authSession, currentTab, cloudReady]);
 
   // Synchronize App Theme (Deep Night vs Light Mode)
   useEffect(() => {
@@ -189,6 +345,9 @@ export const App: React.FC = () => {
       else if (e.key === '5') setCurrentTab('duels');
       else if (e.key === '6') setCurrentTab('chat');
       else if (e.key === '7') setCurrentTab('profile');
+      else if (e.key === 'r' || e.key === 'R') setCurrentTab('review');
+      else if (e.key === 'p' || e.key === 'P') setCurrentTab('projects');
+      else if (e.key === 'a' || e.key === 'A') setCurrentTab('account');
       else if (e.key === 'q' || e.key === 'Q') {
         setExplorerQuestionId(null);
         setShowExplorer(true);
@@ -231,6 +390,10 @@ export const App: React.FC = () => {
   }) => {
     setActiveLesson(null);
     notificationService.recordActivity();
+
+    // Queue lesson material for spaced repetition without overwriting existing schedules.
+    enqueueQuestionsForReview(results.completedQuestionIds);
+    setCloudRevision((revision) => revision + 1);
 
     // Update Stats
     const newXp = stats.xp + results.earnedXp;
@@ -308,6 +471,9 @@ export const App: React.FC = () => {
 
   // Reset progress and stats to clean 0
   const handleResetProgress = () => {
+    clearReviewSchedule();
+    clearProjectProgress();
+    setCloudRevision((revision) => revision + 1);
     const cleanStats = storageService.resetAllProgress();
     setStats(cleanStats);
     setQuests(DEFAULT_DAILY_QUESTS);
@@ -436,6 +602,19 @@ export const App: React.FC = () => {
     codeSnippet?: string;
     linkedQuestionId?: number;
   }) => {
+    if (authSession) {
+      void (async () => {
+        try {
+          await cloudSyncService.sendChatMessage(authSession, msg);
+          const latestMessages = await cloudSyncService.loadChatMessages(authSession);
+          setChatMessages(latestMessages);
+        } catch (cause) {
+          const message = cause instanceof Error ? cause.message : 'Nie udało się wysłać wiadomości.';
+          window.alert(`Czat online: ${message}`);
+        }
+      })();
+      return;
+    }
     const newMsg: ChatMessage = {
       id: `m_${Date.now()}`,
       channelId: msg.channelId,
@@ -614,6 +793,47 @@ export const App: React.FC = () => {
                   <CodePlaygroundView />
                 )}
 
+                {currentTab === 'projects' && (
+                  <ProjectLabView
+                    onProgressChange={() => setCloudRevision((revision) => revision + 1)}
+                    onEarnXp={(xp) => {
+                      setStats((prev) => {
+                        const nextXp = prev.xp + xp;
+                        const updated = { ...prev, xp: nextXp, level: storageService.calculateLevel(nextXp).level };
+                        storageService.saveStats(updated);
+                        return updated;
+                      });
+                      setQuests((prev) => prev.map((quest) => quest.type === 'xp' ? { ...quest, current: Math.min(quest.target, quest.current + xp) } : quest));
+                    }}
+                  />
+                )}
+
+                {currentTab === 'account' && (
+                  <AccountView
+                    session={authSession}
+                    onSessionChange={setAuthSession}
+                    syncState={cloudState}
+                    syncMessage={cloudMessage}
+                    onSyncNow={handleManualCloudSync}
+                  />
+                )}
+
+                {currentTab === 'review' && (
+                  <ReviewView
+                    userStats={stats}
+                    onReviewChange={() => setCloudRevision((revision) => revision + 1)}
+                    onEarnXp={(xp) => {
+                      setStats((prev) => {
+                        const nextXp = prev.xp + xp;
+                        const updated = { ...prev, xp: nextXp, level: storageService.calculateLevel(nextXp).level };
+                        storageService.saveStats(updated);
+                        return updated;
+                      });
+                      setQuests((prev) => prev.map((quest) => quest.type === 'xp' ? { ...quest, current: Math.min(quest.target, quest.current + xp) } : quest));
+                    }}
+                  />
+                )}
+
                 {currentTab === 'quests' && (
                   <DailyQuestsView
                     quests={quests}
@@ -697,6 +917,7 @@ export const App: React.FC = () => {
           lessonIndex={activeLesson.lessonIndex}
           userStats={stats}
           onClose={() => setActiveLesson(null)}
+          onHeartsChange={(hearts) => setStats((prev) => ({ ...prev, hearts }))}
           onComplete={handleCompleteLesson}
           onAskCommunity={handleAskCommunity}
         />
