@@ -192,6 +192,8 @@ export const App: React.FC = () => {
       else if (e.key === '5') setCurrentTab('duels');
       else if (e.key === '6') setCurrentTab('chat');
       else if (e.key === '7') setCurrentTab('profile');
+      else if (e.key === 'r' || e.key === 'R') setCurrentTab('review');
+      else if (e.key === 'p' || e.key === 'P') setCurrentTab('projects');
       else if (e.key === 'q' || e.key === 'Q') {
         setExplorerQuestionId(null);
         setShowExplorer(true);
