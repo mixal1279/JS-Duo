@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Award, CheckCircle2, ChevronLeft, ChevronRight, CirclePlay, Code2, Lightbulb, LockKeyhole, RotateCcw, Terminal, Trophy, XCircle } from 'lucide-react';
+import { Award, CheckCircle2, ChevronLeft, ChevronRight, CirclePlay, Code2, Lightbulb, RotateCcw, Terminal, Trophy, XCircle } from 'lucide-react';
 import { runJavaScriptInWorker, RunnerLog } from '../services/codeRunner';
 
 interface CodingProject {
@@ -113,7 +113,7 @@ export const ProjectLabView: React.FC<ProjectLabViewProps> = ({ onEarnXp }) => {
       const result = await runJavaScriptInWorker(code, 3000);
       setLogs(result.logs);
       const output = result.logs.filter((log) => log.type !== 'error').map((log) => log.text).join('\n');
-      const success = !result.timedOut && !result.logs.some((log) => log.type === 'error') && output.includes(project.expectedOutput);
+      const numericExpected = /^-?\\d+(\\.\\d+)?$/.test(project.expectedOutput);\n      const matchesOutput = numericExpected\n        ? output.trim().split(/\\r?\\n/).some((line) => line.trim() === project.expectedOutput)\n        : output.includes(project.expectedOutput);\n      const success = !result.timedOut && !result.logs.some((log) => log.type === 'error') && matchesOutput;
       setPassed(success);
       if (success && !completed.includes(project.id)) {
         const next = [...completed, project.id];
