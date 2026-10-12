@@ -141,23 +141,6 @@ export const cloudSyncService = {
     return next;
   },
 
-  async loadLeaderboard(session: AuthSession): Promise<LeaderboardUser[]> {
-    const validSession = await this.refreshSession(session);
-    const rows = await restRequest(
-      'leaderboard_public?select=id,username,display_name,avatar_emoji,xp,level,streak&order=xp.desc&limit=100',
-      validSession
-    ) as Array<{ id: string; username: string; display_name: string; avatar_emoji: string; xp: number; level: number; streak: number }> | null;
-    return (Array.isArray(rows) ? rows : []).map((row) => ({
-      id: row.id,
-      name: row.display_name || row.username || 'Programista',
-      avatar: row.avatar_emoji || '🦉',
-      xp: Number.isFinite(row.xp) ? row.xp : 0,
-      level: Number.isFinite(row.level) ? row.level : 1,
-      streak: Number.isFinite(row.streak) ? row.streak : 0,
-      isCurrentUser: row.id === validSession.user.id,
-    }));
-  },
-
   async loadProgress(session: AuthSession): Promise<CloudProgress | null> {
     const validSession = await this.refreshSession(session);
     const rows = await restRequest('user_progress?select=user_id,stats,quests,review_schedule,completed_projects,updated_at&limit=1', validSession) as CloudProgress[] | null;
