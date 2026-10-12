@@ -46,10 +46,18 @@ create table if not exists public.user_progress (
   user_id uuid primary key references auth.users(id) on delete cascade,
   stats jsonb not null default '{}'::jsonb,
   quests jsonb not null default '[]'::jsonb,
+  review_schedule jsonb not null default '[]'::jsonb,
+  completed_projects jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now(),
   constraint user_progress_stats_object check (jsonb_typeof(stats) = 'object'),
-  constraint user_progress_quests_array check (jsonb_typeof(quests) = 'array')
+  constraint user_progress_quests_array check (jsonb_typeof(quests) = 'array'),
+  constraint user_progress_review_array check (jsonb_typeof(review_schedule) = 'array'),
+  constraint user_progress_projects_array check (jsonb_typeof(completed_projects) = 'array')
 );
+
+-- Safe to re-run if the table already exists from an earlier deployment.
+alter table public.user_progress add column if not exists review_schedule jsonb not null default '[]'::jsonb;
+alter table public.user_progress add column if not exists completed_projects jsonb not null default '[]'::jsonb;
 
 create table if not exists public.chat_messages (
   id uuid primary key default gen_random_uuid(),
