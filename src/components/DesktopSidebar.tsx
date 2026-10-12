@@ -14,7 +14,8 @@ import {
   Award,
   Code2,
   BookOpenCheck,
-  Rocket
+  Rocket,
+  CircleUserRound
 } from 'lucide-react';
 import { TabType } from './BottomNavigation';
 import { UserStats } from '../types';
@@ -52,6 +53,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { id: 'duels' as TabType, label: 'Pojedynki 1v1', icon: Swords, shortcut: '5' },
     { id: 'chat' as TabType, label: 'Społeczność', icon: MessageSquareText, badge: unreadChatCount, shortcut: '6' },
     { id: 'profile' as TabType, label: 'Osiągnięcia & Profil', icon: Award, shortcut: '7' },
+    { id: 'account' as TabType, label: 'Konto i synchronizacja', icon: CircleUserRound, shortcut: 'A' },
   ];
 
   return (
