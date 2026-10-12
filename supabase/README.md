@@ -1,6 +1,6 @@
 # JS-Duo online backend (Supabase)
 
-This repository includes a Supabase migration for account profiles, cloud progress, chat messages, friend requests, and duels. The web app currently wires up email/password authentication and progress sync; chat/friend/duel tables are groundwork for the next UI integration step.
+This repository includes a Supabase migration for account profiles, cloud progress, chat messages, friend requests, and duels. The web app wires up email/password authentication, cloud progress sync (stats, quests, review schedule, completed coding projects), and the online leaderboard. Chat/friend/duel tables are groundwork for the next UI integration step.
 
 ## 1. Create a Supabase project
 
@@ -37,7 +37,7 @@ Open the Konto tab to register or sign in. The first successful sign-in creates 
 
 ## Current limitations
 
-- The app currently syncs the stats and daily quests snapshots. Review schedules and completed coding projects still use local storage and are not yet synchronized.
-- The public leaderboard view exposes only public profile fields and aggregate XP/level/streak. UI integration is a separate step.
+- Review schedules and completed project IDs are included in the cloud snapshot; active editor text and review-session UI state remain local.
+- The leaderboard is loaded from the public view when a user signs in; league grouping still uses the app's existing client-side presentation.
 - Chat, friend request, and duel tables are created but their existing mock-data UI is not yet connected to them.
 - The progress snapshot is client-submitted. RLS prevents users from reading or writing another user's row, but it does not prove that XP was earned legitimately. Server-authoritative lesson grading/reward issuance is required before treating XP, rankings, or duel results as cheat-resistant.
