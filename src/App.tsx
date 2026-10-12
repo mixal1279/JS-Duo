@@ -160,12 +160,11 @@ export const App: React.FC = () => {
         const remote = await cloudSyncService.loadProgress(authSession);
         if (cancelled) return;
         if (remote) {
-          const mergedStats = mergeProgressStats(stats, remote.stats);
-          const mergedQuests = mergeDailyQuests(quests, remote.quests, remote.updated_at);
+          // Merge against the latest local state so activity during the network request is not discarded.
+          setStats((local) => mergeProgressStats(local, remote.stats));
+          setQuests((local) => mergeDailyQuests(local, remote.quests, remote.updated_at));
           const mergedReviews = mergeReviewSchedules(getReviewRecords(), remote.review_schedule || []);
           const mergedProjects = [...new Set([...getCompletedProjectIds(), ...(remote.completed_projects || [])])];
-          setStats(mergedStats);
-          setQuests(mergedQuests);
           replaceReviewRecords(mergedReviews);
           replaceCompletedProjectIds(mergedProjects);
           setCloudMessage(`Połączono lokalne i chmurowe postępy. Ostatni zapis: ${new Date(remote.updated_at).toLocaleString()}.`);
