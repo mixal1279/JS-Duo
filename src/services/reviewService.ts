@@ -61,6 +61,16 @@ export function getReviewRecords(): ReviewRecord[] {
   return readRecords();
 }
 
+export function replaceReviewRecords(records: ReviewRecord[]): void {
+  if (!Array.isArray(records)) return;
+  const valid = records.filter((item): item is ReviewRecord =>
+    item && Number.isFinite(item.questionId) && Number.isFinite(item.dueAt) &&
+    Number.isFinite(item.intervalDays) && Number.isFinite(item.repetitions) &&
+    Number.isFinite(item.easeFactor)
+  ).slice(0, 2000);
+  writeRecords(valid);
+}
+
 export function getDueReviewQuestions(allQuestions: Question[], limit = 10, includeFuture = false): Question[] {
   const now = Date.now();
   const byId = new Map(allQuestions.map((question) => [question.id, question]));
