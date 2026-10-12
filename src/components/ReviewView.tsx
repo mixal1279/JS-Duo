@@ -7,9 +7,10 @@ import { getDueReviewQuestions, getReviewSummary, gradeReview } from '../service
 interface ReviewViewProps {
   userStats: UserStats;
   onEarnXp: (xp: number) => void;
+  onReviewChange?: () => void;
 }
 
-export const ReviewView: React.FC<ReviewViewProps> = ({ userStats, onEarnXp }) => {
+export const ReviewView: React.FC<ReviewViewProps> = ({ userStats, onEarnXp, onReviewChange }) => {
   const [sessionKey, setSessionKey] = useState(0);
   const [activeQuestions, setActiveQuestions] = useState<Question[]>(() => getDueReviewQuestions(ALL_QUESTIONS, 10));
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -37,6 +38,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ userStats, onEarnXp }) =
     if (selectedIndex === null || !question || checked) return;
     const correct = selectedIndex === question.correctIndex;
     gradeReview(question.id, correct ? 4 : 1);
+    onReviewChange?.();
     setChecked(true);
     if (correct) {
       setCorrectCount((value) => value + 1);
