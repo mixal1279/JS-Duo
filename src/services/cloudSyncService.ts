@@ -164,6 +164,24 @@ export const cloudSyncService = {
     return Array.isArray(rows) && rows.length ? rows[0] : null;
   },
 
+  async loadLeaderboard(session: AuthSession): Promise<LeaderboardUser[]> {
+    const validSession = await this.refreshSession(session);
+    const rows = await restRequest(
+      'leaderboard_public?select=id,username,display_name,avatar_emoji,xp,level,streak&order=xp.desc&limit=100',
+      validSession
+    ) as Array<{ id: string; username: string; display_name: string; avatar_emoji: string; xp: number; level: number; streak: number }> | null;
+    if (!Array.isArray(rows)) return [];
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.display_name || row.username || 'Programista',
+      avatar: row.avatar_emoji || '🦉',
+      xp: Math.max(0, Number(row.xp) || 0),
+      level: Math.max(1, Number(row.level) || 1),
+      streak: Math.max(0, Number(row.streak) || 0),
+      isCurrentUser: row.id === validSession.user.id,
+    }));
+  },
+
   async saveProgress(session: AuthSession, stats: UserStats, quests: DailyQuest[], reviewSchedule: ReviewRecord[] = [], completedProjects: string[] = []): Promise<void> {
     const validSession = await this.refreshSession(session);
     await restRequest('user_progress?on_conflict=user_id', validSession, {
