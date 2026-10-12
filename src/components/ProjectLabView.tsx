@@ -113,7 +113,11 @@ export const ProjectLabView: React.FC<ProjectLabViewProps> = ({ onEarnXp }) => {
       const result = await runJavaScriptInWorker(code, 3000);
       setLogs(result.logs);
       const output = result.logs.filter((log) => log.type !== 'error').map((log) => log.text).join('\n');
-      const numericExpected = /^-?\\d+(\\.\\d+)?$/.test(project.expectedOutput);\n      const matchesOutput = numericExpected\n        ? output.trim().split(/\\r?\\n/).some((line) => line.trim() === project.expectedOutput)\n        : output.includes(project.expectedOutput);\n      const success = !result.timedOut && !result.logs.some((log) => log.type === 'error') && matchesOutput;
+      const numericExpected = /^-?\d+(\.\d+)?$/.test(project.expectedOutput);
+      const matchesOutput = numericExpected
+        ? output.trim().split(/\r?\n/).some((line) => line.trim() === project.expectedOutput)
+        : output.includes(project.expectedOutput);
+      const success = !result.timedOut && !result.logs.some((log) => log.type === 'error') && matchesOutput;
       setPassed(success);
       if (success && !completed.includes(project.id)) {
         const next = [...completed, project.id];
