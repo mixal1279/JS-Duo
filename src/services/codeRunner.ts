@@ -40,7 +40,7 @@ export function runJavaScriptInWorker(code: string, timeoutMs = 3000): Promise<R
         table: (...args) => add('log', ['[Tabela]', ...args]),
         clear: () => { logs.length = 0; send({ kind: 'clear' }); }
       };
-      for (const key of ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'importScripts', 'indexedDB', 'caches', 'BroadcastChannel']) {
+      for (const key of ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'importScripts', 'indexedDB', 'caches', 'BroadcastChannel', 'Worker', 'SharedWorker']) {
         try { Object.defineProperty(self, key, { value: undefined, configurable: false, writable: false }); } catch {}
       }
       try { Object.defineProperty(self, 'postMessage', { value: undefined, configurable: false, writable: false }); } catch {}
