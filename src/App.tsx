@@ -228,6 +228,20 @@ export const App: React.FC = () => {
     }
   };
 
+  // Load persisted community messages when an authenticated learner opens chat.
+  useEffect(() => {
+    if (!authSession || currentTab !== 'chat' || !cloudReady) return;
+    let cancelled = false;
+    cloudSyncService.loadChatMessages(authSession)
+      .then((messages) => {
+        if (!cancelled) setChatMessages(messages);
+      })
+      .catch((cause) => {
+        if (!cancelled) console.error('Nie udało się pobrać czatu online:', cause);
+      });
+    return () => { cancelled = true; };
+  }, [authSession, currentTab, cloudReady]);
+
   // Synchronize App Theme (Deep Night vs Light Mode)
   useEffect(() => {
     if (theme === 'light') {
@@ -588,6 +602,19 @@ export const App: React.FC = () => {
     codeSnippet?: string;
     linkedQuestionId?: number;
   }) => {
+    if (authSession) {
+      void (async () => {
+        try {
+          await cloudSyncService.sendChatMessage(authSession, msg);
+          const latestMessages = await cloudSyncService.loadChatMessages(authSession);
+          setChatMessages(latestMessages);
+        } catch (cause) {
+          const message = cause instanceof Error ? cause.message : 'Nie udało się wysłać wiadomości.';
+          window.alert(`Czat online: ${message}`);
+        }
+      })();
+      return;
+    }
     const newMsg: ChatMessage = {
       id: `m_${Date.now()}`,
       channelId: msg.channelId,
