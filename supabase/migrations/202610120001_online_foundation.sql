@@ -160,7 +160,7 @@ create policy "Duel participants can update duels" on public.duels
   for update to authenticated using (auth.uid() = challenger_id or auth.uid() = opponent_id)
   with check (auth.uid() = challenger_id or auth.uid() = opponent_id);
 
-create or replace view public.leaderboard_public as
+create or replace view public.leaderboard_public with (security_invoker = true) as
 select
   p.id,
   p.username,
