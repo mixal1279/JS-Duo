@@ -170,9 +170,39 @@ select
   p.username,
   p.display_name,
   p.avatar_emoji,
-  coalesce((up.stats ->> 'xp')::integer, 0) as xp,
-  coalesce((up.stats ->> 'level')::integer, 1) as level,
-  coalesce((up.stats ->> 'streak')::integer, 0) as streak
+  case when up.stats ->> 'xp' ~ '^[0-9]{1,9}
+from public.profiles p
+left join public.user_progress up on up.user_id = p.id;
+
+grant select on public.leaderboard_public to authenticated;
+grant select, update on public.profiles to authenticated;
+grant select, insert, update on public.user_progress to authenticated;
+grant select, insert, delete on public.chat_messages to authenticated;
+grant select, insert, update, delete on public.friend_requests to authenticated;
+grant select, insert, update on public.duels to authenticated;
+ then (up.stats ->> 'xp')::integer else 0 end as xp,
+  case when up.stats ->> 'level' ~ '^[0-9]{1,6}
+from public.profiles p
+left join public.user_progress up on up.user_id = p.id;
+
+grant select on public.leaderboard_public to authenticated;
+grant select, update on public.profiles to authenticated;
+grant select, insert, update on public.user_progress to authenticated;
+grant select, insert, delete on public.chat_messages to authenticated;
+grant select, insert, update, delete on public.friend_requests to authenticated;
+grant select, insert, update on public.duels to authenticated;
+ then greatest(1, (up.stats ->> 'level')::integer) else 1 end as level,
+  case when up.stats ->> 'streak' ~ '^[0-9]{1,6}
+from public.profiles p
+left join public.user_progress up on up.user_id = p.id;
+
+grant select on public.leaderboard_public to authenticated;
+grant select, update on public.profiles to authenticated;
+grant select, insert, update on public.user_progress to authenticated;
+grant select, insert, delete on public.chat_messages to authenticated;
+grant select, insert, update, delete on public.friend_requests to authenticated;
+grant select, insert, update on public.duels to authenticated;
+ then (up.stats ->> 'streak')::integer else 0 end as streak
 from public.profiles p
 left join public.user_progress up on up.user_id = p.id;
 
