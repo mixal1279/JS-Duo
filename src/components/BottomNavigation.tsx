@@ -27,7 +27,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#131F24]/95 backdrop-blur border-t border-[#2A373F] px-1 pt-1 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] select-none">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#131F24]/95 backdrop-blur border-t border-[#2A373F] px-1 pt-1 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] select-none overflow-x-auto">
       <div className="min-w-max max-w-xl mx-auto flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
