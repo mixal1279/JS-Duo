@@ -125,8 +125,10 @@ export const cloudSyncService = {
   },
 
   async refreshSession(session: AuthSession): Promise<AuthSession> {
-    if (!session.expires_at || session.expires_at > Math.floor(Date.now() / 1000) + 60) return session;
-    const result = await authRequest('token?grant_type=refresh_token', { refresh_token: session.refresh_token }) as AuthSession & { expires_in?: number };
+    // Supabase rotates refresh tokens; always prefer the newest locally persisted session.
+    const latest = this.getSession() || session;
+    if (!latest.expires_at || latest.expires_at > Math.floor(Date.now() / 1000) + 60) return latest;
+    const result = await authRequest('token?grant_type=refresh_token', { refresh_token: latest.refresh_token }) as AuthSession & { expires_in?: number };
     if (!result?.access_token || !result.refresh_token || !result.user) {
       this.saveSession(null);
       throw new CloudSyncError('Sesja wygasła. Zaloguj się ponownie.');
