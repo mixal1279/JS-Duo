@@ -29,6 +29,7 @@ import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
 import { enqueueQuestionsForReview, clearReviewSchedule } from './services/reviewService';
 import { ReviewView } from './components/ReviewView';
+import { ProjectLabView } from './components/ProjectLabView';
 
 export const App: React.FC = () => {
   // Application State
@@ -618,6 +619,20 @@ export const App: React.FC = () => {
 
                 {currentTab === 'playground' && (
                   <CodePlaygroundView />
+                )}
+
+                {currentTab === 'projects' && (
+                  <ProjectLabView
+                    onEarnXp={(xp) => {
+                      setStats((prev) => {
+                        const nextXp = prev.xp + xp;
+                        const updated = { ...prev, xp: nextXp, level: storageService.calculateLevel(nextXp).level };
+                        storageService.saveStats(updated);
+                        return updated;
+                      });
+                      setQuests((prev) => prev.map((quest) => quest.type === 'xp' ? { ...quest, current: Math.min(quest.target, quest.current + xp) } : quest));
+                    }}
+                  />
                 )}
 
                 {currentTab === 'review' && (
