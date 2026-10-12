@@ -39,5 +39,5 @@ Open the Konto tab to register or sign in. The first successful sign-in creates 
 
 - Review schedules and completed project IDs are included in the cloud snapshot; active editor text and review-session UI state remain local.
 - The leaderboard is loaded from the public view when a user signs in; league grouping still uses the app's existing client-side presentation.
-- Chat, friend request, and duel tables are created but their existing mock-data UI is not yet connected to them.
-- The progress snapshot is client-submitted. RLS prevents users from reading or writing another user's row, but it does not prove that XP was earned legitimately. Server-authoritative lesson grading/reward issuance is required before treating XP, rankings, or duel results as cheat-resistant.
+- Community chat messages are stored online for authenticated users. Reactions are currently client-side only and are not synchronized between devices. Friend requests and duels are not yet connected to the database.
+- The progress snapshot is client-submitted. RLS prevents users from reading or writing another user's private row, but it does not prove that XP was earned legitimately. Server-authoritative lesson grading/reward issuance is required before treating XP, rankings, or duel results as cheat-resistant.
