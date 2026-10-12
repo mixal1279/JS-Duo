@@ -40,7 +40,7 @@ create policy "Users can challenge another user" on public.duels for insert to a
 drop policy if exists "Duel participants can update duels" on public.duels;
 create policy "Duel participants can update duels" on public.duels for update to authenticated using (auth.uid() = challenger_id or auth.uid() = opponent_id) with check (auth.uid() = challenger_id or auth.uid() = opponent_id);
 
-create or replace view public.leaderboard_public as
+create or replace view public.leaderboard_public with (security_invoker = true) as
 select p.id, p.username, p.display_name, p.avatar_emoji,
   case when coalesce(up.stats ->> 'xp', '') ~ '^[0-9]{1,9}$' then (up.stats ->> 'xp')::integer else 0 end as xp,
   case when coalesce(up.stats ->> 'level', '') ~ '^[0-9]{1,6}$' then greatest(1, (up.stats ->> 'level')::integer) else 1 end as level,
