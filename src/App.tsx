@@ -29,9 +29,9 @@ import { StreakToast } from './components/StreakToast';
 import { NotificationBanner } from './components/NotificationBanner';
 import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
-import { enqueueQuestionsForReview, clearReviewSchedule } from './services/reviewService';
+import { enqueueQuestionsForReview, clearReviewSchedule, getReviewRecords, replaceReviewRecords } from './services/reviewService';
 import { ReviewView } from './components/ReviewView';
-import { ProjectLabView, clearProjectProgress } from './components/ProjectLabView';
+import { ProjectLabView, clearProjectProgress, getCompletedProjectIds, replaceCompletedProjectIds } from './components/ProjectLabView';
 
 export const App: React.FC = () => {
   // Application State
@@ -44,6 +44,7 @@ export const App: React.FC = () => {
   const [theme, setTheme] = useState<AppTheme>(() => storageService.getTheme());
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => cloudSyncService.getSession());
   const [cloudReady, setCloudReady] = useState(false);
+  const [cloudRevision, setCloudRevision] = useState(0);
   const [cloudState, setCloudState] = useState<'idle' | 'loading' | 'synced' | 'error' | 'offline'>('idle');
   const [cloudMessage, setCloudMessage] = useState('Zaloguj się, aby włączyć synchronizację między urządzeniami.');
 
@@ -121,9 +122,11 @@ export const App: React.FC = () => {
         if (remote) {
           setStats(remote.stats);
           setQuests(remote.quests);
+          replaceReviewRecords(remote.review_schedule || []);
+          replaceCompletedProjectIds(remote.completed_projects || []);
           setCloudMessage(`Ostatnia synchronizacja danych z ${new Date(remote.updated_at).toLocaleString()}.`);
         } else {
-          await cloudSyncService.saveProgress(authSession, stats, quests);
+          await cloudSyncService.saveProgress(authSession, stats, quests, getReviewRecords(), getCompletedProjectIds());
           if (cancelled) return;
           setCloudMessage('Zapisano lokalne postępy na koncie po raz pierwszy.');
         }
@@ -144,7 +147,7 @@ export const App: React.FC = () => {
     const timer = window.setTimeout(async () => {
       try {
         setCloudState('loading');
-        await cloudSyncService.saveProgress(authSession, stats, quests);
+        await cloudSyncService.saveProgress(authSession, stats, quests, getReviewRecords(), getCompletedProjectIds());
         setCloudState('synced');
         setCloudMessage(`Zapisano ${new Date().toLocaleTimeString()}.`);
       } catch (cause) {
@@ -153,7 +156,7 @@ export const App: React.FC = () => {
       }
     }, 1200);
     return () => window.clearTimeout(timer);
-  }, [authSession, cloudReady, stats, quests]);
+  }, [authSession, cloudReady, cloudRevision, stats, quests]);
 
   const handleManualCloudSync = async () => {
     if (!authSession) return;
@@ -326,6 +329,7 @@ export const App: React.FC = () => {
 
     // Queue lesson material for spaced repetition without overwriting existing schedules.
     enqueueQuestionsForReview(results.completedQuestionIds);
+    setCloudRevision((revision) => revision + 1);
 
     // Update Stats
     const newXp = stats.xp + results.earnedXp;
@@ -405,6 +409,7 @@ export const App: React.FC = () => {
   const handleResetProgress = () => {
     clearReviewSchedule();
     clearProjectProgress();
+    setCloudRevision((revision) => revision + 1);
     const cleanStats = storageService.resetAllProgress();
     setStats(cleanStats);
     setQuests(DEFAULT_DAILY_QUESTS);
@@ -713,6 +718,7 @@ export const App: React.FC = () => {
 
                 {currentTab === 'projects' && (
                   <ProjectLabView
+                    onProgressChange={() => setCloudRevision((revision) => revision + 1)}
                     onEarnXp={(xp) => {
                       setStats((prev) => {
                         const nextXp = prev.xp + xp;
@@ -738,6 +744,7 @@ export const App: React.FC = () => {
                 {currentTab === 'review' && (
                   <ReviewView
                     userStats={stats}
+                    onReviewChange={() => setCloudRevision((revision) => revision + 1)}
                     onEarnXp={(xp) => {
                       setStats((prev) => {
                         const nextXp = prev.xp + xp;
