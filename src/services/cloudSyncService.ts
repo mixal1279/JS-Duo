@@ -1,4 +1,4 @@
-import { DailyQuest, UserStats, LeaderboardUser } from '../types';
+import { ChatMessage, DailyQuest, LeaderboardUser, UserStats } from '../types';
 import { ReviewRecord } from './reviewService';
 
 const SESSION_KEY = 'js_duo_auth_session_v1';
@@ -139,6 +139,61 @@ export const cloudSyncService = {
     const next = { ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + (result.expires_in || 3600) };
     this.saveSession(next);
     return next;
+  },
+
+  async loadChatMessages(session: AuthSession): Promise<ChatMessage[]> {
+    const validSession = await this.refreshSession(session);
+    const rows = await restRequest(
+      'chat_messages?select=id,channel_id,sender_id,body,code_snippet,linked_question_id,reactions,created_at&order=created_at.desc&limit=100',
+      validSession
+    ) as Array<{ id: string; channel_id: string; sender_id: string; body: string; code_snippet?: string | null; linked_question_id?: number | null; reactions?: Record<string, number>; created_at: string }> | null;
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    const senderIds = [...new Set(rows.map((row) => row.sender_id))];
+    const profileRows = await restRequest(
+      `profiles?select=id,username,display_name,avatar_emoji&id=in.(${senderIds.join(',')})`,
+      validSession
+    ) as Array<{ id: string; username: string; display_name: string; avatar_emoji: string }> | null;
+    const profiles = new Map((profileRows || []).map((profile) => [profile.id, profile]));
+    return rows.reverse().map((row) => {
+      const profile = profiles.get(row.sender_id);
+      return {
+        id: row.id,
+        channelId: row.channel_id,
+        senderName: profile?.display_name || profile?.username || 'Programista',
+        senderAvatar: profile?.avatar_emoji || '🦉',
+        isCurrentUser: row.sender_id === validSession.user.id,
+        text: row.body,
+        codeSnippet: row.code_snippet || undefined,
+        linkedQuestionId: row.linked_question_id || undefined,
+        timestamp: new Date(row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        reactions: row.reactions || {},
+        userReactions: [],
+      };
+    });
+  },
+
+  async sendChatMessage(
+    session: AuthSession,
+    message: { channelId: string; text: string; codeSnippet?: string; linkedQuestionId?: number }
+  ): Promise<void> {
+    const validSession = await this.refreshSession(session);
+    const body = message.text.trim();
+    const code = message.codeSnippet?.trim();
+    if (!body && !code) throw new CloudSyncError('Wiadomość nie może być pusta.');
+    if (body.length > 1500) throw new CloudSyncError('Wiadomość może mieć maksymalnie 1500 znaków.');
+    if (code && code.length > 10000) throw new CloudSyncError('Fragment kodu może mieć maksymalnie 10 000 znaków.');
+    if (!['help', 'general', 'duels'].includes(message.channelId)) throw new CloudSyncError('Nieprawidłowy kanał czatu.');
+    await restRequest('chat_messages', validSession, {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        channel_id: message.channelId,
+        sender_id: validSession.user.id,
+        body: body || '[Fragment kodu]',
+        code_snippet: code || null,
+        linked_question_id: message.linkedQuestionId ?? null,
+      }),
+    });
   },
 
   async loadProgress(session: AuthSession): Promise<CloudProgress | null> {
