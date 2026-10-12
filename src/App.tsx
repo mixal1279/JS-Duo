@@ -620,6 +620,21 @@ export const App: React.FC = () => {
                   <CodePlaygroundView />
                 )}
 
+                {currentTab === 'review' && (
+                  <ReviewView
+                    userStats={stats}
+                    onEarnXp={(xp) => {
+                      setStats((prev) => {
+                        const nextXp = prev.xp + xp;
+                        const updated = { ...prev, xp: nextXp, level: storageService.calculateLevel(nextXp).level };
+                        storageService.saveStats(updated);
+                        return updated;
+                      });
+                      setQuests((prev) => prev.map((quest) => quest.type === 'xp' ? { ...quest, current: Math.min(quest.target, quest.current + xp) } : quest));
+                    }}
+                  />
+                )}
+
                 {currentTab === 'quests' && (
                   <DailyQuestsView
                     quests={quests}
