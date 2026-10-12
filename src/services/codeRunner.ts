@@ -48,7 +48,7 @@ export function runJavaScriptInWorker(code: string, timeoutMs = 3000): Promise<R
         try {
           const execute = new Function('console', '"use strict"; return (async () => {\\n' + ${JSON.stringify(code)} + '\\n})();');
           await execute(sandboxConsole);
-          await new Promise((resolve) => setTimeout(resolve, 150));
+          await new Promise((resolve) => setTimeout(resolve, 500));
           send({ kind: 'done' });
         } catch (error) {
           add('error', [error && error.stack ? error.stack : error]);
