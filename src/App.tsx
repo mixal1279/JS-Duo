@@ -917,6 +917,7 @@ export const App: React.FC = () => {
           lessonIndex={activeLesson.lessonIndex}
           userStats={stats}
           onClose={() => setActiveLesson(null)}
+          onHeartsChange={(hearts) => setStats((prev) => ({ ...prev, hearts }))}
           onComplete={handleCompleteLesson}
           onAskCommunity={handleAskCommunity}
         />
