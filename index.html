@@ -2,21 +2,59 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#131F24" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
     <title>JS Duo - Nauka JavaScript w stylu Duolingo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      html,body{margin:0;min-height:100%;background:#131f24;color:#fff;font-family:system-ui,sans-serif}
+      #startup-fallback{box-sizing:border-box;max-width:640px;margin:12vh auto;padding:24px;color:#fff}
+      #startup-fallback h1{font-size:24px} #startup-fallback p{line-height:1.5;color:#cbd5e1}
+      #startup-error{white-space:pre-wrap;overflow-wrap:anywhere;color:#fca5a5;font-size:13px}
+    </style>
   </head>
-  <body class="bg-[#131F24] text-white font-sans antialiased selection:bg-duo-green selection:text-black">
+  <body>
+    <div id="startup-fallback">
+      <h1>JS Duo uruchamia się…</h1>
+      <p id="startup-message">Jeśli ten ekran nie zniknie, aplikacja nie załadowała poprawnie skryptów.</p>
+      <p id="startup-error"></p>
+    </div>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        var message = document.getElementById('startup-message');
+        var detail = document.getElementById('startup-error');
+        function showError(text) {
+          message.textContent = 'Nie udało się uruchomić aplikacji. Szczegóły błędu:';
+          detail.textContent = String(text || 'Nieznany błąd');
+        }
+        window.addEventListener('error', function (event) {
+          showError(event.message || (event.target && (event.target.src || event.target.href)) || 'Błąd ładowania zasobu');
+        }, true);
+        window.addEventListener('unhandledrejection', function (event) {
+          showError(event.reason && (event.reason.stack || event.reason.message) || event.reason);
+        });
+        var started = Date.now();
+        var check = setInterval(function () {
+          var root = document.getElementById('root');
+          if (root && root.childNodes.length) {
+            document.getElementById('startup-fallback').style.display = 'none';
+            clearInterval(check);
+          } else if (Date.now() - started > 10000) {
+            message.textContent = 'Aplikacja nie wystartowała w ciągu 10 sekund. Skrypty mogły się nie załadować.';
+            clearInterval(check);
+          }
+        }, 250);
+      })();
+    </script>
+    <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>
