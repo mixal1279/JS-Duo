@@ -73,6 +73,10 @@ const PROJECTS: CodingProject[] = [
 ];
 
 const COMPLETED_KEY = 'js_duo_completed_projects_v1';
+
+export const clearProjectProgress = (): void => {
+  try { localStorage.removeItem(COMPLETED_KEY); } catch { /* no-op */ }
+};
 const readCompleted = (): string[] => {
   try {
     const parsed = JSON.parse(localStorage.getItem(COMPLETED_KEY) || '[]');
