@@ -92,9 +92,9 @@ const readCompleted = (): string[] => {
   } catch { return []; }
 };
 
-interface ProjectLabViewProps { onEarnXp: (xp: number) => void; }
+interface ProjectLabViewProps { onEarnXp: (xp: number) => void; onProgressChange?: () => void; }
 
-export const ProjectLabView: React.FC<ProjectLabViewProps> = ({ onEarnXp }) => {
+export const ProjectLabView: React.FC<ProjectLabViewProps> = ({ onEarnXp, onProgressChange }) => {
   const [projectIndex, setProjectIndex] = useState(0);
   const [code, setCode] = useState(PROJECTS[0].starterCode);
   const [logs, setLogs] = useState<RunnerLog[]>([]);
@@ -135,6 +135,7 @@ export const ProjectLabView: React.FC<ProjectLabViewProps> = ({ onEarnXp }) => {
         const next = [...completed, project.id];
         setCompleted(next);
         try { localStorage.setItem(COMPLETED_KEY, JSON.stringify(next)); } catch { /* local progress may be unavailable */ }
+        onProgressChange?.();
         onEarnXp(project.xp);
       }
     } finally {
