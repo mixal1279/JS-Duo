@@ -15,6 +15,7 @@ interface QuizModalProps {
   lessonIndex: number;
   userStats: UserStats;
   onClose: () => void;
+  onHeartsChange: (hearts: number) => void;
   onComplete: (results: {
     earnedXp: number;
     perfect: boolean;
@@ -32,6 +33,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   lessonIndex,
   userStats,
   onClose,
+  onHeartsChange,
   onComplete,
   onAskCommunity,
 }) => {
@@ -149,6 +151,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
 
       const nextHearts = Math.max(0, hearts - 1);
       setHearts(nextHearts);
+      onHeartsChange(nextHearts);
     }
   };
 
@@ -178,6 +181,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
 
   const handleFreeHeartRefill = () => {
     setHearts(1);
+    onHeartsChange(1);
     setOutOfHeartsModal(false);
     soundService.playClick();
   };
@@ -186,6 +190,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     if (currentGems >= 50) {
       setCurrentGems((g) => g - 50);
       setHearts(5);
+      onHeartsChange(5);
       setOutOfHeartsModal(false);
       soundService.playLevelUp();
     }
