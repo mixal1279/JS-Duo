@@ -1,4 +1,5 @@
 import { DailyQuest, UserStats } from '../types';
+import { ReviewRecord } from './reviewService';
 
 const SESSION_KEY = 'js_duo_auth_session_v1';
 const API_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
@@ -16,6 +17,8 @@ export interface CloudProgress {
   user_id: string;
   stats: UserStats;
   quests: DailyQuest[];
+  review_schedule: ReviewRecord[];
+  completed_projects: string[];
   updated_at: string;
 }
 
@@ -140,11 +143,11 @@ export const cloudSyncService = {
 
   async loadProgress(session: AuthSession): Promise<CloudProgress | null> {
     const validSession = await this.refreshSession(session);
-    const rows = await restRequest('user_progress?select=user_id,stats,quests,updated_at&limit=1', validSession) as CloudProgress[] | null;
+    const rows = await restRequest('user_progress?select=user_id,stats,quests,review_schedule,completed_projects,updated_at&limit=1', validSession) as CloudProgress[] | null;
     return Array.isArray(rows) && rows.length ? rows[0] : null;
   },
 
-  async saveProgress(session: AuthSession, stats: UserStats, quests: DailyQuest[]): Promise<void> {
+  async saveProgress(session: AuthSession, stats: UserStats, quests: DailyQuest[], reviewSchedule: ReviewRecord[] = [], completedProjects: string[] = []): Promise<void> {
     const validSession = await this.refreshSession(session);
     await restRequest('user_progress?on_conflict=user_id', validSession, {
       method: 'POST',
@@ -153,6 +156,8 @@ export const cloudSyncService = {
         user_id: validSession.user.id,
         stats,
         quests,
+        review_schedule: reviewSchedule,
+        completed_projects: completedProjects,
         updated_at: new Date().toISOString(),
       }),
     });
