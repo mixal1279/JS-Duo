@@ -27,6 +27,8 @@ import { StreakToast } from './components/StreakToast';
 import { NotificationBanner } from './components/NotificationBanner';
 import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
+import { enqueueQuestionsForReview, clearReviewSchedule } from './services/reviewService';
+import { ReviewView } from './components/ReviewView';
 
 export const App: React.FC = () => {
   // Application State
@@ -232,6 +234,9 @@ export const App: React.FC = () => {
     setActiveLesson(null);
     notificationService.recordActivity();
 
+    // Queue lesson material for spaced repetition without overwriting existing schedules.
+    enqueueQuestionsForReview(results.completedQuestionIds);
+
     // Update Stats
     const newXp = stats.xp + results.earnedXp;
     const newGems = stats.gems + (results.perfect ? 15 : 10);
@@ -308,6 +313,7 @@ export const App: React.FC = () => {
 
   // Reset progress and stats to clean 0
   const handleResetProgress = () => {
+    clearReviewSchedule();
     const cleanStats = storageService.resetAllProgress();
     setStats(cleanStats);
     setQuests(DEFAULT_DAILY_QUESTS);
