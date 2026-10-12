@@ -47,7 +47,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { id: 'playground' as TabType, label: 'Laboratorium JS', icon: Code2, shortcut: '2' },
     { id: 'review' as TabType, label: 'Powtórki inteligentne', icon: BookOpenCheck, shortcut: 'R' },
     { id: 'projects' as TabType, label: 'Projekty praktyczne', icon: Rocket, shortcut: 'P' },
-    { id: 'review' as TabType, label: 'Powtórki inteligentne', icon: BookOpenCheck, shortcut: 'R' },
     { id: 'quests' as TabType, label: 'Wyzwania', icon: Target, shortcut: '3' },
     { id: 'leaderboard' as TabType, label: 'Ranking', icon: Trophy, shortcut: '4' },
     { id: 'duels' as TabType, label: 'Pojedynki 1v1', icon: Swords, shortcut: '5' },
