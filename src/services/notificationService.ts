@@ -25,6 +25,7 @@ export interface MonitorOptions {
   getLastActiveDate?: () => string | undefined;
   getHearts?: () => number;
   getMaxHearts?: () => number;
+  getNotifyOnHeartsFull?: () => boolean;
   onPracticeRequested?: () => void;
 }
 
@@ -759,6 +760,7 @@ class NotificationService {
       getLastActiveDate = () => undefined,
       getHearts,
       getMaxHearts = () => 5,
+      getNotifyOnHeartsFull = () => true,
       onPracticeRequested,
     } = options;
 
@@ -790,7 +792,7 @@ class NotificationService {
       this.checkInactivityAndNotify(streak, tone);
 
       // 3. Hearts full check
-      if (getHearts) {
+      if (getHearts && getNotifyOnHeartsFull()) {
         this.checkHeartsRestoredAndNotify(getHearts(), getMaxHearts());
       }
     };
