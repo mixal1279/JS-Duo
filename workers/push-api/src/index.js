@@ -218,7 +218,7 @@ export default {
         const prefs = body.preferences && typeof body.preferences === "object" ? body.preferences : {};
         const preferences = {
           enabled: prefs.enabled !== false,
-          time: typeof prefs.time === "string" && /^(\d{2}):(\d{2})$/.test(prefs.time) ? prefs.time : "18:00",
+          time: isValidReminderTime(prefs.time) ? prefs.time : "18:00",
           tone: ["friendly", "coder", "strict"].includes(prefs.tone) ? prefs.tone : "friendly",
           streak: Math.max(0, Math.min(100000, Number(prefs.streak) || 0)),
           timezone: typeof prefs.timezone === "string" && prefs.timezone.length < 100 ? prefs.timezone : "UTC",
@@ -245,7 +245,7 @@ export default {
         record.preferences = {
           ...record.preferences,
           enabled: p.enabled !== false,
-          time: typeof p.time === "string" && /^(\d{2}):(\d{2})$/.test(p.time) ? p.time : record.preferences.time,
+          time: isValidReminderTime(p.time) ? p.time : record.preferences.time,
           tone: ["friendly", "coder", "strict"].includes(p.tone) ? p.tone : record.preferences.tone,
           streak: Math.max(0, Math.min(100000, Number(p.streak) || 0)),
           timezone: typeof p.timezone === "string" && p.timezone.length < 100 ? p.timezone : record.preferences.timezone,
