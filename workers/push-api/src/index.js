@@ -106,25 +106,32 @@ function localDateParts(date, timeZone) {
   return Object.fromEntries(parts.map(p => [p.type, p.value]));
 }
 
+function isValidReminderTime(value) {
+  return typeof value === "string" && /^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(value);
+}
+
 function dailyScheduleStatus(record, date) {
   const tz = typeof record.preferences.timezone === "string" ? record.preferences.timezone : "UTC";
   let local;
   try { local = localDateParts(date, tz); } catch { local = localDateParts(date, "UTC"); }
   const localDate = local.year + "-" + local.month + "-" + local.day;
   const currentMinute = Number(local.hour) * 60 + Number(local.minute);
-  const match = /^(\d{2}):(\d{2})$/.exec(record.preferences.time || "18:00");
-  const targetMinute = match ? Number(match[1]) * 60 + Number(match[2]) : 1080;
+  const targetTime = isValidReminderTime(record.preferences.time) ? record.preferences.time : "18:00";
+  const [targetHour, targetMinutePart] = targetTime.split(":").map(Number);
+  const targetMinute = targetHour * 60 + targetMinutePart;
   const delta = (currentMinute - targetMinute + 1440) % 1440;
   return {
     timezone: tz,
     localDate,
     localTime: local.hour + ":" + local.minute,
-    targetTime: match ? match[1] + ":" + match[2] : "18:00",
+    targetTime,
     eligible: delta < 15 && record.lastDailyDate !== localDate,
     alreadySentToday: record.lastDailyDate === localDate,
     minutesSinceTarget: delta,
   };
 }
+
+export { dailyScheduleStatus, isValidReminderTime };
 
 function dailyMessage(record) {
   const streak = Math.max(0, Number(record.preferences.streak) || 0);
