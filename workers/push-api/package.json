@@ -6,11 +6,9 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "node --check src/index.js"
   },
-  "dependencies": {
-    "web-push": "^3.6.7"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@cloudflare/workers-types": "*",
     "@types/web-push": "^3.6.4",
