@@ -1,0 +1,35 @@
+name: Validate Cloudflare Push Worker
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "workers/push-api/**"
+      - ".github/workflows/validate-push-worker.yml"
+  push:
+    branches: [fix/push-notifications-apk-workflow]
+    paths:
+      - "workers/push-api/**"
+      - ".github/workflows/validate-push-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/push-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install worker dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Validate Wrangler configuration
+        run: npx wrangler deploy --dry-run
