@@ -201,6 +201,7 @@ class NotificationService {
         }
 
         localStorage.setItem('js_duo_native_permission_granted', granted ? 'true' : 'false');
+        localStorage.setItem('js_duo_native_permission_state', granted ? 'granted' : 'denied');
 
         if (granted) {
           soundService.playLevelUp();
