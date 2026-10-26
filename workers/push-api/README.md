@@ -1,35 +1,32 @@
 # JS Duo Web Push API (Cloudflare Worker)
 
-This worker is the server-side part of real browser Web Push. It stores browser subscription endpoints in Cloudflare KV and sends encrypted notifications through the browser vendor's push service using VAPID. The browser must still opt in and register its service worker.
+Live endpoint: https://js-duo-push-api.michalkowalczyk489.workers.dev
+
+This Worker implements browser Web Push using the Web Crypto API and Cloudflare KV. It stores each browser subscription and preferences, sends encrypted Web Push messages with VAPID, and runs daily/inactivity reminders on a 15-minute Cron Trigger.
 
 ## Routes
 
 - `GET /health` — health check.
-- `GET /vapid-public-key` — returns the public VAPID key.
-- `POST /subscribe` — saves a Push API subscription.
-- `POST /unsubscribe` — removes a subscription by endpoint.
-- `POST /send-test` — sends a test to one stored endpoint; requires `Authorization: Bearer <ADMIN_TOKEN>`.
+- `GET /vapid-public-key` — public VAPID key for browser subscription.
+- `POST /subscribe` — saves a Push API subscription and reminder preferences.
+- `POST /preferences` — updates reminder settings for a registered subscription.
+- `POST /activity` — updates the last activity timestamp, resetting the inactivity timer.
+- `POST /unsubscribe` — removes a subscription.
+- `POST /test` — sends one test notification to a registered endpoint; rate limited to one per minute.
+- `POST /send-test` — administrative test route requiring `Authorization: Bearer <ADMIN_TOKEN>`.
 
-The admin token is deliberately required for test sending; do not expose it in frontend code. This endpoint is for operator-side verification only. Production event delivery should be called from trusted server-side application logic, never by embedding the admin token in the browser.
+## Cloudflare configuration
 
-## Deploy
+- KV binding: `PUSH_SUBSCRIPTIONS`
+- Secrets: `VAPID_PRIVATE_JWK`, `ADMIN_TOKEN`
+- Non-secret bindings: `VAPID_PUBLIC_KEY`, `VAPID_SUBJECT`, `ALLOWED_ORIGIN`
+- Cron: `*/15 * * * *`
 
-1. Create a Cloudflare KV namespace named `JS_DUO_PUSH_SUBSCRIPTIONS`.
-2. Replace `REPLACE_WITH_KV_NAMESPACE_ID` in `wrangler.toml` with its namespace ID.
-3. From this directory run `npm install`.
-4. Generate a VAPID key pair with `npx web-push generate-vapid-keys`. Do not commit the private key.
-5. Set Worker secrets:
-   - `npx wrangler secret put VAPID_PUBLIC_KEY`
-   - `npx wrangler secret put VAPID_PRIVATE_KEY`
-   - `npx wrangler secret put VAPID_SUBJECT` (a `mailto:` contact)
-   - `npx wrangler secret put ADMIN_TOKEN` (a long random secret)
-6. Deploy with `npm run deploy`.
-7. Set the frontend's `VITE_PUSH_API_URL` to the deployed Worker URL and wire the opt-in flow to fetch `/vapid-public-key`, call `PushManager.subscribe()`, and POST the resulting JSON to `/subscribe`.
+Never put the VAPID private key or admin token in frontend code, Vite variables, or Git. A browser must explicitly grant notification permission before the app can create a subscription. The current client syncs preferences when saved and syncs activity when recorded.
 
-## Security and limitations
+## Notes
 
-- Only the GitHub Pages origin configured in `ALLOWED_ORIGIN` is accepted for browser requests. CORS is not authentication; endpoints must still validate input.
-- The Worker does not expose a public broadcast endpoint.
-- A browser subscription only works for that browser profile/device and must be explicitly approved by the user.
-- This Worker stores subscriptions but does not yet schedule JS Duo's daily or inactivity reminders. The app must send a trusted event to a server-side scheduler for those notifications to arrive after the app/browser is closed.
-- Keep VAPID private key and admin token only in Worker secrets. Never put them in Vite variables or the Git repository.
+- The app origin is restricted to `https://mixal1279.github.io`; the app is served under `/JS-Duo/`.
+- KV currently stores subscription data for up to one year.
+- Scheduled reminders are sent only for subscriptions with reminders enabled. Inactivity alerts fire once after 24 hours without activity and reset when the app syncs new activity.
+- To remove a browser subscription, use the app's future unsubscribe control or call `POST /unsubscribe` with its endpoint.
