@@ -43,6 +43,8 @@ class NotificationService {
   private swRegistration: ServiceWorkerRegistration | null = null;
   private practiceRequestedListeners: Array<() => void> = [];
   private previousHeartsCount: number | null = null;
+  private nativeAlarmRevision = 0;
+  private nativeAlarmQueue: Promise<void> = Promise.resolve();
 
   private isCapacitor = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
@@ -533,38 +535,50 @@ class NotificationService {
   async scheduleNativeBackgroundAlarms(timeStr: string, streak: number, tone: NotificationConfig['tone']) {
     if (!this.isCapacitor || !Capacitor.isPluginAvailable('LocalNotifications')) return;
 
-    try {
-      // Cancel only reminders managed here; preserve unrelated app notifications.
-      const pending = await LocalNotifications.getPending();
-      const managed = pending.notifications.filter((item) => item.id === 1001 || item.id === 1002);
-      if (managed.length > 0) await LocalNotifications.cancel({ notifications: managed });
+    const revision = ++this.nativeAlarmRevision;
+    const operation = async () => {
+      // A later disable/re-enable action supersedes stale queued scheduling work.
+      if (revision !== this.nativeAlarmRevision) return;
 
-      const next = this.getNextReminderTime(timeStr);
-      const msg = this.getDailyReminderMessage(streak, tone);
-      const notifications: any[] = [{
-        title: msg.title,
-        body: msg.body,
-        id: 1001,
-        schedule: { on: { hour: next.date.getHours(), minute: next.date.getMinutes() } },
-        extra: { type: 'daily' },
-      }];
+      try {
+        // Cancel only reminders managed here; preserve unrelated app notifications.
+        const pending = await LocalNotifications.getPending();
+        const managed = pending.notifications.filter((item) => item.id === 1001 || item.id === 1002);
+        if (managed.length > 0) await LocalNotifications.cancel({ notifications: managed });
 
-      // Anchor the inactivity alarm to the actual last-activity timestamp.
-      const inactivityAt = new Date(this.getLastLoginTime() + INACTIVITY_THRESHOLD_MS);
-      if (inactivityAt.getTime() > Date.now()) {
-        notifications.push({
-          title: '⚠️ Twój streak (' + streak + ' dni) wisi na włosku!',
-          body: 'Minęły 24 godziny od ostatniej nauki w JS Duo! Rozwiąż 1 lekcję i uratuj passę.',
-          id: 1002,
-          schedule: { at: inactivityAt },
-          extra: { type: 'inactivity' },
-        });
+        // Do not let an older schedule operation recreate alarms after a newer disable.
+        if (revision !== this.nativeAlarmRevision) return;
+
+        const next = this.getNextReminderTime(timeStr);
+        const msg = this.getDailyReminderMessage(streak, tone);
+        const notifications: any[] = [{
+          title: msg.title,
+          body: msg.body,
+          id: 1001,
+          schedule: { on: { hour: next.date.getHours(), minute: next.date.getMinutes() } },
+          extra: { type: 'daily' },
+        }];
+
+        // Anchor the inactivity alarm to the actual last-activity timestamp.
+        const inactivityAt = new Date(this.getLastLoginTime() + INACTIVITY_THRESHOLD_MS);
+        if (inactivityAt.getTime() > Date.now()) {
+          notifications.push({
+            title: '⚠️ Twój streak (' + streak + ' dni) wisi na włosku!',
+            body: 'Minęły 24 godziny od ostatniej nauki w JS Duo! Rozwiąż 1 lekcję i uratuj passę.',
+            id: 1002,
+            schedule: { at: inactivityAt },
+            extra: { type: 'inactivity' },
+          });
+        }
+        await LocalNotifications.schedule({ notifications });
+        console.log('Capacitor native background alarms successfully scheduled for:', next.date);
+      } catch (e) {
+        console.warn('Error scheduling Capacitor native alarms:', e);
       }
-      await LocalNotifications.schedule({ notifications });
-      console.log('Capacitor native background alarms successfully scheduled for:', next.date);
-    } catch (e) {
-      console.warn('Error scheduling Capacitor native alarms:', e);
-    }
+    };
+
+    this.nativeAlarmQueue = this.nativeAlarmQueue.then(operation, operation);
+    await this.nativeAlarmQueue;
   }
 
   /**
@@ -573,15 +587,21 @@ class NotificationService {
   async cancelNativeBackgroundAlarms(): Promise<void> {
     if (!this.isCapacitor || !Capacitor.isPluginAvailable('LocalNotifications')) return;
 
-    try {
-      const pending = await LocalNotifications.getPending();
-      const managed = pending.notifications.filter((item) => item.id === 1001 || item.id === 1002);
-      if (managed.length > 0) {
-        await LocalNotifications.cancel({ notifications: managed });
+    ++this.nativeAlarmRevision;
+    const operation = async () => {
+      try {
+        const pending = await LocalNotifications.getPending();
+        const managed = pending.notifications.filter((item) => item.id === 1001 || item.id === 1002);
+        if (managed.length > 0) {
+          await LocalNotifications.cancel({ notifications: managed });
+        }
+      } catch (e) {
+        console.warn('Error cancelling Capacitor native alarms:', e);
       }
-    } catch (e) {
-      console.warn('Error cancelling Capacitor native alarms:', e);
-    }
+    };
+
+    this.nativeAlarmQueue = this.nativeAlarmQueue.then(operation, operation);
+    await this.nativeAlarmQueue;
   }
 
   // Calculate next scheduled reminder time string and date object
@@ -733,26 +753,33 @@ class NotificationService {
 
     const wasLow = this.previousHeartsCount < maxHearts;
     const isNowFull = currentHearts >= maxHearts;
-    this.previousHeartsCount = currentHearts;
 
-    if (wasLow && isNowFull) {
-      const lastSent = parseInt(localStorage.getItem(STORAGE_LAST_HEARTS_RESTORED_KEY) || '0', 10);
-      // Throttle to at most once per 2 hours
-      if (Date.now() - lastSent > 2 * 60 * 60 * 1000) {
-        const msg = this.getHeartsRestoredMessage();
-        const sent = await this.sendPushNotification(msg.title, {
-          body: msg.body,
-          icon: this.getAssetUrl('favicon.svg'),
-          tag: 'js-duo-hearts-full',
-          type: 'hearts',
-        });
-        if (sent) {
-          localStorage.setItem(STORAGE_LAST_HEARTS_RESTORED_KEY, Date.now().toString());
-        }
-        return sent;
-      }
+    if (!wasLow || !isNowFull) {
+      this.previousHeartsCount = currentHearts;
+      return false;
     }
-    return false;
+
+    const lastSent = parseInt(localStorage.getItem(STORAGE_LAST_HEARTS_RESTORED_KEY) || '0', 10);
+    // Throttle to at most once per 2 hours
+    if (Date.now() - lastSent <= 2 * 60 * 60 * 1000) {
+      this.previousHeartsCount = currentHearts;
+      return false;
+    }
+
+    const msg = this.getHeartsRestoredMessage();
+    const sent = await this.sendPushNotification(msg.title, {
+      body: msg.body,
+      icon: this.getAssetUrl('favicon.svg'),
+      tag: 'js-duo-hearts-full',
+      type: 'hearts',
+    });
+
+    // Keep the previous count low when dispatch fails so the next monitor tick retries.
+    if (sent) {
+      localStorage.setItem(STORAGE_LAST_HEARTS_RESTORED_KEY, Date.now().toString());
+      this.previousHeartsCount = currentHearts;
+    }
+    return sent;
   }
 
   /**
