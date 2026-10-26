@@ -132,6 +132,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     if (enabled) {
       notificationService.scheduleNativeBackgroundAlarms(time, streak, tone);
     }
+    void notificationService.configureWebPush(time, streak, tone, enabled);
     onSave({
       enabled,
       time,
