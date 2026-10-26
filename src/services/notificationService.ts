@@ -2,6 +2,7 @@ import { NotificationConfig } from '../types';
 import { soundService } from './soundService';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { registerWebPush, syncWebPushActivity, syncWebPushPreferences } from './webPushService';
 
 export interface InactivityCheckResult {
   notified: boolean;
@@ -130,6 +131,19 @@ class NotificationService {
     };
   }
 
+  // Synchronize browser push scheduling preferences with the remote worker
+
+  async configureWebPush(time: string, streak: number, tone: NotificationConfig['tone'], enabled: boolean): Promise<void> {
+    if (this.isCapacitor || typeof window === 'undefined' || Notification.permission !== 'granted') return;
+    await syncWebPushPreferences({
+      enabled,
+      time,
+      streak,
+      tone,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    });
+  }
+
   // Trigger practice requested (e.g. from in-app toast click)
   triggerPracticeRequested() {
     this.practiceRequestedListeners.forEach((l) => l());
@@ -244,6 +258,7 @@ class NotificationService {
       }
 
       if (result === 'granted') {
+        await registerWebPush();
         soundService.playLevelUp();
         // Send instant confirmation notification
         await this.sendPushNotification('🎉 Powiadomienia włączone!', {
@@ -274,6 +289,7 @@ class NotificationService {
     if (typeof window === 'undefined') return;
     const ts = customTimestamp !== undefined ? customTimestamp : Date.now();
     localStorage.setItem(STORAGE_LAST_LOGIN_KEY, ts.toString());
+    if (!this.isCapacitor) void syncWebPushActivity(ts);
   }
 
   // Get timestamp of the last logged activity
