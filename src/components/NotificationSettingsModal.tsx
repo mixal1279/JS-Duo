@@ -161,12 +161,12 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                <span>Powiadomienia Push</span>
+                <span>Powiadomienia systemowe</span>
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-duo-green/20 text-duo-green border border-duo-green/40">
-                  Systemowe Push & App
+                  Android + przeglądarka
                 </span>
               </h3>
-              <p className="text-xs text-gray-400">Powiadomienia na pulpicie i telefonie nad innymi aplikacjami</p>
+              <p className="text-xs text-gray-400">Android: przypomnienia działają także po zamknięciu aplikacji. Przeglądarka: powiadomienia w czasie działania strony; push w tle wymaga skonfigurowanego serwera.</p>
             </div>
           </div>
           <button
