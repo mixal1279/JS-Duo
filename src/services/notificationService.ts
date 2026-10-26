@@ -350,8 +350,8 @@ class NotificationService {
   ): Promise<boolean> {
     const notifOptions: NotificationOptions = {
       body: options?.body || '',
-      icon: options?.icon || this.getAssetUrl('favicon.svg')',
-      badge: options?.badge || this.getAssetUrl('favicon.svg')',
+      icon: options?.icon || this.getAssetUrl('favicon.svg'),
+      badge: options?.badge || this.getAssetUrl('favicon.svg'),
       tag: options?.tag || 'js-duo-notification',
       requireInteraction: options?.requireInteraction ?? true,
       data: options?.data || { url: typeof window !== 'undefined' ? window.location.href : '/' },
