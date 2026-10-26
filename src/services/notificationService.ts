@@ -612,6 +612,10 @@ class NotificationService {
       }
     }
 
+    // Avoid retrying every 30 seconds while system notifications are not permitted.
+    // The next monitor tick will retry after the user grants permission.
+    if (!this.checkPermission()) return false;
+
     // Send daily reminder
     const msg = this.getDailyReminderMessage(streak, tone);
     const sent = await this.sendPushNotification(msg.title, {
