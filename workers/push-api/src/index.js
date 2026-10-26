@@ -105,6 +105,27 @@ function localDateParts(date, timeZone) {
   }).formatToParts(date);
   return Object.fromEntries(parts.map(p => [p.type, p.value]));
 }
+
+function dailyScheduleStatus(record, date) {
+  const tz = typeof record.preferences.timezone === "string" ? record.preferences.timezone : "UTC";
+  let local;
+  try { local = localDateParts(date, tz); } catch { local = localDateParts(date, "UTC"); }
+  const localDate = local.year + "-" + local.month + "-" + local.day;
+  const currentMinute = Number(local.hour) * 60 + Number(local.minute);
+  const match = /^(\\d{2}):(\\d{2})$/.exec(record.preferences.time || "18:00");
+  const targetMinute = match ? Number(match[1]) * 60 + Number(match[2]) : 1080;
+  const delta = (currentMinute - targetMinute + 1440) % 1440;
+  return {
+    timezone: tz,
+    localDate,
+    localTime: local.hour + ":" + local.minute,
+    targetTime: match ? match[1] + ":" + match[2] : "18:00",
+    eligible: delta < 15 && record.lastDailyDate !== localDate,
+    alreadySentToday: record.lastDailyDate === localDate,
+    minutesSinceTarget: delta,
+  };
+}
+
 function dailyMessage(record) {
   const streak = Math.max(0, Number(record.preferences.streak) || 0);
   const tone = record.preferences.tone;
@@ -145,15 +166,9 @@ async function scheduledRun(env) {
       try { record = JSON.parse(raw); } catch { await env.PUSH_SUBSCRIPTIONS.delete(item.name); continue; }
       if (!record.subscription || !record.preferences || !record.preferences.enabled) continue;
       const now = new Date();
-      const tz = typeof record.preferences.timezone === "string" ? record.preferences.timezone : "UTC";
-      let local;
-      try { local = localDateParts(now, tz); } catch { local = localDateParts(now, "UTC"); }
-      const localDate = local.year + "-" + local.month + "-" + local.day;
-      const currentMinute = Number(local.hour) * 60 + Number(local.minute);
-      const match = /^(\d{2}):(\d{2})$/.exec(record.preferences.time || "18:00");
-      const targetMinute = match ? Number(match[1]) * 60 + Number(match[2]) : 1080;
-      const delta = (currentMinute - targetMinute + 1440) % 1440;
-      if (delta < 15 && record.lastDailyDate !== localDate) {
+      const dailyStatus = dailyScheduleStatus(record, now);
+      const localDate = dailyStatus.localDate;
+      if (dailyStatus.eligible) {
         const sent = await deliver(env, item.name, record, { ...dailyMessage(record), tag: "js-duo-daily-reminder" });
         if (sent) {
           record.lastDailyDate = localDate;
@@ -258,6 +273,37 @@ export default {
         record.lastTestAt = Date.now();
         await env.PUSH_SUBSCRIPTIONS.put(key, JSON.stringify(record), { expirationTtl: 31536000 });
         return json({ ok: true }, 200, headers);
+      }
+      if (url.pathname === "/schedule-test") {
+        if (!admin(request, env)) return json({ error: "Unauthorized" }, 401, headers);
+        if (typeof body.endpoint !== "string") return json({ error: "endpoint is required" }, 400, headers);
+        const key = await keyFor(body.endpoint);
+        const raw = await env.PUSH_SUBSCRIPTIONS.get(key);
+        if (!raw) return json({ error: "Subscription not found" }, 404, headers);
+        const record = JSON.parse(raw);
+        if (!record.subscription || !record.preferences || !record.preferences.enabled) {
+          return json({ error: "Subscription is missing or reminders are disabled" }, 409, headers);
+        }
+        let simulatedAt = new Date();
+        if (body.at !== undefined) {
+          if (typeof body.at !== "string" || !Number.isFinite(Date.parse(body.at))) {
+            return json({ error: "at must be a valid ISO date-time string" }, 400, headers);
+          }
+          simulatedAt = new Date(body.at);
+        }
+        const status = dailyScheduleStatus(record, simulatedAt);
+        const shouldSend = body.send === true;
+        if (shouldSend && !status.eligible) {
+          return json({ ok: false, status, sent: false, reason: "Daily reminder is not eligible at the simulated time" }, 200, headers);
+        }
+        if (!shouldSend) return json({ ok: true, mode: "preview", status, sent: false, stateChanged: false }, 200, headers);
+        const sent = await deliver(env, key, record, {
+          ...dailyMessage(record),
+          tag: "js-duo-daily-reminder-test",
+        });
+        if (!sent) return json({ ok: false, status, sent: false, stateChanged: false, error: "Push delivery failed" }, 502, headers);
+        // Test mode intentionally does not update lastDailyDate or any other subscription state.
+        return json({ ok: true, mode: "send", status, sent: true, stateChanged: false }, 200, headers);
       }
       if (url.pathname === "/send-test") {
         if (!admin(request, env)) return json({ error: "Unauthorized" }, 401, headers);
