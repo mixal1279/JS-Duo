@@ -567,6 +567,23 @@ class NotificationService {
     }
   }
 
+  /**
+   * Cancel only the reminders owned by this service. Other app notifications are preserved.
+   */
+  async cancelNativeBackgroundAlarms(): Promise<void> {
+    if (!this.isCapacitor || !Capacitor.isPluginAvailable('LocalNotifications')) return;
+
+    try {
+      const pending = await LocalNotifications.getPending();
+      const managed = pending.notifications.filter((item) => item.id === 1001 || item.id === 1002);
+      if (managed.length > 0) {
+        await LocalNotifications.cancel({ notifications: managed });
+      }
+    } catch (e) {
+      console.warn('Error cancelling Capacitor native alarms:', e);
+    }
+  }
+
   // Calculate next scheduled reminder time string and date object
   getNextReminderTime(timeStr: string = '18:00'): { label: string; date: Date } {
     const [hours, minutes] = (timeStr || '18:00').split(':').map((v) => parseInt(v, 10) || 0);
@@ -671,7 +688,7 @@ class NotificationService {
 
     if (force || (isOver24h && notSpammedRecently)) {
       const msg = this.get24HourInactivityMessage(streak, tone);
-      await this.sendPushNotification(msg.title, {
+      const sent = await this.sendPushNotification(msg.title, {
         body: msg.body,
         icon: this.getAssetUrl('favicon.svg'),
         tag: 'js-duo-24h-inactivity-reminder',
@@ -679,11 +696,16 @@ class NotificationService {
         type: 'inactivity',
       });
 
-      this.setLastInactivityNotificationTime(Date.now());
+      // Keep the retry window open if the OS rejected the notification.
+      if (sent) {
+        this.setLastInactivityNotificationTime(Date.now());
+      }
 
       return {
-        notified: true,
-        reason: force ? 'Wysłano wymuszone powiadomienie testowe' : 'Wysłano powiadomienie po 24h nieobecności',
+        notified: sent,
+        reason: sent
+          ? (force ? 'Wysłano wymuszone powiadomienie testowe' : 'Wysłano powiadomienie po 24h nieobecności')
+          : 'Nie udało się wyświetlić powiadomienia; ponowimy próbę',
         hoursInactive,
       };
     }
@@ -718,14 +740,16 @@ class NotificationService {
       // Throttle to at most once per 2 hours
       if (Date.now() - lastSent > 2 * 60 * 60 * 1000) {
         const msg = this.getHeartsRestoredMessage();
-        await this.sendPushNotification(msg.title, {
+        const sent = await this.sendPushNotification(msg.title, {
           body: msg.body,
           icon: this.getAssetUrl('favicon.svg'),
           tag: 'js-duo-hearts-full',
           type: 'hearts',
         });
-        localStorage.setItem(STORAGE_LAST_HEARTS_RESTORED_KEY, Date.now().toString());
-        return true;
+        if (sent) {
+          localStorage.setItem(STORAGE_LAST_HEARTS_RESTORED_KEY, Date.now().toString());
+        }
+        return sent;
       }
     }
     return false;
@@ -798,7 +822,11 @@ class NotificationService {
     let lastScheduledKey = '';
 
     const runChecks = () => {
-      if (!getEnabled()) return;
+      if (!getEnabled()) {
+        // Disabling reminders must also remove alarms already queued by Android.
+        if (this.isCapacitor) void this.cancelNativeBackgroundAlarms();
+        return;
+      }
 
       const streak = getStreak();
       const tone = getTone();
