@@ -114,6 +114,7 @@ export const App: React.FC = () => {
       getLastActiveDate: () => stats.lastActiveDate,
       getHearts: () => stats.hearts,
       getMaxHearts: () => stats.maxHearts,
+      getNotifyOnHeartsFull: () => notifConfig.notifyOnHeartsFull !== false,
       onPracticeRequested: () => {
         setCurrentTab('path');
         window.focus();
@@ -123,19 +124,19 @@ export const App: React.FC = () => {
     return () => {
       cleanupMonitor();
     };
-  }, [stats.streak, stats.lastActiveDate, stats.hearts, stats.maxHearts, notifConfig.tone, notifConfig.enabled, notifConfig.time]);
+  }, [stats.streak, stats.lastActiveDate, stats.hearts, stats.maxHearts, notifConfig.tone, notifConfig.enabled, notifConfig.time, notifConfig.notifyOnHeartsFull]);
 
   // Automatyczne sprawdzanie i synchronizacja passy (reset, jeśli ominięto choć jeden dzień)
   useEffect(() => {
     const checkStreak = () => {
       setStats((prev) => {
         const { stats: updatedStats, wasReset, freezeUsed } = storageService.validateAndSyncStreak(prev);
-        if (wasReset && prev.streak > 0) {
+        if (notifConfig.enabled && wasReset && prev.streak > 0) {
           notificationService.triggerNotification(
             '⚠️ Twoja passa wygasła!',
             `Ominięto dzień bez lekcji w JS Duo. Passa (${prev.streak} dni) została zresetowana. Ukończ lekcję dzisiaj, aby zacząć od nowa!`
           );
-        } else if (freezeUsed) {
+        } else if (notifConfig.enabled && notifConfig.notifyOnStreakFreeze !== false && freezeUsed) {
           notificationService.triggerNotification(
             '🛡️ Zamrożenie passy aktywne!',
             'Twoje zamrożenie uratowało Twój streak przed resetem! Wykonaj dzisiejszą lekcję, by kontynuować naukę.'
@@ -159,7 +160,7 @@ export const App: React.FC = () => {
       window.removeEventListener('focus', checkStreak);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [notifConfig.enabled, notifConfig.notifyOnStreakFreeze]);
 
   // Toast informujący o passie (streak) tuż po zalogowaniu / uruchomieniu aplikacji (gdy passa > 0)
   useEffect(() => {
