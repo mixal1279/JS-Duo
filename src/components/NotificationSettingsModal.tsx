@@ -176,7 +176,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                   Android + przeglądarka
                 </span>
               </h3>
-              <p className="text-xs text-gray-400">Android: przypomnienia działają także po zamknięciu aplikacji. Przeglądarka: powiadomienia w czasie działania strony; push w tle wymaga skonfigurowanego serwera.</p>
+              <p className="text-xs text-gray-400">Android: przypomnienia działają także po zamknięciu aplikacji. Przeglądarka: po zgodzie na Push zdalne przypomnienia mogą docierać także po zamknięciu strony.</p>
             </div>
           </div>
           <button
