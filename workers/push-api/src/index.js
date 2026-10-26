@@ -107,7 +107,7 @@ function localDateParts(date, timeZone) {
 }
 
 function isValidReminderTime(value) {
-  return typeof value === "string" && /^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(value);
+  return typeof value === "string" && /^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
 }
 
 function dailyScheduleStatus(record, date) {
