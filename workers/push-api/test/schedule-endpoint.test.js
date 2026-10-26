@@ -147,3 +147,55 @@ test("eligible send mode delivers a push but leaves lastDailyDate and KV state u
   assert.equal(f.store.get(f.kvKey), before);
   assert.equal(JSON.parse(f.store.get(f.kvKey)).lastDailyDate, "");
 });
+
+test("schedule-test accepts an authenticated request without an Origin header", async () => {
+  const f = await fixture();
+  const response = await worker.fetch(new Request("https://worker.example.test/schedule-test", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + ADMIN_TOKEN, "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint: f.endpoint, at: "2026-10-26T17:05:00Z" }),
+  }), f.env);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).mode, "preview");
+});
+
+test("schedule-test rejects ambiguous or invalid simulated timestamps", async () => {
+  const f = await fixture();
+  for (const at of [
+    "2026-10-26",
+    "2026-10-26T17:05:00",
+    "2026-02-30T17:05:00Z",
+    "2026-10-26T25:05:00Z",
+    "2026-10-26T17:05:00+15:00",
+  ]) {
+    const response = await requestSchedule(f, { at });
+    assert.equal(response.status, 400, at);
+  }
+});
+
+test("test send does not delete a subscription when push service returns 410", async (t) => {
+  const f = await fixture();
+  const before = f.store.get(f.kvKey);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(null, { status: 410 });
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const response = await requestSchedule(f, {
+    at: "2026-10-26T17:05:00Z",
+    send: true,
+  });
+  assert.equal(response.status, 502);
+  assert.equal(f.store.get(f.kvKey), before);
+});
+
+test("subscription routes reject invalid reminder times instead of saving them", async () => {
+  const f = await fixture();
+  const before = f.store.get(f.kvKey);
+  const response = await worker.fetch(new Request("https://worker.example.test/preferences", {
+    method: "POST",
+    headers: { Origin: ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint: f.endpoint, preferences: { time: "25:90" } }),
+  }), f.env);
+  assert.equal(response.status, 400);
+  assert.equal(f.store.get(f.kvKey), before);
+});
