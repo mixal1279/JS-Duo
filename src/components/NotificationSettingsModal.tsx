@@ -139,7 +139,10 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const handleSave = () => {
     soundService.playClick();
     if (enabled) {
-      notificationService.scheduleNativeBackgroundAlarms(time, streak, tone);
+      void notificationService.scheduleNativeBackgroundAlarms(time, streak, tone);
+    } else {
+      // Remove Android alarms immediately when the user disables reminders.
+      void notificationService.cancelNativeBackgroundAlarms();
     }
     void notificationService.configureWebPush(time, streak, tone, enabled);
     onSave({
