@@ -82,7 +82,10 @@ test("preview mode does not send a push or mutate subscription state", async (t)
   const before = f.store.get(f.kvKey);
   const originalFetch = globalThis.fetch;
   let fetchCalls = 0;
-  globalThis.fetch = async (...args) => { fetchCalls++; return originalFetch(...args); };
+  globalThis.fetch = async () => {
+    fetchCalls++;
+    throw new Error("Unexpected outbound fetch");
+  };
   t.after(() => { globalThis.fetch = originalFetch; });
 
   const response = await requestSchedule(f, {
@@ -103,7 +106,10 @@ test("send mode refuses an ineligible time without attempting delivery", async (
   const f = await fixture({ lastDailyDate: "2026-10-26" });
   const originalFetch = globalThis.fetch;
   let fetchCalls = 0;
-  globalThis.fetch = async (...args) => { fetchCalls++; return originalFetch(...args); };
+  globalThis.fetch = async () => {
+    fetchCalls++;
+    throw new Error("Unexpected outbound fetch");
+  };
   t.after(() => { globalThis.fetch = originalFetch; });
 
   const before = f.store.get(f.kvKey);
