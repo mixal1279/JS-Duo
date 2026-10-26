@@ -31,6 +31,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: TypeScript validation
         run: npm run typecheck
+      - name: Daily reminder schedule unit tests
+        run: npm test
       - name: Validate Wrangler configuration
         run: npx wrangler deploy --dry-run
       - name: Smoke test deployed Worker endpoints
