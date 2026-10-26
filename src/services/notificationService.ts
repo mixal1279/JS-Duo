@@ -720,10 +720,21 @@ class NotificationService {
    */
   async simulate24HourInactivity(streak: number, tone: NotificationConfig['tone'] = 'friendly'): Promise<InactivityCheckResult> {
     const simulatedPastTime = Date.now() - 25 * 60 * 60 * 1000;
-    this.recordActivity(simulatedPastTime);
-    this.setLastInactivityNotificationTime(0);
+    const originalLastLogin = localStorage.getItem(STORAGE_LAST_LOGIN_KEY);
+    const originalLastNotification = localStorage.getItem(STORAGE_LAST_NOTIF_SENT_KEY);
 
-    return this.checkInactivityAndNotify(streak, tone, true);
+    try {
+      this.recordActivity(simulatedPastTime);
+      this.setLastInactivityNotificationTime(0);
+      return await this.checkInactivityAndNotify(streak, tone, true);
+    } finally {
+      // A test button must not change the user's real inactivity timers.
+      if (originalLastLogin === null) localStorage.removeItem(STORAGE_LAST_LOGIN_KEY);
+      else localStorage.setItem(STORAGE_LAST_LOGIN_KEY, originalLastLogin);
+
+      if (originalLastNotification === null) localStorage.removeItem(STORAGE_LAST_NOTIF_SENT_KEY);
+      else localStorage.setItem(STORAGE_LAST_NOTIF_SENT_KEY, originalLastNotification);
+    }
   }
 
   /**
