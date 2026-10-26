@@ -1,0 +1,39 @@
+name: Validate Cloudflare Push Worker
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "workers/push-api/**"
+      - ".github/workflows/validate-push-worker.yml"
+  push:
+    branches: [fix/push-notifications-apk-workflow]
+    paths:
+      - "workers/push-api/**"
+      - ".github/workflows/validate-push-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/push-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install worker dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Validate Wrangler configuration
+        run: npx wrangler deploy --dry-run
+      - name: Smoke test deployed Worker endpoints
+        run: |
+          curl --fail --silent --show-error https://js-duo-push-api.michalkowalczyk489.workers.dev/health | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);if(d.ok!==true)process.exit(1);console.log("Worker health endpoint OK")})'
+          curl --fail --silent --show-error https://js-duo-push-api.michalkowalczyk489.workers.dev/vapid-public-key | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);if(typeof d.publicKey!=="string"||d.publicKey.length<80)process.exit(1);console.log("VAPID public key endpoint OK")})'

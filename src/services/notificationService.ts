@@ -2,6 +2,7 @@ import { NotificationConfig } from '../types';
 import { soundService } from './soundService';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { registerWebPush, syncWebPushActivity, syncWebPushPreferences } from './webPushService';
 
 export interface InactivityCheckResult {
   notified: boolean;
@@ -25,6 +26,7 @@ export interface MonitorOptions {
   getLastActiveDate?: () => string | undefined;
   getHearts?: () => number;
   getMaxHearts?: () => number;
+  getNotifyOnHeartsFull?: () => boolean;
   onPracticeRequested?: () => void;
 }
 
@@ -87,7 +89,11 @@ class NotificationService {
   async initServiceWorker(): Promise<ServiceWorkerRegistration | null> {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        // Resolve worker URLs relative to the app base path (GitHub Pages subpath or Capacitor).
+        const appBaseUrl = new URL('./', window.location.href);
+        const workerUrl = new URL('sw.js', appBaseUrl);
+        const workerScope = appBaseUrl.pathname.endsWith('/') ? appBaseUrl.pathname : appBaseUrl.pathname + '/';
+        const reg = await navigator.serviceWorker.register(workerUrl, { scope: workerScope });
         this.swRegistration = reg;
 
         // Wait until service worker is active
@@ -125,6 +131,19 @@ class NotificationService {
     };
   }
 
+  // Synchronize browser push scheduling preferences with the remote worker
+
+  async configureWebPush(time: string, streak: number, tone: NotificationConfig['tone'], enabled: boolean): Promise<void> {
+    if (this.isCapacitor || typeof window === 'undefined' || Notification.permission !== 'granted') return;
+    await syncWebPushPreferences({
+      enabled,
+      time,
+      streak,
+      tone,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    });
+  }
+
   // Trigger practice requested (e.g. from in-app toast click)
   triggerPracticeRequested() {
     this.practiceRequestedListeners.forEach((l) => l());
@@ -138,6 +157,18 @@ class NotificationService {
         localStorage.setItem(STORAGE_LAST_LOGIN_KEY, Date.now().toString());
       }
     }
+  }
+
+  private getAssetUrl(path: string): string {
+    const baseUrl = new URL('./', window.location.href);
+    return new URL(path.replace(/^\//, ''), baseUrl).toString();
+  }
+
+  private getLocalDateKey(date = new Date()): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return year + '-' + month + '-' + day;
   }
 
   // Check if native app or browser notifications permission is granted
@@ -185,12 +216,13 @@ class NotificationService {
         }
 
         localStorage.setItem('js_duo_native_permission_granted', granted ? 'true' : 'false');
+        localStorage.setItem('js_duo_native_permission_state', granted ? 'granted' : 'denied');
 
         if (granted) {
           soundService.playLevelUp();
           await this.sendPushNotification('🎉 Powiadomienia włączone w aplikacji!', {
             body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
-            icon: '/favicon.svg',
+            icon: this.getAssetUrl('favicon.svg'),
             tag: 'welcome-notification',
             type: 'welcome',
           });
@@ -226,11 +258,12 @@ class NotificationService {
       }
 
       if (result === 'granted') {
+        await registerWebPush();
         soundService.playLevelUp();
         // Send instant confirmation notification
         await this.sendPushNotification('🎉 Powiadomienia włączone!', {
           body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
-          icon: '/favicon.svg',
+          icon: this.getAssetUrl('favicon.svg'),
           tag: 'welcome-notification',
           type: 'welcome',
         });
@@ -256,6 +289,7 @@ class NotificationService {
     if (typeof window === 'undefined') return;
     const ts = customTimestamp !== undefined ? customTimestamp : Date.now();
     localStorage.setItem(STORAGE_LAST_LOGIN_KEY, ts.toString());
+    if (!this.isCapacitor) void syncWebPushActivity(ts);
   }
 
   // Get timestamp of the last logged activity
@@ -334,8 +368,8 @@ class NotificationService {
   ): Promise<boolean> {
     const notifOptions: NotificationOptions = {
       body: options?.body || '',
-      icon: options?.icon || '/favicon.svg',
-      badge: options?.badge || '/favicon.svg',
+      icon: options?.icon || this.getAssetUrl('favicon.svg'),
+      badge: options?.badge || this.getAssetUrl('favicon.svg'),
       tag: options?.tag || 'js-duo-notification',
       requireInteraction: options?.requireInteraction ?? true,
       data: options?.data || { url: typeof window !== 'undefined' ? window.location.href : '/' },
@@ -500,46 +534,33 @@ class NotificationService {
     if (!this.isCapacitor || !Capacitor.isPluginAvailable('LocalNotifications')) return;
 
     try {
-      // Cancel previous scheduled alarms
+      // Cancel only reminders managed here; preserve unrelated app notifications.
       const pending = await LocalNotifications.getPending();
-      if (pending.notifications.length > 0) {
-        await LocalNotifications.cancel({ notifications: pending.notifications });
-      }
+      const managed = pending.notifications.filter((item) => item.id === 1001 || item.id === 1002);
+      if (managed.length > 0) await LocalNotifications.cancel({ notifications: managed });
 
       const next = this.getNextReminderTime(timeStr);
       const msg = this.getDailyReminderMessage(streak, tone);
+      const notifications: any[] = [{
+        title: msg.title,
+        body: msg.body,
+        id: 1001,
+        schedule: { on: { hour: next.date.getHours(), minute: next.date.getMinutes() } },
+        extra: { type: 'daily' },
+      }];
 
-      // Schedule daily reminder at specified hour
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            title: msg.title,
-            body: msg.body,
-            id: 1001,
-            schedule: {
-              on: {
-                hour: next.date.getHours(),
-                minute: next.date.getMinutes(),
-              },
-            },
-            extra: {
-              type: 'daily',
-            },
-          },
-          // Schedule 24h inactivity warning
-          {
-            title: `⚠️ Twój streak (${streak} dni) wisi na włosku!`,
-            body: 'Minęły 24 godziny od ostatniej nauki w JS Duo! Rozwiąż 1 lekcję i uratuj passę.',
-            id: 1002,
-            schedule: {
-              at: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            },
-            extra: {
-              type: 'inactivity',
-            },
-          },
-        ],
-      });
+      // Anchor the inactivity alarm to the actual last-activity timestamp.
+      const inactivityAt = new Date(this.getLastLoginTime() + INACTIVITY_THRESHOLD_MS);
+      if (inactivityAt.getTime() > Date.now()) {
+        notifications.push({
+          title: '⚠️ Twój streak (' + streak + ' dni) wisi na włosku!',
+          body: 'Minęły 24 godziny od ostatniej nauki w JS Duo! Rozwiąż 1 lekcję i uratuj passę.',
+          id: 1002,
+          schedule: { at: inactivityAt },
+          extra: { type: 'inactivity' },
+        });
+      }
+      await LocalNotifications.schedule({ notifications });
       console.log('Capacitor native background alarms successfully scheduled for:', next.date);
     } catch (e) {
       console.warn('Error scheduling Capacitor native alarms:', e);
@@ -583,7 +604,7 @@ class NotificationService {
     lastActiveDate?: string,
     force: boolean = false
   ): Promise<boolean> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.getLocalDateKey();
     const lastSentDate = this.getLastDailyReminderDate();
 
     // If user already practiced today and we are not forcing, no need to remind
@@ -609,18 +630,23 @@ class NotificationService {
       }
     }
 
+    // Avoid retrying every 30 seconds while system notifications are not permitted.
+    // The next monitor tick will retry after the user grants permission.
+    if (!this.checkPermission()) return false;
+
     // Send daily reminder
     const msg = this.getDailyReminderMessage(streak, tone);
-    await this.sendPushNotification(msg.title, {
+    const sent = await this.sendPushNotification(msg.title, {
       body: msg.body,
-      icon: '/favicon.svg',
+      icon: this.getAssetUrl('favicon.svg'),
       tag: 'js-duo-daily-reminder',
       requireInteraction: true,
       type: 'daily',
     });
 
-    this.setLastDailyReminderDate(today);
-    return true;
+    // Do not mark the reminder as delivered when permission or delivery failed.
+    if (sent) this.setLastDailyReminderDate(today);
+    return sent;
   }
 
   /**
@@ -647,7 +673,7 @@ class NotificationService {
       const msg = this.get24HourInactivityMessage(streak, tone);
       await this.sendPushNotification(msg.title, {
         body: msg.body,
-        icon: '/favicon.svg',
+        icon: this.getAssetUrl('favicon.svg'),
         tag: 'js-duo-24h-inactivity-reminder',
         requireInteraction: true,
         type: 'inactivity',
@@ -694,7 +720,7 @@ class NotificationService {
         const msg = this.getHeartsRestoredMessage();
         await this.sendPushNotification(msg.title, {
           body: msg.body,
-          icon: '/favicon.svg',
+          icon: this.getAssetUrl('favicon.svg'),
           tag: 'js-duo-hearts-full',
           type: 'hearts',
         });
@@ -710,10 +736,21 @@ class NotificationService {
    */
   async simulate24HourInactivity(streak: number, tone: NotificationConfig['tone'] = 'friendly'): Promise<InactivityCheckResult> {
     const simulatedPastTime = Date.now() - 25 * 60 * 60 * 1000;
-    this.recordActivity(simulatedPastTime);
-    this.setLastInactivityNotificationTime(0);
+    const originalLastLogin = localStorage.getItem(STORAGE_LAST_LOGIN_KEY);
+    const originalLastNotification = localStorage.getItem(STORAGE_LAST_NOTIF_SENT_KEY);
 
-    return this.checkInactivityAndNotify(streak, tone, true);
+    try {
+      this.recordActivity(simulatedPastTime);
+      this.setLastInactivityNotificationTime(0);
+      return await this.checkInactivityAndNotify(streak, tone, true);
+    } finally {
+      // A test button must not change the user's real inactivity timers.
+      if (originalLastLogin === null) localStorage.removeItem(STORAGE_LAST_LOGIN_KEY);
+      else localStorage.setItem(STORAGE_LAST_LOGIN_KEY, originalLastLogin);
+
+      if (originalLastNotification === null) localStorage.removeItem(STORAGE_LAST_NOTIF_SENT_KEY);
+      else localStorage.setItem(STORAGE_LAST_NOTIF_SENT_KEY, originalLastNotification);
+    }
   }
 
   /**
@@ -730,7 +767,7 @@ class NotificationService {
     const msg = this.getHeartsRestoredMessage();
     return this.sendPushNotification(msg.title, {
       body: msg.body,
-      icon: '/favicon.svg',
+      icon: this.getAssetUrl('favicon.svg'),
       tag: 'js-duo-hearts-full-sim',
       type: 'hearts',
     });
@@ -750,6 +787,7 @@ class NotificationService {
       getLastActiveDate = () => undefined,
       getHearts,
       getMaxHearts = () => 5,
+      getNotifyOnHeartsFull = () => true,
       onPracticeRequested,
     } = options;
 
@@ -768,7 +806,7 @@ class NotificationService {
       const lastActive = getLastActiveDate();
 
       // Ensure native offline alarms are scheduled in Android/iOS so notifications fire when app is closed (only once per time change)
-      const scheduleKey = `${time}|${streak}|${tone}`;
+      const scheduleKey = `${time}|${streak}|${tone}|${this.getLastLoginTime()}`;
       if (this.isCapacitor && lastScheduledKey !== scheduleKey) {
         lastScheduledKey = scheduleKey;
         this.scheduleNativeBackgroundAlarms(time, streak, tone);
@@ -781,7 +819,7 @@ class NotificationService {
       this.checkInactivityAndNotify(streak, tone);
 
       // 3. Hearts full check
-      if (getHearts) {
+      if (getHearts && getNotifyOnHeartsFull()) {
         this.checkHeartsRestoredAndNotify(getHearts(), getMaxHearts());
       }
     };

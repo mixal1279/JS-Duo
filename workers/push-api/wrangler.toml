@@ -1,0 +1,15 @@
+name = "js-duo-push-api"
+main = "src/index.js"
+compatibility_date = "2026-10-26"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "PUSH_SUBSCRIPTIONS"
+id = "0f37b7f051dc40e7878c9f17cd72bd59"
+
+[vars]
+ALLOWED_ORIGIN = "https://mixal1279.github.io"
+VAPID_SUBJECT = "https://github.com/mixal1279/JS-Duo"
+
+[triggers]
+crons = ["*/15 * * * *"]

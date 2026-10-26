@@ -375,6 +375,29 @@ jobs:
           fi
 
       # ============================================================
+      # NORMALIZACJA ŚCIEŻKI APK (debug dla main, release dla tagów/release)
+      # ============================================================
+
+      - name: Przygotowanie APK do publikacji
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          if [[ "${GITHUB_REF}" == refs/tags/v* || "${GITHUB_REF}" == refs/heads/release/* ]]; then
+            APK="android/app/build/outputs/apk/release/app-release.apk"
+          else
+            APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          fi
+
+          if [ ! -s "$APK" ]; then
+            echo "ERROR: Nie znaleziono zbudowanego APK: $APK"
+            find android/app/build/outputs/apk -type f -name '*.apk' -print
+            exit 1
+          fi
+
+          cp "$APK" artifacts/JS-Duo-Android-APK.apk
+          ls -lh artifacts/JS-Duo-Android-APK.apk
+
+      # ============================================================
       # APK ARTIFACT
       # ============================================================
 
@@ -382,7 +405,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: JS-Duo-Android-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: artifacts/JS-Duo-Android-APK.apk
           if-no-files-found: error
           retention-days: 14
 

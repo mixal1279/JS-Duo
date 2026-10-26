@@ -18,7 +18,15 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+  const appHomeUrl = new URL('./', self.registration.scope).href;
+  const requestedUrl = (event.notification.data && event.notification.data.url) || appHomeUrl;
+  // Keep notification navigation inside this app's scope.
+  const candidateUrl = new URL(requestedUrl, appHomeUrl);
+  const appPath = new URL('./', self.registration.scope).pathname;
+  const targetUrl = candidateUrl.origin === self.location.origin &&
+    candidateUrl.pathname.startsWith(appPath)
+    ? candidateUrl.href
+    : appHomeUrl;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
@@ -51,10 +59,10 @@ self.addEventListener('push', (event) => {
   let data = {
     title: '🦉 Czas na codzienną dawkę JavaScriptu!',
     body: 'Minęły 24 godziny od Twojej ostatniej sesji. Zrób 1 lekcję i uratuj streak!',
-    icon: '/favicon.png',
-    badge: '/favicon.png',
+    icon: new URL('./favicon.png', self.registration.scope).href,
+    badge: new URL('./favicon.png', self.registration.scope).href,
     tag: 'js-duo-daily-reminder',
-    data: { url: '/' },
+    data: { url: new URL('./', self.registration.scope).href },
   };
 
   if (event.data) {
@@ -67,13 +75,13 @@ self.addEventListener('push', (event) => {
 
   const notificationOptions = {
     body: data.body,
-    icon: data.icon || '/favicon.png',
-    badge: data.badge || '/favicon.png',
+    icon: data.icon || new URL('./favicon.png', self.registration.scope).href,
+    badge: data.badge || new URL('./favicon.png', self.registration.scope).href,
     tag: data.tag || 'js-duo-daily-reminder',
     renotify: true,
     requireInteraction: true,
     vibrate: [200, 100, 200],
-    data: data.data || { url: '/' },
+    data: data.data || { url: new URL('./', self.registration.scope).href },
     actions: [
       { action: 'practice', title: 'Ćwicz teraz 🚀' },
       { action: 'dismiss', title: 'Później' },
