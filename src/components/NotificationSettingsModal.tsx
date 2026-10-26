@@ -19,9 +19,11 @@ import {
 } from 'lucide-react';
 import { NotificationConfig } from '../types';
 import { notificationService, NotificationHistoryItem } from '../services/notificationService';
+import { sendWebPushTest } from '../services/webPushService';
 import { soundService } from '../services/soundService';
 import { storageService } from '../services/storageService';
 import { syncWidgetStats } from '../services/widgetBridge';
+import { Capacitor } from '@capacitor/core';
 
 interface NotificationSettingsModalProps {
   config: NotificationConfig;
@@ -48,6 +50,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const [permissionGranted, setPermissionGranted] = useState(() => notificationService.checkPermission());
 
   const [testingDaily, setTestingDaily] = useState(false);
+  const [remoteTestResult, setRemoteTestResult] = useState<'sent' | 'failed' | 'unsupported' | null>(null);
   const [testingInactivity, setTestingInactivity] = useState(false);
   const [testingHearts, setTestingHearts] = useState(false);
   const [widgetSynced, setWidgetSynced] = useState(false);
@@ -93,6 +96,12 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     soundService.playClick();
     setTestingDaily(true);
     await notificationService.simulateDailyReminder(streak, time, tone);
+    if (!Capacitor.isNativePlatform() && permissionGranted) {
+      const sent = await sendWebPushTest();
+      setRemoteTestResult(sent ? 'sent' : 'failed');
+    } else {
+      setRemoteTestResult('unsupported');
+    }
     refreshHistory();
     setTimeout(() => setTestingDaily(false), 2500);
   };
@@ -487,6 +496,11 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               <span>{testingHearts ? 'Wysyłanie...' : 'Test: Serca 5/5'}</span>
             </button>
           </div>
+          {remoteTestResult && (
+            <p className={`text-[11px] ${remoteTestResult === 'sent' ? 'text-emerald-400' : 'text-amber-300'}`}>
+              {remoteTestResult === 'sent' ? 'Serwer przyjął test Web Push. Sprawdź, czy powiadomienie dotarło na urządzenie.' : remoteTestResult === 'failed' ? 'Test Web Push nie powiódł się. Sprawdź połączenie i ponownie włącz powiadomienia.' : 'Zdalny test Web Push jest dostępny w przeglądarce, nie w natywnej aplikacji.'}
+            </p>
+          )}
         </div>
 
         {/* History of Sent Notifications */}
