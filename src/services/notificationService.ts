@@ -88,7 +88,7 @@ class NotificationService {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       try {
         // Resolve worker URLs relative to the app base path (GitHub Pages subpath or Capacitor).
-        const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href);
+        const appBaseUrl = new URL('./', window.location.href);
         const workerUrl = new URL('sw.js', appBaseUrl);
         const workerScope = appBaseUrl.pathname.endsWith('/') ? appBaseUrl.pathname : appBaseUrl.pathname + '/';
         const reg = await navigator.serviceWorker.register(workerUrl, { scope: workerScope });
@@ -145,7 +145,7 @@ class NotificationService {
   }
 
   private getAssetUrl(path: string): string {
-    const baseUrl = new URL(import.meta.env.BASE_URL, window.location.href);
+    const baseUrl = new URL('./', window.location.href);
     return new URL(path.replace(/^\//, ''), baseUrl).toString();
   }
 
