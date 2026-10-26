@@ -112,7 +112,7 @@ function dailyScheduleStatus(record, date) {
   try { local = localDateParts(date, tz); } catch { local = localDateParts(date, "UTC"); }
   const localDate = local.year + "-" + local.month + "-" + local.day;
   const currentMinute = Number(local.hour) * 60 + Number(local.minute);
-  const match = /^(\\d{2}):(\\d{2})$/.exec(record.preferences.time || "18:00");
+  const match = /^(\d{2}):(\d{2})$/.exec(record.preferences.time || "18:00");
   const targetMinute = match ? Number(match[1]) * 60 + Number(match[2]) : 1080;
   const delta = (currentMinute - targetMinute + 1440) % 1440;
   return {
