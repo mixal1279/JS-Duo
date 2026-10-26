@@ -146,7 +146,7 @@ class NotificationService {
 
   private getAssetUrl(path: string): string {
     const baseUrl = new URL(import.meta.env.BASE_URL, window.location.href);
-    return new URL(path.replace(/^\\//, ''), baseUrl).toString();
+    return new URL(path.replace(/^\//, ''), baseUrl).toString();
   }
 
   private getLocalDateKey(date = new Date()): string {
