@@ -64,3 +64,14 @@ test("uses the local calendar date and handles the Warsaw DST spring-forward", (
   assert.equal(dst.localTime, "03:00");
   assert.equal(dst.timezone, "Europe/Warsaw");
 });
+
+test("does not wrap a late-night target into the following local date", () => {
+  const nextDay = dailyScheduleStatus(
+    record({ time: "23:55" }),
+    new Date("2026-10-26T23:00:00.000Z"),
+  );
+  assert.equal(nextDay.localDate, "2026-10-27");
+  assert.equal(nextDay.localTime, "00:00");
+  assert.equal(nextDay.minutesSinceTarget, -1435);
+  assert.equal(nextDay.eligible, false);
+});
