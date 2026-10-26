@@ -64,17 +64,21 @@ export async function registerWebPush(preferences?: Partial<WebPushPreferences>)
 }
 
 export async function syncWebPushPreferences(preferences: WebPushPreferences): Promise<boolean> {
+  return registerWebPush(preferences);
+}
+
+export async function sendWebPushTest(): Promise<boolean> {
   try {
-    const subscription = await getSubscription(true);
+    const subscription = await getSubscription(false);
     if (!subscription) return false;
-    const response = await fetch(`${PUSH_API_URL}/preferences`, {
+    const response = await fetch(`${PUSH_API_URL}/test`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ endpoint: subscription.endpoint, preferences }),
+      body: JSON.stringify({ endpoint: subscription.endpoint }),
     });
     return response.ok;
   } catch (error) {
-    console.warn('Remote Web Push preferences sync failed:', error);
+    console.warn('Remote Web Push test failed:', error);
     return false;
   }
 }
