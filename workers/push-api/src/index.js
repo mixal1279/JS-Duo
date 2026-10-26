@@ -110,6 +110,22 @@ function isValidReminderTime(value) {
   return typeof value === "string" && /^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
 }
 
+function isValidIsoDateTime(value) {
+  if (typeof value !== "string") return false;
+  const match = /^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,9})?(Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.exec(value);
+  if (!match) return false;
+  const [, year, month, day, hour, minute, second, , offset] = match;
+  const y = Number(year), m = Number(month), d = Number(day);
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  if (m < 1 || m > 12 || d < 1 || d > daysInMonth) return false;
+  if (offset !== "Z") {
+    const offsetHour = Number(offset.slice(1, 3));
+    const offsetMinute = Number(offset.slice(4, 6));
+    if (offsetHour > 14 || (offsetHour === 14 && offsetMinute !== 0)) return false;
+  }
+  return Number.isFinite(Date.parse(value));
+}
+
 function dailyScheduleStatus(record, date) {
   const tz = typeof record.preferences.timezone === "string" ? record.preferences.timezone : "UTC";
   let local;
@@ -119,13 +135,13 @@ function dailyScheduleStatus(record, date) {
   const targetTime = isValidReminderTime(record.preferences.time) ? record.preferences.time : "18:00";
   const [targetHour, targetMinutePart] = targetTime.split(":").map(Number);
   const targetMinute = targetHour * 60 + targetMinutePart;
-  const delta = (currentMinute - targetMinute + 1440) % 1440;
+  const delta = currentMinute - targetMinute;
   return {
     timezone: tz,
     localDate,
     localTime: local.hour + ":" + local.minute,
     targetTime,
-    eligible: delta < 15 && record.lastDailyDate !== localDate,
+    eligible: delta >= 0 && delta < 15 && record.lastDailyDate !== localDate,
     alreadySentToday: record.lastDailyDate === localDate,
     minutesSinceTarget: delta,
   };
@@ -146,7 +162,7 @@ function inactivityMessage(record) {
   if (record.preferences.tone === "coder") return { title: "💻 ERR_IDLE_TIMEOUT", body: "24h bez sesji JS. Wznów pętlę i utrzymaj streak " + streak + "." };
   return { title: "🦉 Sowa JS Duo tęskni!", body: "Nie było Cię od 24 godzin. Wróć na 3 minuty i uratuj swoją passę." };
 }
-async function deliver(env, key, record, payload) {
+async function deliver(env, key, record, payload, { cleanup = true } = {}) {
   try {
     await sendPush(record.subscription, {
       ...payload,
@@ -157,7 +173,9 @@ async function deliver(env, key, record, payload) {
     }, env);
     return true;
   } catch (error) {
-    if (error && (error.statusCode === 404 || error.statusCode === 410)) await env.PUSH_SUBSCRIPTIONS.delete(key);
+    if (cleanup && error && (error.statusCode === 404 || error.statusCode === 410)) {
+      await env.PUSH_SUBSCRIPTIONS.delete(key);
+    }
     return false;
   }
 }
@@ -208,7 +226,7 @@ export default {
       if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "js-duo-push-api" }, 200, headers);
       if (request.method === "GET" && url.pathname === "/vapid-public-key") return env.VAPID_PUBLIC_KEY ? json({ publicKey: env.VAPID_PUBLIC_KEY }, 200, headers) : json({ error: "Push is not configured" }, 503, headers);
       if (request.method !== "POST") return json({ error: "Not found" }, 404, headers);
-      if (url.pathname !== "/send-test" && origin !== env.ALLOWED_ORIGIN) return json({ error: "Origin required" }, 403, headers);
+      if (url.pathname !== "/send-test" && url.pathname !== "/schedule-test" && origin !== env.ALLOWED_ORIGIN) return json({ error: "Origin required" }, 403, headers);
       const body = await request.json();
       if (url.pathname === "/subscribe") {
         if (!validSubscription(body.subscription)) return json({ error: "Invalid Web Push subscription" }, 400, headers);
@@ -216,6 +234,9 @@ export default {
         const existingRaw = await env.PUSH_SUBSCRIPTIONS.get(key);
         let existing = existingRaw ? JSON.parse(existingRaw) : {};
         const prefs = body.preferences && typeof body.preferences === "object" ? body.preferences : {};
+        if (prefs.time !== undefined && !isValidReminderTime(prefs.time)) {
+          return json({ error: "preferences.time must be a valid 24-hour HH:mm value" }, 400, headers);
+        }
         const preferences = {
           enabled: prefs.enabled !== false,
           time: isValidReminderTime(prefs.time) ? prefs.time : "18:00",
@@ -242,6 +263,9 @@ export default {
         if (!raw) return json({ error: "Subscription not found" }, 404, headers);
         const record = JSON.parse(raw);
         const p = body.preferences || {};
+        if (p.time !== undefined && !isValidReminderTime(p.time)) {
+          return json({ error: "preferences.time must be a valid 24-hour HH:mm value" }, 400, headers);
+        }
         record.preferences = {
           ...record.preferences,
           enabled: p.enabled !== false,
@@ -293,8 +317,8 @@ export default {
         }
         let simulatedAt = new Date();
         if (body.at !== undefined) {
-          if (typeof body.at !== "string" || !Number.isFinite(Date.parse(body.at))) {
-            return json({ error: "at must be a valid ISO date-time string" }, 400, headers);
+          if (!isValidIsoDateTime(body.at)) {
+            return json({ error: "at must be an ISO date-time with seconds and an explicit Z or ±HH:mm offset" }, 400, headers);
           }
           simulatedAt = new Date(body.at);
         }
@@ -307,7 +331,7 @@ export default {
         const sent = await deliver(env, key, record, {
           ...dailyMessage(record),
           tag: "js-duo-daily-reminder-test",
-        });
+        }, { cleanup: false });
         if (!sent) return json({ ok: false, status, sent: false, stateChanged: false, error: "Push delivery failed" }, 502, headers);
         // Test mode intentionally does not update lastDailyDate or any other subscription state.
         return json({ ok: true, mode: "send", status, sent: true, stateChanged: false }, 200, headers);
