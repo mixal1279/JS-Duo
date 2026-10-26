@@ -1,0 +1,63 @@
+name: Validate notification fixes
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - fix/push-notifications-apk-workflow
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Typecheck, build, and notification asset smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript checks
+        run: npm run lint
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Validate built notification assets
+        run: |
+          test -s dist/sw.js
+          test -s dist/manifest.json
+          test -s dist/favicon.png
+          node --check dist/sw.js
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf8'));
+          if (!manifest.start_url || manifest.start_url.startsWith('/')) {
+            throw new Error('PWA start_url must be relative for subpath deployments');
+          }
+          if (!manifest.scope || manifest.scope.startsWith('/')) {
+            throw new Error('PWA scope must be relative for subpath deployments');
+          }
+          for (const icon of manifest.icons ?? []) {
+            if (icon.src.startsWith('/')) {
+              throw new Error('PWA icon path must be relative: ' + icon.src);
+            }
+          }
+          const sw = fs.readFileSync('dist/sw.js', 'utf8');
+          if (sw.includes("register('/sw.js'") || sw.includes("url: '/'")) {
+            throw new Error('Found a root-relative notification URL');
+          }
+          console.log('Notification asset smoke tests passed.');
+          NODE
