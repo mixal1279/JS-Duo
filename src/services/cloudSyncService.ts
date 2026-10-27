@@ -4,7 +4,8 @@ import { ReviewRecord } from './reviewService';
 const SESSION_KEY = 'js_duo_auth_session_v1';
 const API_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const AUTH_REDIRECT_URL = (import.meta.env.VITE_APP_URL || 'https://mixal1279.github.io/JS-Duo/').replace(/\/$/, '/');
+const AUTH_REDIRECT_URL_RAW = import.meta.env.VITE_APP_URL || 'https://mixal1279.github.io/JS-Duo/';
+const AUTH_REDIRECT_URL = AUTH_REDIRECT_URL_RAW.endsWith('/') ? AUTH_REDIRECT_URL_RAW : `${AUTH_REDIRECT_URL_RAW}/`;
 
 export interface AuthSession {
   access_token: string;
