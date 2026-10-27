@@ -69,25 +69,9 @@ export interface OnlineDuelState {
   question: OnlineDuelQuestion | null;
   my_answer: { answer_index: number; correct: boolean; answered_at: string } | null;
   opponent_answered: boolean;
-}
-
-export interface OnlineDuelState {
-  id: string;
-  status: 'pending' | 'active' | 'completed' | 'declined';
-  challenger_id: string;
-  opponent_id: string;
-  challenger_score: number;
-  opponent_score: number;
-  winner_id: string | null;
-  current_round: number;
-  round_count: number;
-  round_started_at: string | null;
-  completed_at: string | null;
-  question: null | { id: number; unit_id: number; unit_title: string; question: string; code_snippet?: string | null; type: string; options: string[]; difficulty: string; points: number };
-  my_answer: null | { answer_index: number; correct: boolean; answered_at: string };
-  opponent_answered: boolean;
   my_rewards?: { xp: number; gems: number; duel_wins: number; duel_losses: number } | null;
 }
+
 
 export interface CloudProgress {
   user_id: string;
@@ -597,51 +581,6 @@ export const cloudSyncService = {
     }) as OnlineDuelState;
   },
 
-
-  async listDuels(session: AuthSession): Promise<Array<{ id: string; challenger_id: string; opponent_id: string; status: string; created_at: string; completed_at?: string | null; winner_id?: string | null }>> {
-    const validSession = await this.refreshSession(session);
-    const uid = encodeURIComponent(validSession.user.id);
-    const rows = await restRequest(
-      `duels?select=id,challenger_id,opponent_id,status,created_at,completed_at,winner_id&or=(challenger_id.eq.${uid},opponent_id.eq.${uid})&order=created_at.desc&limit=30`,
-      validSession
-    ) as Array<{ id: string; challenger_id: string; opponent_id: string; status: string; created_at: string; completed_at?: string | null; winner_id?: string | null }> | null;
-    return Array.isArray(rows) ? rows : [];
-  },
-
-  async createDuel(session: AuthSession, opponentId: string): Promise<string> {
-    const validSession = await this.refreshSession(session);
-    return await restRequest('rpc/create_duel', validSession, {
-      method: 'POST', body: JSON.stringify({ p_opponent_id: opponentId }),
-    }) as string;
-  },
-
-  async respondToDuel(session: AuthSession, duelId: string, accept: boolean): Promise<OnlineDuelState> {
-    const validSession = await this.refreshSession(session);
-    return await restRequest('rpc/respond_to_duel', validSession, {
-      method: 'POST', body: JSON.stringify({ p_duel_id: duelId, p_accept: accept }),
-    }) as OnlineDuelState;
-  },
-
-  async getDuelState(session: AuthSession, duelId: string): Promise<OnlineDuelState> {
-    const validSession = await this.refreshSession(session);
-    return await restRequest('rpc/get_duel_state', validSession, {
-      method: 'POST', body: JSON.stringify({ p_duel_id: duelId }),
-    }) as OnlineDuelState;
-  },
-
-  async submitDuelAnswer(session: AuthSession, duelId: string, answerIndex: number): Promise<OnlineDuelState> {
-    const validSession = await this.refreshSession(session);
-    return await restRequest('rpc/submit_duel_answer', validSession, {
-      method: 'POST', body: JSON.stringify({ p_duel_id: duelId, p_answer_index: answerIndex }),
-    }) as OnlineDuelState;
-  },
-
-  async advanceDuelTimeout(session: AuthSession, duelId: string): Promise<OnlineDuelState> {
-    const validSession = await this.refreshSession(session);
-    return await restRequest('rpc/advance_duel_timeout', validSession, {
-      method: 'POST', body: JSON.stringify({ p_duel_id: duelId }),
-    }) as OnlineDuelState;
-  },
 
   async saveProgress(session: AuthSession, stats: UserStats, quests: DailyQuest[], reviewSchedule: ReviewRecord[] = [], completedProjects: string[] = []): Promise<void> {
     await this.flushPendingLearningAnswers(session);
