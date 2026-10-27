@@ -22,6 +22,51 @@ export interface CloudProfile {
   avatar_emoji: string | null;
 }
 
+export interface DuelPlayer {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_emoji: string | null;
+}
+
+export interface DuelSummary {
+  id: string;
+  challenger_id: string;
+  opponent_id: string;
+  status: 'pending' | 'active' | 'completed' | 'declined' | 'cancelled';
+  created_at: string;
+}
+
+export interface OnlineDuelQuestion {
+  id: number;
+  unit_id: number;
+  unit_title: string;
+  question: string;
+  code_snippet?: string | null;
+  type: 'single-choice' | 'output-predict' | 'fill-gap' | 'code-order';
+  options: string[];
+  explanation: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  points: number;
+}
+
+export interface OnlineDuelState {
+  id: string;
+  status: DuelSummary['status'];
+  challenger_id: string;
+  opponent_id: string;
+  challenger_score: number;
+  opponent_score: number;
+  winner_id: string | null;
+  current_round: number;
+  round_count: number;
+  round_started_at: string | null;
+  completed_at: string | null;
+  question: OnlineDuelQuestion | null;
+  my_answer: { answer_index: number; correct: boolean; answered_at: string } | null;
+  opponent_answered: boolean;
+}
+
 export interface CloudProgress {
   user_id: string;
   stats: UserStats;
@@ -328,6 +373,60 @@ export const cloudSyncService = {
       streak: Math.max(0, Number(row.streak) || 0),
       isCurrentUser: row.id === validSession.user.id,
     }));
+  },
+
+  async loadDuelPlayers(session: AuthSession): Promise<DuelPlayer[]> {
+    const validSession = await this.refreshSession(session);
+    const rows = await restRequest(
+      `profiles?select=id,username,display_name,avatar_emoji&order=username.asc&limit=100`,
+      validSession
+    ) as DuelPlayer[] | null;
+    return Array.isArray(rows) ? rows.filter((player) => player.id !== validSession.user.id) : [];
+  },
+
+  async loadMyDuels(session: AuthSession): Promise<DuelSummary[]> {
+    const validSession = await this.refreshSession(session);
+    const userId = encodeURIComponent(validSession.user.id);
+    const rows = await restRequest(
+      `duels?select=id,challenger_id,opponent_id,status,created_at&or=(challenger_id.eq.${userId},opponent_id.eq.${userId})&order=created_at.desc&limit=30`,
+      validSession
+    ) as DuelSummary[] | null;
+    return Array.isArray(rows) ? rows : [];
+  },
+
+  async createDuel(session: AuthSession, opponentId: string): Promise<string> {
+    const validSession = await this.refreshSession(session);
+    const id = await restRequest('rpc/create_duel', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_opponent_id: opponentId }),
+    });
+    if (typeof id !== 'string') throw new CloudSyncError('Nie udało się utworzyć wyzwania.');
+    return id;
+  },
+
+  async respondToDuel(session: AuthSession, duelId: string, accept: boolean): Promise<OnlineDuelState | null> {
+    const validSession = await this.refreshSession(session);
+    const result = await restRequest('rpc/respond_to_duel', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_duel_id: duelId, p_accept: accept }),
+    });
+    return result && typeof result === 'object' ? result as OnlineDuelState : null;
+  },
+
+  async getDuelState(session: AuthSession, duelId: string): Promise<OnlineDuelState> {
+    const validSession = await this.refreshSession(session);
+    return await restRequest('rpc/get_duel_state', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_duel_id: duelId }),
+    }) as OnlineDuelState;
+  },
+
+  async submitDuelAnswer(session: AuthSession, duelId: string, answerIndex: number): Promise<OnlineDuelState> {
+    const validSession = await this.refreshSession(session);
+    return await restRequest('rpc/submit_duel_answer', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_duel_id: duelId, p_answer_index: answerIndex }),
+    }) as OnlineDuelState;
   },
 
   async saveProgress(session: AuthSession, stats: UserStats, quests: DailyQuest[], reviewSchedule: ReviewRecord[] = [], completedProjects: string[] = []): Promise<void> {
