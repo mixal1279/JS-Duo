@@ -155,6 +155,7 @@ export const cloudSyncService = {
     return session;
   },
 
+  // Password changes require the recovery session returned by Supabase Auth.
   async updatePassword(session: AuthSession, password: string): Promise<void> {
     if (password.length < 8) throw new CloudSyncError('Hasło musi mieć co najmniej 8 znaków.');
     const validSession = await this.refreshSession(session);
