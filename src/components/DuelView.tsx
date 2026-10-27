@@ -56,7 +56,7 @@ export const DuelView: React.FC<DuelViewProps> = ({ friends, userStats, onUpdate
     }
     if (!quiet) setLoading(true);
     try {
-      const rows = await cloudSyncService.listDuels(current);
+      const rows = await cloudSyncService.loadMyDuels(current);
       setDuels(rows);
       if (activeDuelId) {
         try {
