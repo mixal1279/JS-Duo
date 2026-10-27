@@ -54,6 +54,10 @@ public class WidgetBridgePlugin extends Plugin {
 
             editor.apply();
 
+            // Update the launcher icon even when the user has not placed the widget.
+            String savedLastActiveDate = prefs.getString("lastActiveDate", "");
+            DuoAppIcon.update(context, DuoAppIcon.moodFor(savedLastActiveDate));
+
             // Trigger widget update broadcast
             Intent intent = new Intent(context, DailyQuestWidgetProvider.class);
             intent.setAction(DailyQuestWidgetProvider.ACTION_REFRESH_WIDGET);
