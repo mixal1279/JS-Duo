@@ -11,7 +11,6 @@ import {
   Shield,
   Calendar,
   Share2,
-  Filter,
   Star,
   Moon,
   Sun,
