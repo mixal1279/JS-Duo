@@ -60,6 +60,8 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         String todayStr = sdf.format(new Date());
         boolean practicedToday = todayStr.equals(lastActiveDate);
 
+        String mood = practicedToday ? "happy" : moodForHour(java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY));
+
         // Update Views
         views.setTextViewText(R.id.widget_streak_count, String.valueOf(streak));
         views.setTextViewText(R.id.widget_hearts_count, hearts + "/5");
@@ -72,13 +74,13 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
             views.setTextViewText(R.id.widget_action_button, "Powtórz materiał");
             views.setImageViewResource(R.id.widget_status_icon, R.drawable.ic_widget_check);
         } else {
-            views.setTextViewText(R.id.widget_status_title, "Nie zapomnij o dzisiejszej lekcji!");
+            views.setTextViewText(R.id.widget_status_title, widgetTitle(mood));
             if (streak > 0) {
                 views.setTextViewText(R.id.widget_status_desc, "Masz " + dailyXp + "/" + dailyXpTarget + " XP. Zrób krótką lekcję i utrzymaj passę.");
             } else {
                 views.setTextViewText(R.id.widget_status_desc, "Poświęć kilka minut na JavaScript i zdobądź dzisiejsze XP.");
             }
-            views.setTextViewText(R.id.widget_action_button, "Rozpocznij lekcję teraz ⚡");
+            views.setTextViewText(R.id.widget_action_button, mood.equals("desperate") ? "URATUJ DZISIEJSZĄ PASSĘ!" : "Rozpocznij lekcję teraz ⚡");
             views.setImageViewResource(R.id.widget_status_icon, R.drawable.ic_widget_flame);
         }
 
@@ -97,6 +99,22 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_action_button, pendingIntent);
 
         appWidgetManager.updateAppWidget(appWidgetId, views);
+    }
+
+    private static String moodForHour(int hour) {
+        if (hour < 13) return "worried";
+        if (hour < 18) return "sad";
+        if (hour < 21) return "panicked";
+        return "desperate";
+    }
+
+    private static String widgetTitle(String mood) {
+        switch (mood) {
+            case "desperate": return "Zaraz północ! Zrób lekcję!";
+            case "panicked": return "Duo zaczyna panikować…";
+            case "sad": return "Duo wciąż czeka na lekcję";
+            default: return "Nie zapomnij o dzisiejszej lekcji!";
+        }
     }
 
     private static int parseJsonInt(String json, String key, int defaultValue) {
