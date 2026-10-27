@@ -12,8 +12,7 @@ import {
   Sparkles,
   User,
   Award,
-  Code2,
-  Award
+  Code2
 } from 'lucide-react';
 import { TabType } from './BottomNavigation';
 import { UserStats } from '../types';
