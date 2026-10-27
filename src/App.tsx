@@ -47,6 +47,14 @@ export const App: React.FC = () => {
   // Navigation State
   const [currentTab, setCurrentTab] = useState<TabType>('path');
 
+  // Password-reset links return to the hosted app with a recovery token in the URL hash.
+  // Open the account panel so it can validate the token and render the new-password form.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const authParams = new URLSearchParams(window.location.hash.slice(1));
+    if (authParams.get('type') === 'recovery') setCurrentTab('profile');
+  }, []);
+
   // Modal & Toast States
   const [showStreakToast, setShowStreakToast] = useState(false);
   const [activeLesson, setActiveLesson] = useState<{
