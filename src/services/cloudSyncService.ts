@@ -429,6 +429,14 @@ export const cloudSyncService = {
     }) as OnlineDuelState;
   },
 
+  async advanceDuelTimeout(session: AuthSession, duelId: string): Promise<OnlineDuelState> {
+    const validSession = await this.refreshSession(session);
+    return await restRequest('rpc/advance_duel_timeout', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_duel_id: duelId }),
+    }) as OnlineDuelState;
+  },
+
   async saveProgress(session: AuthSession, stats: UserStats, quests: DailyQuest[], reviewSchedule: ReviewRecord[] = [], completedProjects: string[] = []): Promise<void> {
     const validSession = await this.refreshSession(session);
     await restRequest('user_progress?on_conflict=user_id', validSession, {
