@@ -291,3 +291,90 @@ left join public.duel_reward_balances rb on rb.user_id = p.id;
 
 revoke all on public.leaderboard_public from anon;
 grant select on public.leaderboard_public to authenticated;
+
+
+create table if not exists public.daily_reward_claims (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  quest_id text not null check (quest_id in ('q1','q2','q3','q4')),
+  claim_date date not null default current_date,
+  xp_delta integer not null,
+  gems_delta integer not null,
+  created_at timestamptz not null default now(),
+  primary key (user_id, quest_id, claim_date)
+);
+alter table public.daily_reward_claims enable row level security;
+revoke all on public.daily_reward_claims from public, anon, authenticated;
+
+create or replace function public.claim_daily_quest(p_quest_id text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_xp integer;
+  v_gems integer;
+  v_correct integer;
+  v_wrong integer;
+  v_units integer;
+  v_has_duel_win boolean;
+  v_inserted boolean := false;
+begin
+  if v_uid is null then raise exception 'Sign in required'; end if;
+  if p_quest_id not in ('q1','q2','q3','q4') then raise exception 'Invalid quest'; end if;
+
+  select count(*) filter (where is_correct), count(*) filter (where not is_correct)
+    into v_correct, v_wrong
+  from public.learning_answer_events
+  where user_id = v_uid and created_at >= date_trunc('day', now());
+
+  select count(distinct q.unit_id) into v_units
+  from public.learning_answer_events e
+  join public.duel_question_bank q on q.id = e.question_id
+  where e.user_id = v_uid and e.is_correct and e.created_at >= date_trunc('day', now());
+
+  select exists (
+    select 1 from public.duel_reward_events
+    where user_id = v_uid and wins_delta > 0 and created_at >= date_trunc('day', now())
+  ) into v_has_duel_win;
+
+  case p_quest_id
+    when 'q1' then
+      select coalesce(sum(xp_delta),0) into v_xp
+      from public.learning_answer_events
+      where user_id = v_uid and created_at >= date_trunc('day', now());
+      if v_xp < 30 then raise exception 'Quest requirement not met'; end if;
+      v_xp := 25; v_gems := 10;
+    when 'q2' then
+      if v_correct < 5 or v_wrong > 0 then raise exception 'Quest requirement not met'; end if;
+      v_xp := 35; v_gems := 15;
+    when 'q3' then
+      if v_units < 2 then raise exception 'Quest requirement not met'; end if;
+      v_xp := 30; v_gems := 15;
+    when 'q4' then
+      if not v_has_duel_win then raise exception 'Quest requirement not met'; end if;
+      v_xp := 50; v_gems := 25;
+  end case;
+
+  insert into public.daily_reward_claims (user_id, quest_id, claim_date, xp_delta, gems_delta)
+  values (v_uid, p_quest_id, current_date, v_xp, v_gems)
+  on conflict (user_id, quest_id, claim_date) do nothing
+  returning true into v_inserted;
+
+  if not coalesce(v_inserted, false) then
+    return jsonb_build_object('claimed', false, 'duplicate', true, 'xp_awarded', 0, 'gems_awarded', 0);
+  end if;
+
+  insert into public.duel_reward_balances (user_id, xp, gems)
+  values (v_uid, v_xp, v_gems)
+  on conflict (user_id) do update set
+    xp = public.duel_reward_balances.xp + excluded.xp,
+    gems = public.duel_reward_balances.gems + excluded.gems,
+    updated_at = now();
+
+  return jsonb_build_object('claimed', true, 'duplicate', false, 'xp_awarded', v_xp, 'gems_awarded', v_gems);
+end;
+$$;
+revoke all on function public.claim_daily_quest(text) from public, anon;
+grant execute on function public.claim_daily_quest(text) to authenticated;
