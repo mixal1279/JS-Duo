@@ -78,9 +78,8 @@ export const DuelView: React.FC<DuelViewProps> = ({ friends, userStats, onUpdate
             setRewardSyncedId(state.id);
           }
         } catch {
-          setDuel(null);
-          setActiveDuelId('');
-          try { localStorage.removeItem(ACTIVE_DUEL_KEY); } catch { /* optional cache */ }
+          // Keep the active duel ID across transient disconnects so the next poll can reconnect.
+          setNotice('Brak połączenia z pojedynkiem. Zachowałem stan i spróbuję ponownie.');
         }
       }
       setError('');
