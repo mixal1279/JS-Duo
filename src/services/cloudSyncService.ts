@@ -35,6 +35,8 @@ export interface DuelSummary {
   opponent_id: string;
   status: 'pending' | 'active' | 'completed' | 'declined' | 'cancelled';
   created_at: string;
+  completed_at?: string | null;
+  winner_id?: string | null;
 }
 
 export interface OnlineDuelQuestion {
@@ -45,7 +47,7 @@ export interface OnlineDuelQuestion {
   code_snippet?: string | null;
   type: 'single-choice' | 'output-predict' | 'fill-gap' | 'code-order';
   options: string[];
-  explanation: string;
+  explanation?: string;
   difficulty: 'easy' | 'medium' | 'hard';
   points: number;
 }
@@ -388,7 +390,7 @@ export const cloudSyncService = {
     const validSession = await this.refreshSession(session);
     const userId = encodeURIComponent(validSession.user.id);
     const rows = await restRequest(
-      `duels?select=id,challenger_id,opponent_id,status,created_at&or=(challenger_id.eq.${userId},opponent_id.eq.${userId})&order=created_at.desc&limit=30`,
+      `duels?select=id,challenger_id,opponent_id,status,created_at,completed_at,winner_id&or=(challenger_id.eq.${userId},opponent_id.eq.${userId})&order=created_at.desc&limit=30`,
       validSession
     ) as DuelSummary[] | null;
     return Array.isArray(rows) ? rows : [];
