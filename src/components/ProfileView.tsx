@@ -45,6 +45,7 @@ interface ProfileViewProps {
   isSignedIn?: boolean;
   profileSaving?: boolean;
   profileSaveMessage?: string;
+  profileSaveError?: boolean;
   onSaveProfile?: (displayName: string, avatarEmoji: string) => Promise<void>;
 }
 
@@ -70,6 +71,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   isSignedIn = false,
   profileSaving = false,
   profileSaveMessage,
+  profileSaveError = false,
   onSaveProfile,
 }) => {
   const [selectedAvatar, setSelectedAvatar] = useState<string>(() => {
@@ -292,7 +294,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </form>
             )}
             {profileSaveMessage && (
-              <p role="status" className="mt-2 text-xs font-semibold text-duo-green">{profileSaveMessage}</p>
+              <p role={profileSaveError ? 'alert' : 'status'} className={`mt-2 text-xs font-semibold ${profileSaveError ? 'text-duo-red' : 'text-duo-green'}`}>{profileSaveMessage}</p>
             )}
 
             {/* Overall Level Progress Bar */}
