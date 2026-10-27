@@ -7,11 +7,12 @@ This repository includes a Supabase migration for account profiles, cloud progre
 1. Create a project at https://supabase.com.
 2. Open Project Settings → API (or Data API depending on dashboard version).
 3. Copy the project URL and the public anon/publishable key.
-4. Add these environment variables to the local .env file and to the deployment environment:
+4. Add these environment variables to the local `.env` file and to the deployment environment. For GitHub Actions, configure repository Actions secrets named `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optionally `VITE_APP_URL` (defaults to `https://mixal1279.github.io/JS-Duo/`):
 
 ```dotenv
 VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY
+VITE_APP_URL=https://mixal1279.github.io/JS-Duo/
 ```
 
 Only the public anon/publishable key belongs in the frontend. Never use the service_role key in a VITE_* variable or commit real credentials.
@@ -22,7 +23,7 @@ Apply the migrations in filename order (first `202610120001_online_foundation.sq
 
 ## 3. Configure authentication
 
-In Authentication → URL Configuration, set the production Site URL and add the local development URL (for example http://localhost:3000) to the allowed redirect URLs. Configure email confirmation according to the desired account flow. When email confirmation is enabled, signup may ask the user to verify their email before signing in.
+In Authentication → URL Configuration, set the production Site URL to `https://mixal1279.github.io/JS-Duo/` and add that URL plus the local development URL (for example `http://localhost:3000`) to the allowed redirect URLs. The password-reset email returns to the hosted web app; on Android, finish the reset in that browser page, then reopen the app and sign in with the new password. Configure email confirmation according to the desired account flow. When email confirmation is enabled, signup may ask the user to verify their email before signing in.
 
 ## 4. Run and verify
 
