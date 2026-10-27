@@ -1073,6 +1073,12 @@ alter table public.duels
   add column if not exists started_at timestamptz,
   add column if not exists round_started_at timestamptz;
 
+-- Clients must not read private answer records or write duel state directly.
+-- Only the SECURITY DEFINER RPCs below may create or advance a duel.
+revoke select, insert, update on public.duels from authenticated;
+grant select (id, challenger_id, opponent_id, status, created_at, completed_at, winner_id)
+  on public.duels to authenticated;
+
 alter table public.duel_question_bank enable row level security;
 revoke all on public.duel_question_bank from anon, authenticated;
 
