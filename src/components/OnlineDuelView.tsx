@@ -188,7 +188,6 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
   const incoming = duels.filter((item) => item.status === 'pending' && item.opponent_id === session.user.id);
   const outgoing = duels.filter((item) => item.status === 'pending' && item.challenger_id === session.user.id);
   const active = duels.filter((item) => item.status === 'active');
-  const selectedSummary = duels.find((item) => item.id === selectedDuelId);
   const secondsLeft = duel?.round_started_at
     ? Math.max(0, 15 - Math.floor((now - Date.parse(duel.round_started_at)) / 1000))
     : 15;
