@@ -16,8 +16,8 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
-as $$
+set search_path = pg_catalog, public, pg_temp
+as $
 declare
   base_name text;
 begin
