@@ -389,10 +389,22 @@ export const cloudSyncService = {
       return;
     }
     const validSession = await this.refreshSession(session);
-    await restRequest('rpc/complete_learning_lesson', validSession, {
-      method: 'POST',
-      body: JSON.stringify({ p_lesson_key: lessonKey, p_question_ids: questionIds }),
-    });
+    try {
+      await restRequest('rpc/complete_learning_lesson', validSession, {
+        method: 'POST',
+        body: JSON.stringify({ p_lesson_key: lessonKey, p_question_ids: questionIds }),
+      });
+    } catch (cause) {
+      try {
+        const raw = localStorage.getItem(PENDING_LESSONS_KEY);
+        const pending = raw ? JSON.parse(raw) as Array<{ userId: string; lessonKey: string; questionIds: number[] }> : [];
+        if (!pending.some((item) => item.userId === validSession.user.id && item.lessonKey === lessonKey)) {
+          pending.push({ userId: validSession.user.id, lessonKey, questionIds });
+          localStorage.setItem(PENDING_LESSONS_KEY, JSON.stringify(pending));
+        }
+      } catch { /* Keep local lesson completion independent from queue storage. */ }
+      throw cause;
+    }
   },
 
   async claimDailyQuest(questId: string): Promise<{ claimed: boolean; duplicate: boolean }> {
