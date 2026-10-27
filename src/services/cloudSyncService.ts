@@ -354,10 +354,23 @@ export const cloudSyncService = {
       return;
     }
     const validSession = await this.refreshSession(session);
-    await restRequest('rpc/submit_learning_answer', validSession, {
-      method: 'POST',
-      body: JSON.stringify({ p_question_id: questionId, p_answer_index: answerIndex }),
-    });
+    try {
+      await restRequest('rpc/submit_learning_answer', validSession, {
+        method: 'POST',
+        body: JSON.stringify({ p_question_id: questionId, p_answer_index: answerIndex }),
+      });
+    } catch (cause) {
+      // Retrying is safe because the server uses (user_id, question_id) as an idempotency key.
+      try {
+        const raw = localStorage.getItem(PENDING_LEARNING_ANSWERS_KEY);
+        const pending = raw ? JSON.parse(raw) as Array<{ userId: string; questionId: number; answerIndex: number }> : [];
+        if (!pending.some((item) => item.userId === validSession.user.id && item.questionId === questionId)) {
+          pending.push({ userId: validSession.user.id, questionId, answerIndex });
+          localStorage.setItem(PENDING_LEARNING_ANSWERS_KEY, JSON.stringify(pending));
+        }
+      } catch { /* Keep the local lesson playable if storage is unavailable. */ }
+      throw cause;
+    }
   },
 
 
@@ -404,7 +417,7 @@ export const cloudSyncService = {
     } catch {
       return;
     }
-    if (!Array.isArray(pending) || !pending.length) return;
+    if (!Array.isArray(pending)) pending = [];
     const remaining: typeof pending = [];
     const validSession = await this.refreshSession(session);
     for (const item of pending) {
