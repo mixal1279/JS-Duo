@@ -16,8 +16,8 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
-as $$
+set search_path = pg_catalog, public, pg_temp
+as $
 declare
   base_name text;
 begin
@@ -153,12 +153,12 @@ create or replace function public.touch_friend_request_updated_at()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 begin
   new.updated_at := now();
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists friend_requests_touch_updated_at on public.friend_requests;
 create trigger friend_requests_touch_updated_at
