@@ -78,11 +78,20 @@ jobs:
           VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
         run: npm run build
 
-      - name: Sync Capacitor Android
+      - name: Prepare and sync Capacitor Android
         run: |
+          if [ ! -f "android/settings.gradle" ] && [ ! -f "android/settings.gradle.kts" ]; then
+            echo "Gradle project files missing; regenerating Android wrapper/project."
+            rm -rf android
+            npx cap add android
+          fi
+
           npx cap sync android
+
+          # Preserve the repository's custom widget manifest/resources.
           git checkout -- android/app/src/main/AndroidManifest.xml android/app/src/main/res
           grep -q "DailyQuestWidgetProvider" android/app/src/main/AndroidManifest.xml
+          echo "android.builder.sdkDownload=true" >> android/gradle.properties
           chmod +x android/gradlew
 
       - name: Compile debug APK
