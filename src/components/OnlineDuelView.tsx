@@ -59,7 +59,13 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
         const selectedStillExists = selectedDuelId && result.some((item) => item.id === selectedDuelId);
         if (!selectedStillExists && !selectedDuelId) {
           const ongoing = result.find((item) => item.status === 'active');
+          const unrewarded = result.find((item) => {
+            if (item.status !== 'completed') return false;
+            try { return localStorage.getItem(`js_duo_duel_rewarded_${item.id}`) !== '1'; }
+            catch { return false; }
+          });
           if (ongoing) setSelectedDuelId(ongoing.id);
+          else if (unrewarded) setSelectedDuelId(unrewarded.id);
         }
       } catch (cause) {
         if (!cancelled) setError(errorMessage(cause));
