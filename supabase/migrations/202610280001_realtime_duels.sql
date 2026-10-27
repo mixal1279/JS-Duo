@@ -1136,6 +1136,9 @@ begin
   if not found then raise exception 'Duel not found'; end if;
   if auth.uid() is null or auth.uid() not in (v_duel.challenger_id, v_duel.opponent_id) then raise exception 'Not a participant'; end if;
   if v_duel.status <> 'active' then raise exception 'Duel is not active'; end if;
+  if v_duel.round_started_at is not null and now() >= v_duel.round_started_at + interval '15 seconds' then
+    return public.advance_duel_timeout(p_duel_id);
+  end if;
   if v_duel.current_round < 0 or v_duel.current_round >= array_length(v_duel.question_ids,1) then raise exception 'No active round'; end if;
   v_qid := v_duel.question_ids[v_duel.current_round+1];
   select correct_index, points into v_correct, v_points from public.duel_question_bank where id=v_qid;
