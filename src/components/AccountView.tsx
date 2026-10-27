@@ -39,7 +39,7 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
     event.preventDefault();
     setError(''); setNotice('');
     if (!session) { setError('Sesja resetowania wygasła. Poproś o nowy link resetujący.'); return; }
-    if (mode !== 'reset' && password.length < 8) { setError('Hasło musi mieć co najmniej 8 znaków.'); return; }
+    if (password.length < 8) { setError('Hasło musi mieć co najmniej 8 znaków.'); return; }
     setBusy(true);
     try {
       await cloudSyncService.updatePassword(session, password);
@@ -55,7 +55,7 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
     event.preventDefault();
     setError(''); setNotice('');
     if (!configured) { setError('Brak konfiguracji Supabase. Ustaw VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY w środowisku wdrożenia.'); return; }
-    if (password.length < 8) { setError('Hasło musi mieć co najmniej 8 znaków.'); return; }
+    if (mode !== 'reset' && password.length < 8) { setError('Hasło musi mieć co najmniej 8 znaków.'); return; }
     setBusy(true);
     try {
       if (mode === 'reset') {
@@ -91,10 +91,8 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
         <div className="flex items-center gap-3"><div className="rounded-2xl bg-duo-blue/15 p-3 text-duo-blue"><KeyRound size={24}/></div><div><h2 className="text-lg font-black">Ustaw nowe hasło</h2><p className="text-sm text-gray-400">{session.user.email || 'Zweryfikowany link resetujący'}</p></div></div>
         <form onSubmit={handlePasswordUpdate} className="space-y-4">
           <label className="block"><span className="mb-2 block text-sm font-bold text-gray-300">Nowe hasło</span><span className="flex items-center gap-2 rounded-xl border border-[#34444D] bg-[#10191E] px-3"><KeyRound size={17} className="text-gray-500"/><input type="password" autoComplete="new-password" minLength={8} required value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimum 8 znaków" className="w-full bg-transparent py-3.5 text-sm text-white outline-none"/></span></label>
-          <button type="submit" disabled={busy || !configured} className="flex w-full items-center justify-center gap-2 rounded-xl bg-duo-green px-4 py-3.5 font-black text-black disabled:cursor-not-allowed disabled:opacity-50">{busy ? <LoaderCircle size={18} className="animate-spin"/> : mode === 'reset' ? <Mail size={18}/> : mode === 'login' ? <LogIn size={18}/> : <UserPlus size={18}/ >}{busy ? 'Przetwarzanie…' : mode === 'reset' ? 'Wyślij link resetujący' : mode === 'login' ? 'Zaloguj się' : 'Utwórz konto'}</button>
+          <button type="submit" disabled={busy || !configured} className="flex w-full items-center justify-center gap-2 rounded-xl bg-duo-green px-4 py-3.5 font-black text-black disabled:cursor-not-allowed disabled:opacity-50">{busy ? <LoaderCircle size={18} className="animate-spin"/> : <KeyRound size={18}/>}{busy ? 'Zapisywanie…' : 'Zapisz nowe hasło'}</button>
         </form>
-        {mode === 'login' && <button type="button" onClick={() => {setMode('reset');setError('');setNotice('');}} className="mt-3 w-full text-sm font-bold text-duo-blue hover:underline">Nie pamiętasz hasła?</button>}
-        {mode === 'reset' && <button type="button" onClick={() => {setMode('login');setError('');setNotice('');}} className="mt-3 w-full text-sm font-bold text-gray-400 hover:underline">Wróć do logowania</button>}
       </div> : session ? <div className="space-y-5">
         <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-duo-green/15 text-duo-green"><ShieldCheck size={25}/></div><div className="min-w-0 flex-1"><h2 className="text-lg font-black">Jesteś zalogowany</h2><p className="truncate text-sm text-gray-400">{session.user.email || session.user.id}</p></div><span className="rounded-full border border-duo-green/30 bg-duo-green/10 px-2.5 py-1 text-xs font-bold text-duo-green">Konto aktywne</span></div>
         <div className="rounded-2xl border border-[#34444D] bg-[#10191E] p-4"><div className="flex items-center gap-3"><StateIcon size={22} className={`shrink-0 ${syncState === 'error' ? 'text-duo-red' : syncState === 'synced' ? 'text-duo-green' : 'text-duo-blue'} ${syncState === 'loading' ? 'animate-spin' : ''}`}/><div className="min-w-0 flex-1"><p className="font-extrabold">{syncState === 'synced' ? 'Postęp zsynchronizowany' : syncState === 'loading' ? 'Synchronizacja w toku' : syncState === 'error' ? 'Synchronizacja nie powiodła się' : syncState === 'offline' ? 'Brak połączenia' : 'Synchronizacja gotowa'}</p><p className="mt-1 text-sm leading-5 text-gray-400">{syncMessage || 'Postęp jest zapisywany lokalnie, a po połączeniu z internetem może zostać wysłany do chmury.'}</p></div></div><button onClick={() => void onSyncNow()} disabled={syncState === 'loading' || !configured} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-duo-blue px-4 py-3 font-black text-white disabled:opacity-50"><RefreshCw size={17}/>Synchronizuj teraz</button></div>
@@ -106,8 +104,10 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
           {mode !== 'reset' && (
           <label className="block"><span className="mb-2 block text-sm font-bold text-gray-300">Hasło</span><span className="flex items-center gap-2 rounded-xl border border-[#34444D] bg-[#10191E] px-3"><KeyRound size={17} className="text-gray-500"/><input type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} required value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimum 8 znaków" className="w-full bg-transparent py-3.5 text-sm text-white outline-none"/></span></label>
           )}
-          <button type="submit" disabled={busy || !configured} className="flex w-full items-center justify-center gap-2 rounded-xl bg-duo-green px-4 py-3.5 font-black text-black disabled:cursor-not-allowed disabled:opacity-50">{busy ? <LoaderCircle size={18} className="animate-spin"/> : mode === 'login' ? <LogIn size={18}/> : <UserPlus size={18}/>}{busy ? 'Przetwarzanie…' : mode === 'login' ? 'Zaloguj się' : 'Utwórz konto'}</button>
+          <button type="submit" disabled={busy || !configured} className="flex w-full items-center justify-center gap-2 rounded-xl bg-duo-green px-4 py-3.5 font-black text-black disabled:cursor-not-allowed disabled:opacity-50">{busy ? <LoaderCircle size={18} className="animate-spin"/> : mode === 'reset' ? <Mail size={18}/> : mode === 'login' ? <LogIn size={18}/> : <UserPlus size={18}/>}{busy ? 'Przetwarzanie…' : mode === 'reset' ? 'Wyślij link resetujący' : mode === 'login' ? 'Zaloguj się' : 'Utwórz konto'}</button>
         </form>
+        {mode === 'login' && <button type="button" onClick={() => {setMode('reset');setError('');setNotice('');}} className="mt-3 w-full text-sm font-bold text-duo-blue hover:underline">Nie pamiętasz hasła?</button>}
+        {mode === 'reset' && <button type="button" onClick={() => {setMode('login');setError('');setNotice('');}} className="mt-3 w-full text-sm font-bold text-gray-400 hover:underline">Wróć do logowania</button>}
         {!configured && <div className="mt-4 rounded-xl border border-duo-yellow/30 bg-duo-yellow/10 p-3 text-sm leading-5 text-gray-300"><strong className="text-duo-yellow">Wymagana konfiguracja:</strong> dodaj VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY oraz uruchom migrację z katalogu supabase/migrations.</div>}
       </>}
       {error && <div role="alert" className="mt-4 flex gap-2 rounded-xl border border-duo-red/30 bg-duo-red/10 p-3 text-sm leading-5 text-red-200"><AlertCircle size={18} className="mt-0.5 shrink-0"/>{error}</div>}
