@@ -30,6 +30,22 @@ drop policy if exists "Users can send friend requests" on public.friend_requests
 create policy "Users can send friend requests" on public.friend_requests for insert to authenticated with check (auth.uid() = sender_id);
 drop policy if exists "Recipients can respond to friend requests" on public.friend_requests;
 create policy "Recipients can respond to friend requests" on public.friend_requests for update to authenticated using (auth.uid() = receiver_id or auth.uid() = sender_id) with check (auth.uid() = receiver_id or auth.uid() = sender_id);
+create or replace function public.touch_friend_request_updated_at()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+begin
+  new.updated_at := now();
+  return new;
+end;
+$;
+
+drop trigger if exists friend_requests_touch_updated_at on public.friend_requests;
+create trigger friend_requests_touch_updated_at
+  before update on public.friend_requests
+  for each row execute function public.touch_friend_request_updated_at();
+
 drop policy if exists "Senders can cancel friend requests" on public.friend_requests;
 create policy "Senders can cancel friend requests" on public.friend_requests for delete to authenticated using (auth.uid() = sender_id);
 
@@ -40,7 +56,7 @@ create policy "Users can challenge another user" on public.duels for insert to a
 drop policy if exists "Duel participants can update duels" on public.duels;
 create policy "Duel participants can update duels" on public.duels for update to authenticated using (auth.uid() = challenger_id or auth.uid() = opponent_id) with check (auth.uid() = challenger_id or auth.uid() = opponent_id);
 
-create or replace view public.leaderboard_public with (security_invoker = true) as
+create or replace view public.leaderboard_public with (security_invoker = false) as
 select p.id, p.username, p.display_name, p.avatar_emoji,
   case when coalesce(up.stats ->> 'xp', '') ~ '^[0-9]{1,9}$' then (up.stats ->> 'xp')::integer else 0 end as xp,
   case when coalesce(up.stats ->> 'level', '') ~ '^[0-9]{1,6}$' then greatest(1, (up.stats ->> 'level')::integer) else 1 end as level,
@@ -48,8 +64,12 @@ select p.id, p.username, p.display_name, p.avatar_emoji,
 from public.profiles p left join public.user_progress up on up.user_id = p.id;
 
 grant select on public.leaderboard_public to authenticated;
-grant select, update on public.profiles to authenticated;
+grant select on public.profiles to authenticated;
+revoke update on public.profiles from authenticated;
+grant update (username, display_name, avatar_emoji) on public.profiles to authenticated;
 grant select, insert, update on public.user_progress to authenticated;
 grant select, insert, delete on public.chat_messages to authenticated;
-grant select, insert, update, delete on public.friend_requests to authenticated;
-grant select, insert, update on public.duels to authenticated;
+grant select, insert, delete on public.friend_requests to authenticated;
+revoke update on public.friend_requests from authenticated;
+grant update (status) on public.friend_requests to authenticated;
+grant select, insert on public.duels to authenticated;
