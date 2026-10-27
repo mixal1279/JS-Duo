@@ -200,6 +200,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     const allLessonQuestionIds = questions.map((q) => q.id);
     const finalCompletedIds = Array.from(new Set([...solvedIds, ...allLessonQuestionIds]));
     const effectiveUnitId = unitId || (questions[0]?.unitId ?? 1);
+    void cloudSyncService.completeLearningLesson(`${effectiveUnitId}:${lessonIndex}`, allLessonQuestionIds).catch(() => undefined);
 
     onComplete({
       earnedXp: Math.max(10, earnedXp),
