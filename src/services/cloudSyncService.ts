@@ -15,6 +15,13 @@ export interface AuthSession {
   user: { id: string; email?: string; user_metadata?: Record<string, unknown> };
 }
 
+export interface CloudProfile {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_emoji: string | null;
+}
+
 export interface CloudProgress {
   user_id: string;
   stats: UserStats;
@@ -266,6 +273,43 @@ export const cloudSyncService = {
     const validSession = await this.refreshSession(session);
     const rows = await restRequest('user_progress?select=user_id,stats,quests,review_schedule,completed_projects,updated_at&limit=1', validSession) as CloudProgress[] | null;
     return Array.isArray(rows) && rows.length ? rows[0] : null;
+  },
+
+  async loadProfile(session: AuthSession): Promise<CloudProfile | null> {
+    const validSession = await this.refreshSession(session);
+    const rows = await restRequest(
+      `profiles?select=id,username,display_name,avatar_emoji&id=eq.${encodeURIComponent(validSession.user.id)}&limit=1`,
+      validSession
+    ) as CloudProfile[] | null;
+    return Array.isArray(rows) && rows.length ? rows[0] : null;
+  },
+
+  async updateProfile(
+    session: AuthSession,
+    changes: { display_name: string; avatar_emoji: string }
+  ): Promise<CloudProfile> {
+    const validSession = await this.refreshSession(session);
+    const displayName = changes.display_name.trim();
+    if (!displayName || displayName.length > 24) {
+      throw new CloudSyncError('Nazwa wyświetlana musi mieć od 1 do 24 znaków.');
+    }
+    const allowedAvatars = ['🦉', '🧙‍♂️', '🤖', '🐱', '🦊', '🚀'];
+    if (!allowedAvatars.includes(changes.avatar_emoji)) {
+      throw new CloudSyncError('Wybrany awatar jest nieprawidłowy.');
+    }
+    const rows = await restRequest(
+      `profiles?id=eq.${encodeURIComponent(validSession.user.id)}&select=id,username,display_name,avatar_emoji`,
+      validSession,
+      {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify({ display_name: displayName, avatar_emoji: changes.avatar_emoji }),
+      }
+    ) as CloudProfile[] | null;
+    if (!Array.isArray(rows) || !rows.length) {
+      throw new CloudSyncError('Nie udało się zapisać profilu. Sprawdź polityki RLS tabeli profiles.');
+    }
+    return rows[0];
   },
 
   async loadLeaderboard(session: AuthSession): Promise<LeaderboardUser[]> {
