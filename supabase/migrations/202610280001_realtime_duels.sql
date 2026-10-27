@@ -1196,7 +1196,7 @@ begin
     select jsonb_build_object(
       'id',id,'unit_id',unit_id,'unit_title',unit_title,'question',question,
       'code_snippet',code_snippet,'type',question_type,'options',options,
-      'explanation',explanation,'difficulty',difficulty,'points',points
+      'difficulty',difficulty,'points',points
     ) into v_q from public.duel_question_bank where id=v_duel.question_ids[v_duel.current_round+1];
   else v_q := null; end if;
   return jsonb_build_object(
