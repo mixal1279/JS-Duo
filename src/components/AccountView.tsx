@@ -14,6 +14,7 @@ interface AccountViewProps {
 export const AccountView: React.FC<AccountViewProps> = ({ session, onSessionChange, syncState, syncMessage, onSyncNow }) => {
 const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [recoverySession, setRecoverySession] = useState<AuthSession | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -26,8 +27,8 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
     cloudSyncService.consumeRecoverySessionFromUrl().then((recoverySession) => {
       if (!active || !recoverySession) return;
       setRecoveryMode(true);
+      setRecoverySession(recoverySession);
       setMode('reset');
-      onSessionChange(recoverySession);
       setNotice('Link został zweryfikowany. Ustaw nowe hasło.');
     }).catch((cause) => {
       if (active) setError(cause instanceof Error ? cause.message : 'Link resetowania hasła jest nieprawidłowy.');
@@ -38,14 +39,13 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
   const handlePasswordUpdate = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(''); setNotice('');
-    if (!session) { setError('Sesja resetowania wygasła. Poproś o nowy link resetujący.'); return; }
+    if (!recoverySession) { setError('Sesja resetowania wygasła. Poproś o nowy link resetujący.'); return; }
     if (password.length < 8) { setError('Hasło musi mieć co najmniej 8 znaków.'); return; }
     setBusy(true);
     try {
-      await cloudSyncService.updatePassword(session, password);
+      await cloudSyncService.updatePassword(recoverySession, password);
       cloudSyncService.saveSession(null);
-      onSessionChange(null);
-      setRecoveryMode(false); setPassword(''); setMode('login');
+      setRecoveryMode(false); setRecoverySession(null); setPassword(''); setMode('login');
       setNotice('Hasło zostało zmienione. Zaloguj się nowym hasłem.');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Nie udało się zmienić hasła.'); }
     finally { setBusy(false); }
@@ -87,8 +87,8 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
       <div className="flex items-start gap-4"><div className="rounded-2xl bg-duo-blue/15 p-3 text-duo-blue"><Cloud size={30}/></div><div className="flex-1"><p className="text-xs font-black uppercase tracking-[0.18em] text-duo-blue">Konto i synchronizacja</p><h1 className="mt-1 text-2xl font-black sm:text-3xl">Twoja nauka, na każdym urządzeniu</h1><p className="mt-2 text-sm leading-6 text-gray-300">Zaloguj się, aby zapisywać XP, ukończone pytania i dzienne wyzwania w chmurze. Nauka lokalna działa również bez konta.</p></div></div>
     </header>
     <section className="rounded-3xl border-2 border-[#2A373F] bg-[#172127] p-5 sm:p-7">
-      {session && recoveryMode ? <div className="space-y-5">
-        <div className="flex items-center gap-3"><div className="rounded-2xl bg-duo-blue/15 p-3 text-duo-blue"><KeyRound size={24}/></div><div><h2 className="text-lg font-black">Ustaw nowe hasło</h2><p className="text-sm text-gray-400">{session.user.email || 'Zweryfikowany link resetujący'}</p></div></div>
+      {recoverySession && recoveryMode ? <div className="space-y-5">
+        <div className="flex items-center gap-3"><div className="rounded-2xl bg-duo-blue/15 p-3 text-duo-blue"><KeyRound size={24}/></div><div><h2 className="text-lg font-black">Ustaw nowe hasło</h2><p className="text-sm text-gray-400">{recoverySession.user.email || 'Zweryfikowany link resetujący'}</p></div></div>
         <form onSubmit={handlePasswordUpdate} className="space-y-4">
           <label className="block"><span className="mb-2 block text-sm font-bold text-gray-300">Nowe hasło</span><span className="flex items-center gap-2 rounded-xl border border-[#34444D] bg-[#10191E] px-3"><KeyRound size={17} className="text-gray-500"/><input type="password" autoComplete="new-password" minLength={8} required value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimum 8 znaków" className="w-full bg-transparent py-3.5 text-sm text-white outline-none"/></span></label>
           <button type="submit" disabled={busy || !configured} className="flex w-full items-center justify-center gap-2 rounded-xl bg-duo-green px-4 py-3.5 font-black text-black disabled:cursor-not-allowed disabled:opacity-50">{busy ? <LoaderCircle size={18} className="animate-spin"/> : <KeyRound size={18}/>}{busy ? 'Zapisywanie…' : 'Zapisz nowe hasło'}</button>
