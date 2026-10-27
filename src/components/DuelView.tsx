@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Swords, Zap, Timer, Trophy, UserCheck, RefreshCw, ArrowRight, ShieldCheck, CheckCircle2, XCircle } from 'lucide-react';
-import confetti from 'canvas-confetti';
-import { Friend, Question, UserStats } from '../types';
-import { ALL_QUESTIONS } from '../data/questionsData';
-import { CodeBlock } from './CodeBlock';
-import { MascotOwl } from './MascotOwl';
-import { soundService } from '../services/soundService';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Swords, Trophy, Timer, CheckCircle2, XCircle, RefreshCw, UserCheck, ShieldCheck } from 'lucide-react';
+import { Friend, UserStats } from '../types';
+import { AuthSession, OnlineDuelState, cloudSyncService } from '../services/cloudSyncService';
 
 interface DuelViewProps {
   friends: Friend[];
@@ -13,429 +9,261 @@ interface DuelViewProps {
   onUpdateStats: (newStats: Partial<UserStats>) => void;
 }
 
-export const DuelView: React.FC<DuelViewProps> = ({
-  friends,
-  userStats,
-  onUpdateStats,
-}) => {
-  const [duelState, setDuelState] = useState<'lobby' | 'matchmaking' | 'battle' | 'results'>('lobby');
-  const [opponent, setOpponent] = useState<Friend | null>(null);
-  const [duelQuestions, setDuelQuestions] = useState<Question[]>([]);
-  const [currentRound, setCurrentRound] = useState(0);
-  const [userScore, setUserScore] = useState(0);
-  const [opponentScore, setOpponentScore] = useState(0);
-  const [userAnswer, setUserAnswer] = useState<number | null>(null);
-  const [opponentAnswered, setOpponentAnswered] = useState<boolean>(false);
-  const [opponentGotCorrect, setOpponentGotCorrect] = useState<boolean>(false);
+interface DuelRow {
+  id: string;
+  challenger_id: string;
+  opponent_id: string;
+  status: string;
+  created_at: string;
+  completed_at?: string | null;
+  winner_id?: string | null;
+}
+
+const ACTIVE_DUEL_KEY = 'js_duo_active_online_duel_v1';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const DuelView: React.FC<DuelViewProps> = ({ friends, userStats, onUpdateStats }) => {
+  const session: AuthSession | null = cloudSyncService.getSession();
+  const userId = session?.user.id || '';
+  const [duels, setDuels] = useState<DuelRow[]>([]);
+  const [activeDuelId, setActiveDuelId] = useState<string>(() => {
+    try { return localStorage.getItem(ACTIVE_DUEL_KEY) || ''; } catch { return ''; }
+  });
+  const [duel, setDuel] = useState<OnlineDuelState | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [timeLeft, setTimeLeft] = useState(15);
-  const [roundFinished, setRoundFinished] = useState(false);
+  const [rewardSyncedId, setRewardSyncedId] = useState('');
 
-  // Matchmaking or challenge initiation
-  const startDuel = (selectedFriend?: Friend) => {
-    setDuelState('matchmaking');
-    soundService.playClick();
+  const incoming = useMemo(
+    () => duels.filter((item) => item.status === 'pending' && item.opponent_id === userId),
+    [duels, userId]
+  );
+  const outgoing = useMemo(
+    () => duels.filter((item) => item.status === 'pending' && item.challenger_id === userId),
+    [duels, userId]
+  );
 
-    setTimeout(() => {
-      const chosenOpponent = selectedFriend || friends[Math.floor(Math.random() * friends.length)];
-      setOpponent(chosenOpponent);
-
-      // Pick 5 random questions across the 500 questions bank
-      const shuffled = [...ALL_QUESTIONS].sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, 5);
-      setDuelQuestions(selected);
-
-      setCurrentRound(0);
-      setUserScore(0);
-      setOpponentScore(0);
-      setUserAnswer(null);
-      setOpponentAnswered(false);
-      setRoundFinished(false);
-      setTimeLeft(15);
-      setDuelState('battle');
-    }, 1200);
-  };
-
-  const currentQ = duelQuestions[currentRound];
-
-  // Round Timer
-  useEffect(() => {
-    if (duelState !== 'battle' || roundFinished) return;
-
-    if (timeLeft <= 0) {
-      handleTimeOut();
+  const refresh = async (quiet = false) => {
+    const current = cloudSyncService.getSession();
+    if (!current) {
+      setDuels([]);
+      setDuel(null);
+      if (!quiet) setError('Zaloguj się, aby korzystać z pojedynków online.');
       return;
     }
+    if (!quiet) setLoading(true);
+    try {
+      const rows = await cloudSyncService.listDuels(current);
+      setDuels(rows);
+      if (activeDuelId) {
+        try {
+          const state = await cloudSyncService.getDuelState(current, activeDuelId);
+          setDuel(state);
+          if (state.status === 'declined') {
+            setNotice('Wyzwanie zostało odrzucone.');
+            setActiveDuelId('');
+            try { localStorage.removeItem(ACTIVE_DUEL_KEY); } catch { /* optional cache */ }
+          }
+          if (state.status === 'completed' && state.my_rewards && rewardSyncedId !== state.id) {
+            onUpdateStats({
+              xp: Number(state.my_rewards.xp) || 0,
+              gems: Number(state.my_rewards.gems) || 0,
+              duelWins: Number(state.my_rewards.duel_wins) || 0,
+              duelLosses: Number(state.my_rewards.duel_losses) || 0,
+              level: Math.max(1, Math.floor((Number(state.my_rewards.xp) || 0) / 100) + 1),
+            });
+            setRewardSyncedId(state.id);
+          }
+        } catch {
+          setDuel(null);
+          setActiveDuelId('');
+          try { localStorage.removeItem(ACTIVE_DUEL_KEY); } catch { /* optional cache */ }
+        }
+      }
+      setError('');
+    } catch (cause) {
+      if (!quiet) setError(cause instanceof Error ? cause.message : 'Nie udało się pobrać pojedynków.');
+    } finally {
+      if (!quiet) setLoading(false);
+    }
+  };
 
-    const timer = setInterval(() => {
-      setTimeLeft((t) => t - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [duelState, timeLeft, roundFinished]);
-
-  // Simulate Opponent Behavior (answers between 3 and 8 seconds with ~75% accuracy)
   useEffect(() => {
-    if (duelState !== 'battle' || roundFinished || opponentAnswered) return;
+    void refresh();
+    const interval = window.setInterval(() => { void refresh(true); }, 2500);
+    return () => window.clearInterval(interval);
+    // refresh reads activeDuelId and rewardSyncedId; restarting on these changes keeps its closure current.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, activeDuelId, rewardSyncedId]);
 
-    const delay = Math.floor(Math.random() * 4000) + 3000;
-    const oppTimer = setTimeout(() => {
-      const isCorrect = Math.random() < 0.75;
-      setOpponentAnswered(true);
-      setOpponentGotCorrect(isCorrect);
-      if (isCorrect) {
-        setOpponentScore((prev) => prev + (currentQ?.points || 15));
-      }
-    }, delay);
+  useEffect(() => {
+    if (!duel || duel.status !== 'active' || !duel.round_started_at) return;
+    const update = () => {
+      const deadline = new Date(duel.round_started_at as string).getTime() + 15_000;
+      setTimeLeft(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
+    };
+    update();
+    const interval = window.setInterval(update, 250);
+    return () => window.clearInterval(interval);
+  }, [duel?.id, duel?.status, duel?.current_round, duel?.round_started_at]);
 
-    return () => clearTimeout(oppTimer);
-  }, [duelState, currentRound, roundFinished, opponentAnswered]);
+  useEffect(() => {
+    if (!duel || duel.status !== 'active' || timeLeft > 0 || working) return;
+    const current = cloudSyncService.getSession();
+    if (!current) return;
+    setWorking(true);
+    cloudSyncService.advanceDuelTimeout(current, duel.id)
+      .then(setDuel)
+      .catch((cause) => setError(cause instanceof Error ? cause.message : 'Nie udało się rozliczyć timeoutu.'))
+      .finally(() => setWorking(false));
+  }, [duel, timeLeft, working]);
 
-  const handleSelectAnswer = (idx: number) => {
-    if (userAnswer !== null || roundFinished) return;
-    setUserAnswer(idx);
-    soundService.playClick();
+  const rememberDuel = (id: string) => {
+    setActiveDuelId(id);
+    try { localStorage.setItem(ACTIVE_DUEL_KEY, id); } catch { /* server remains authoritative */ }
+  };
 
-    const isCorrect = idx === currentQ.correctIndex;
-    if (isCorrect) {
-      soundService.playCorrect();
-      setUserScore((prev) => prev + currentQ.points);
-    } else {
-      soundService.playWrong();
+  const challenge = async (friend: Friend) => {
+    const current = cloudSyncService.getSession();
+    if (!current) { setError('Zaloguj się, aby wysyłać wyzwania.'); return; }
+    if (!UUID_RE.test(friend.id)) {
+      setError(`Profil „${friend.name}” nie ma powiązanego identyfikatora konta online. Odśwież znajomych po połączeniu z Supabase.`);
+      return;
     }
-
-    // Wait 1.5s to show both answers before next round or finish
-    setTimeout(() => {
-      setRoundFinished(true);
-    }, 1200);
+    setWorking(true); setError(''); setNotice('');
+    try {
+      const id = await cloudSyncService.createDuel(current, friend.id);
+      rememberDuel(id);
+      setDuel(await cloudSyncService.getDuelState(current, id));
+      setNotice(`Wysłano wyzwanie do ${friend.name}.`);
+      await refresh(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Nie udało się utworzyć wyzwania.');
+    } finally { setWorking(false); }
   };
 
-  const handleTimeOut = () => {
-    setRoundFinished(true);
-    soundService.playWrong();
-  };
-
-  const handleNextRound = () => {
-    if (currentRound + 1 < duelQuestions.length) {
-      setCurrentRound((prev) => prev + 1);
-      setUserAnswer(null);
-      setOpponentAnswered(false);
-      setOpponentGotCorrect(false);
-      setRoundFinished(false);
-      setTimeLeft(15);
-    } else {
-      // Duel finished
-      setDuelState('results');
-      const won = userScore > opponentScore;
-      if (won) {
-        soundService.playLevelUp();
-        confetti({ particleCount: 100, spread: 80 });
-        onUpdateStats({
-          xp: userStats.xp + 50,
-          gems: userStats.gems + 20,
-          duelWins: userStats.duelWins + 1,
-        });
+  const respond = async (row: DuelRow, accept: boolean) => {
+    const current = cloudSyncService.getSession();
+    if (!current) return;
+    setWorking(true); setError(''); setNotice('');
+    try {
+      const state = await cloudSyncService.respondToDuel(current, row.id, accept);
+      if (accept) {
+        rememberDuel(row.id);
+        setDuel(state);
+        setNotice('Wyzwanie zaakceptowane. Pojedynek rozpoczęty.');
       } else {
-        onUpdateStats({
-          duelLosses: userStats.duelLosses + 1,
-        });
+        setNotice('Wyzwanie odrzucone.');
+        setActiveDuelId('');
+        try { localStorage.removeItem(ACTIVE_DUEL_KEY); } catch { /* optional cache */ }
       }
-    }
+      await refresh(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Nie udało się odpowiedzieć na wyzwanie.');
+    } finally { setWorking(false); }
   };
 
-  return (
-    <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-8 select-none">
-      {/* LOBBY VIEW */}
-      {duelState === 'lobby' && (
-        <div>
-          {/* Hero Banner */}
-          <div className="rounded-3xl p-5 mb-6 bg-gradient-to-tr from-[#241738] to-[#1C262C] border-2 border-purple-500/50 shadow-xl text-center">
-            <div className="flex justify-center mb-2">
-              <div className="w-16 h-16 rounded-3xl bg-purple-500/20 border-2 border-purple-400/60 flex items-center justify-center">
-                <Swords size={34} className="text-purple-400" />
-              </div>
-            </div>
-            <h2 className="text-2xl font-black text-white tracking-tight">
-              Pojedynki 1v1 ze Znajomymi
-            </h2>
-            <p className="text-xs text-gray-300 max-w-md mx-auto mt-1 mb-4 leading-relaxed">
-              Zmierz się w szybkim 5-rundowym starciu na wiedzę z JavaScriptu! Kto szybciej i celniej odpowie, zgarnia +50 XP oraz diamenty.
-            </p>
+  const answer = async (index: number) => {
+    const current = cloudSyncService.getSession();
+    if (!current || !duel || duel.status !== 'active' || duel.my_answer || working) return;
+    setWorking(true); setError('');
+    try {
+      setDuel(await cloudSyncService.submitDuelAnswer(current, duel.id, index));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Nie udało się wysłać odpowiedzi.');
+    } finally { setWorking(false); }
+  };
 
-            {/* Duel Stats pill */}
-            <div className="inline-flex items-center gap-4 px-4 py-2 rounded-2xl bg-black/40 border border-white/10 text-xs font-bold mb-4">
-              <span className="text-duo-green">Wygrane: {userStats.duelWins}</span>
-              <span className="text-gray-500">|</span>
-              <span className="text-duo-red">Przegrane: {userStats.duelLosses}</span>
-              <span className="text-gray-500">|</span>
-              <span className="text-yellow-400">
-                Winrate:{' '}
-                {userStats.duelWins + userStats.duelLosses > 0
-                  ? Math.round((userStats.duelWins / (userStats.duelWins + userStats.duelLosses)) * 100)
-                  : 0}
-                %
-              </span>
-            </div>
+  const abandonView = () => {
+    setDuel(null);
+    setActiveDuelId('');
+    setRewardSyncedId('');
+    try { localStorage.removeItem(ACTIVE_DUEL_KEY); } catch { /* optional cache */ }
+    void refresh(true);
+  };
 
-            <div>
-              <button
-                onClick={() => startDuel()}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-black text-sm uppercase tracking-wider shadow-[0_4px_0_#4c1d95] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2"
-              >
-                <Zap size={18} />
-                <span>Szybki pojedynek (Dobierz rywala)</span>
-              </button>
-            </div>
-          </div>
+  if (!session) {
+    return <div className="mx-auto max-w-xl rounded-3xl border border-[#2A373F] bg-[#172127] p-6 text-center">
+      <ShieldCheck size={34} className="mx-auto mb-3 text-purple-400" />
+      <h2 className="text-xl font-black text-white">Pojedynki online 1v1</h2>
+      <p className="mt-2 text-sm text-gray-400">Zaloguj się do JS Duo, aby wysyłać wyzwania i rozgrywać zsynchronizowane rundy z innymi użytkownikami.</p>
+    </div>;
+  }
 
-          {/* Friends List with Duel Action */}
-          <div>
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="text-sm font-black uppercase tracking-wider text-gray-400">
-                Twoi Znajomi ({friends.length})
-              </h3>
-              <span className="text-xs text-duo-green font-bold">
-                {friends.filter((f) => f.status === 'online').length} online
-              </span>
-            </div>
+  return <div className="mx-auto max-w-2xl space-y-5 px-2 py-3 pb-8">
+    <header className="rounded-3xl border-2 border-purple-500/40 bg-gradient-to-tr from-[#241738] to-[#1C262C] p-5 text-center shadow-xl">
+      <Swords size={34} className="mx-auto mb-2 text-purple-400" />
+      <h2 className="text-2xl font-black text-white">Pojedynki online 1v1</h2>
+      <p className="mt-2 text-sm text-gray-300">Pięć rund, odpowiedzi sprawdzane na serwerze i nagrody naliczane tylko raz.</p>
+      <div className="mt-4 flex justify-center gap-4 text-xs font-bold">
+        <span className="text-duo-green">Wygrane: {userStats.duelWins}</span>
+        <span className="text-duo-red">Przegrane: {userStats.duelLosses}</span>
+      </div>
+      <button onClick={() => void refresh()} disabled={loading || working} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
+        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Odśwież
+      </button>
+    </header>
 
-            <div className="space-y-2.5">
-              {friends.map((friend) => (
-                <div
-                  key={friend.id}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-[#1C262C] border border-[#2A373F] hover:bg-[#223038] transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <span className="text-2xl">{friend.avatar}</span>
-                      <span
-                        className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#1C262C] ${
-                          friend.status === 'online'
-                            ? 'bg-duo-green'
-                            : friend.status === 'w grze'
-                            ? 'bg-yellow-400'
-                            : 'bg-gray-500'
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-sm text-white">{friend.name}</h4>
-                      <div className="flex items-center gap-2 text-[11px] text-gray-400">
-                        <span>Poz. {friend.level}</span>
-                        <span>•</span>
-                        <span className="text-purple-300 font-medium">
-                          {friend.duelWins} wygranych pojedynków
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+    {error && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{error}</div>}
+    {notice && <div role="status" className="rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-200">{notice}</div>}
 
-                  <button
-                    onClick={() => startDuel(friend)}
-                    className="px-3.5 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 border border-purple-500/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95"
-                  >
-                    <Swords size={14} />
-                    <span>Zaproś</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+    {duel && duel.status === 'active' && duel.question && <section className="space-y-4 rounded-3xl border border-purple-500/40 bg-[#172127] p-4 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="text-xs font-bold uppercase tracking-wider text-purple-300">Runda {Math.min(duel.current_round + 1, duel.round_count)} / {duel.round_count}</p><h3 className="mt-1 text-lg font-black text-white">{duel.question.unit_title}</h3></div>
+        <div className="flex items-center gap-2 rounded-xl bg-black/30 px-3 py-2 font-black text-white"><Timer size={17} className={timeLeft <= 5 ? 'text-red-400' : 'text-purple-300'} />{timeLeft}s</div>
+      </div>
+      <div className="rounded-2xl bg-[#10191E] p-4">
+        <p className="whitespace-pre-wrap font-bold text-white">{duel.question.question}</p>
+        {duel.question.code_snippet && <pre className="mt-3 overflow-x-auto rounded-xl bg-black/30 p-3 text-sm text-gray-200"><code>{duel.question.code_snippet}</code></pre>}
+      </div>
+      <div className="grid gap-2">
+        {duel.question.options.map((option, index) => <button key={index} onClick={() => void answer(index)} disabled={working || Boolean(duel.my_answer) || timeLeft <= 0} className={`rounded-xl border px-4 py-3 text-left text-sm font-bold transition ${duel.my_answer?.answer_index === index ? 'border-purple-400 bg-purple-500/20 text-white' : 'border-[#34444D] bg-[#10191E] text-gray-200 hover:border-purple-400'} disabled:cursor-not-allowed disabled:opacity-60`}>
+          <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/5">{String.fromCharCode(65 + index)}</span>{option}
+        </button>)}
+      </div>
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-black/20 p-3 text-sm">
+        <span className="text-gray-300">Ty: <strong>{duel.challenger_id === userId ? duel.challenger_score : duel.opponent_score}</strong></span>
+        <span className="text-gray-300">Rywal: <strong>{duel.challenger_id === userId ? duel.opponent_score : duel.challenger_score}</strong></span>
+      </div>
+      {duel.my_answer && <p className={`flex items-center gap-2 text-sm font-bold ${duel.my_answer.correct ? 'text-green-300' : 'text-red-300'}`}>
+        {duel.my_answer.correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+        {duel.my_answer.correct ? 'Poprawna odpowiedź' : 'Niepoprawna odpowiedź'} — czekamy na rywala lub koniec rundy.
+      </p>}
+      {duel.opponent_answered && <p className="text-sm text-purple-200">Rywal odpowiedział. Synchronizuję stan rundy…</p>}
+    </section>}
 
-      {/* MATCHMAKING ANIMATION */}
-      {duelState === 'matchmaking' && (
-        <div className="py-20 flex flex-col items-center justify-center text-center">
-          <div className="w-20 h-20 rounded-full border-4 border-purple-500 border-t-transparent animate-spin mb-6 flex items-center justify-center">
-            <Swords size={32} className="text-purple-400" />
-          </div>
-          <h3 className="text-xl font-black text-white mb-1">Szukanie rywala...</h3>
-          <p className="text-xs text-gray-400">Dobieramy programistę o zbliżonym poziomie w JS Duo</p>
-        </div>
-      )}
+    {duel && duel.status === 'pending' && <section className="rounded-2xl border border-purple-500/30 bg-[#172127] p-5 text-center">
+      <UserCheck size={28} className="mx-auto mb-2 text-purple-300" />
+      <h3 className="font-black text-white">Wyzwanie oczekuje na odpowiedź</h3>
+      <p className="mt-1 text-sm text-gray-400">Ten panel odświeża się automatycznie. Możesz zamknąć aplikację i wrócić później.</p>
+      <button onClick={abandonView} className="mt-4 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold text-gray-200">Wróć do lobby</button>
+    </section>}
 
-      {/* ACTIVE BATTLE */}
-      {duelState === 'battle' && currentQ && (
-        <div>
-          {/* Split Top Scoreboard */}
-          <div className="bg-[#1C262C] border-2 border-[#2A373F] rounded-3xl p-3.5 mb-4 shadow-lg">
-            <div className="flex items-center justify-between">
-              {/* User Side */}
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-duo-blue/20 border border-duo-blue flex items-center justify-center text-xl">
-                  🦉
-                </div>
-                <div>
-                  <span className="text-xs font-black text-duo-blue">Ty</span>
-                  <div className="text-base font-black text-white">{userScore} pkt</div>
-                </div>
-              </div>
+    {duel && duel.status === 'completed' && <section className="rounded-3xl border border-yellow-500/30 bg-[#172127] p-5 text-center">
+      <Trophy size={34} className="mx-auto mb-2 text-yellow-300" />
+      <h3 className="text-xl font-black text-white">{duel.winner_id === userId ? 'Wygrana!' : duel.winner_id ? 'Tym razem przegrana' : 'Remis'}</h3>
+      <p className="mt-2 text-sm text-gray-300">Wynik: {duel.challenger_score} : {duel.opponent_score}</p>
+      {duel.my_rewards && <p className="mt-2 text-sm text-green-300">Stan serwerowy: {duel.my_rewards.xp} XP · {duel.my_rewards.gems} klejnotów</p>}
+      <button onClick={abandonView} className="mt-4 rounded-xl bg-purple-500 px-5 py-3 font-black text-white">Wróć do lobby</button>
+    </section>}
 
-              {/* Center: Timer & Round */}
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">
-                  Runda {currentRound + 1}/5
-                </span>
-                <div
-                  className={`flex items-center gap-1 text-sm font-black px-2.5 py-0.5 rounded-full mt-0.5 ${
-                    timeLeft <= 5
-                      ? 'bg-red-500/20 text-red-400 border border-red-500 animate-pulse'
-                      : 'bg-black/30 text-yellow-400'
-                  }`}
-                >
-                  <Timer size={14} />
-                  <span>{timeLeft}s</span>
-                </div>
-              </div>
-
-              {/* Opponent Side */}
-              <div className="flex items-center gap-2 text-right">
-                <div>
-                  <span className="text-xs font-black text-purple-400">{opponent?.name}</span>
-                  <div className="text-base font-black text-white">{opponentScore} pkt</div>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500 flex items-center justify-center text-xl">
-                  {opponent?.avatar || '🦁'}
-                </div>
-              </div>
-            </div>
-
-            {/* Live Opponent Status Indicator */}
-            <div className="mt-2 pt-2 border-t border-[#2A373F] flex items-center justify-between text-[11px] font-bold">
-              <span className="text-gray-400">
-                {userAnswer !== null ? 'Oddałeś odpowiedź!' : 'Wybierz odpowiedź...'}
-              </span>
-              <span className={opponentAnswered ? 'text-duo-green' : 'text-gray-500'}>
-                {opponentAnswered ? 'Rywal odpowiedział! ⚡' : 'Rywal jeszcze myśli...'}
-              </span>
-            </div>
-          </div>
-
-          {/* Question Prompt */}
-          <div className="mb-4">
-            <h3 className="text-base sm:text-lg font-black text-white mb-2 leading-snug">
-              {currentQ.question}
-            </h3>
-            {currentQ.codeSnippet && <CodeBlock code={currentQ.codeSnippet} />}
-          </div>
-
-          {/* Options */}
-          <div className="space-y-2.5 mb-6">
-            {currentQ.options.map((opt, idx) => {
-              const isSelected = userAnswer === idx;
-              let btnStyle = 'bg-[#202F36] border-[#2A373F] text-gray-200 hover:bg-[#253942]';
-
-              if (userAnswer !== null) {
-                if (idx === currentQ.correctIndex) {
-                  btnStyle = 'bg-green-950/40 border-duo-green text-green-300';
-                } else if (isSelected) {
-                  btnStyle = 'bg-red-950/40 border-duo-red text-red-300';
-                } else {
-                  btnStyle = 'bg-[#202F36] opacity-40 border-[#2A373F] text-gray-400';
-                }
-              }
-
-              return (
-                <button
-                  key={idx}
-                  disabled={userAnswer !== null}
-                  onClick={() => handleSelectAnswer(idx)}
-                  className={`w-full p-3.5 rounded-2xl border-2 text-left font-bold text-sm flex items-center justify-between transition-all ${btnStyle}`}
-                >
-                  <span>{opt}</span>
-                  {userAnswer !== null && idx === currentQ.correctIndex && (
-                    <CheckCircle2 size={18} className="text-duo-green shrink-0" />
-                  )}
-                  {userAnswer !== null && isSelected && idx !== currentQ.correctIndex && (
-                    <XCircle size={18} className="text-duo-red shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Next Round Button */}
-          {roundFinished && (
-            <button
-              onClick={handleNextRound}
-              className="w-full py-3.5 rounded-2xl bg-duo-green hover:bg-duo-greenDark text-black font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_4px_0_#46a302] active:translate-y-0.5"
-            >
-              <span>{currentRound + 1 === 5 ? 'Zobacz wyniki pojedynku' : 'Następna runda'}</span>
-              <ArrowRight size={18} />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* RESULTS SCREEN */}
-      {duelState === 'results' && (
-        <div className="py-8 flex flex-col items-center justify-center text-center">
-          {userScore > opponentScore ? (
-            <>
-              <div className="text-5xl mb-3 animate-bounce">🏆</div>
-              <h2 className="text-2xl sm:text-3xl font-black text-yellow-400 mb-1">
-                Zwycięstwo w pojedynku!
-              </h2>
-              <p className="text-xs text-gray-300 mb-6">
-                Pokonałeś programistę {opponent?.name} wiedzą z JavaScriptu!
-              </p>
-            </>
-          ) : userScore === opponentScore ? (
-            <>
-              <div className="text-5xl mb-3">🤝</div>
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-200 mb-1">Remis!</h2>
-              <p className="text-xs text-gray-300 mb-6">Wyrównane starcie dwóch tytanów kodu!</p>
-            </>
-          ) : (
-            <>
-              <div className="text-5xl mb-3">💔</div>
-              <h2 className="text-2xl sm:text-3xl font-black text-duo-red mb-1">Porażka</h2>
-              <p className="text-xs text-gray-300 mb-6">
-                {opponent?.name} był tym razem szybszy. Przećwicz lekcje i zrewanżuj się!
-              </p>
-            </>
-          )}
-
-          {/* Score Comparison Box */}
-          <div className="flex items-center justify-center gap-6 bg-[#1C262C] border-2 border-[#2A373F] p-5 rounded-3xl w-full max-w-sm mb-6">
-            <div className="flex flex-col items-center">
-              <span className="text-3xl mb-1">🦉</span>
-              <span className="text-xs font-bold text-gray-400">Ty</span>
-              <span className="text-2xl font-black text-white">{userScore}</span>
-            </div>
-            <div className="text-xl font-black text-gray-500">VS</div>
-            <div className="flex flex-col items-center">
-              <span className="text-3xl mb-1">{opponent?.avatar || '🦁'}</span>
-              <span className="text-xs font-bold text-gray-400">{opponent?.name}</span>
-              <span className="text-2xl font-black text-white">{opponentScore}</span>
-            </div>
-          </div>
-
-          {userScore > opponentScore && (
-            <div className="flex items-center gap-3 mb-6 bg-duo-green/10 border border-duo-green/40 px-4 py-2 rounded-2xl text-xs font-black text-duo-green">
-              <span>+50 XP</span>
-              <span>•</span>
-              <span>+20 Kryształów</span>
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
-            <button
-              onClick={() => startDuel(opponent || undefined)}
-              className="flex-1 py-3.5 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow"
-            >
-              <RefreshCw size={15} />
-              <span>Rewanż</span>
-            </button>
-            <button
-              onClick={() => setDuelState('lobby')}
-              className="flex-1 py-3.5 rounded-2xl bg-[#232E35] hover:bg-[#2C3B44] text-gray-200 font-bold text-xs uppercase tracking-wider"
-            >
-              Powrót do lobby
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    <section className="rounded-3xl border border-[#2A373F] bg-[#172127] p-4 sm:p-5">
+      <h3 className="mb-3 text-lg font-black text-white">Wyzwania przychodzące ({incoming.length})</h3>
+      {!incoming.length && <p className="text-sm text-gray-500">Brak oczekujących wyzwań.</p>}
+      <div className="space-y-2">{incoming.map((row) => <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#10191E] p-3">
+        <div><p className="text-sm font-bold text-white">Wyzwanie od gracza</p><p className="text-xs text-gray-500">{new Date(row.created_at).toLocaleString()}</p></div>
+        <div className="flex gap-2"><button disabled={working} onClick={() => void respond(row, true)} className="rounded-lg bg-duo-green px-3 py-2 text-xs font-black text-black disabled:opacity-50">Akceptuj</button><button disabled={working} onClick={() => void respond(row, false)} className="rounded-lg border border-red-500/30 px-3 py-2 text-xs font-bold text-red-200 disabled:opacity-50">Odrzuć</button></div>
+      </div>)}</div>
+      <h3 className="mb-3 mt-6 text-lg font-black text-white">Wyślij wyzwanie</h3>
+      {!friends.length && <p className="text-sm text-gray-500">Dodaj znajomych, aby wysłać wyzwanie.</p>}
+      <div className="space-y-2">{friends.map((friend) => <div key={friend.id} className="flex items-center justify-between gap-3 rounded-xl bg-[#10191E] p-3">
+        <div><p className="font-bold text-white">{friend.avatar} {friend.name}</p><p className="text-xs text-gray-500">Poziom {friend.level} · {friend.status}</p></div>
+        <button disabled={working || friend.id === userId} onClick={() => void challenge(friend)} className="rounded-lg bg-purple-500 px-3 py-2 text-xs font-black text-white disabled:opacity-50">Wyzwij</button>
+      </div>)}</div>
+      {outgoing.length > 0 && <p className="mt-3 text-xs text-gray-500">Wysłane wyzwania: {outgoing.length}. Stan odświeża się automatycznie.</p>}
+    </section>
+  </div>;
 };
