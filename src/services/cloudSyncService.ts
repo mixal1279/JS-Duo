@@ -108,7 +108,7 @@ export const cloudSyncService = {
   },
 
   async signUp(email: string, password: string): Promise<AuthSession | null> {
-    const result = await authRequest('signup', { email: email.trim().toLowerCase(), password }) as { access_token?: string; refresh_token?: string; token_type?: string; expires_in?: number; user?: AuthSession['user'] };
+    const result = await authRequest(`signup?redirect_to=${encodeURIComponent(AUTH_REDIRECT_URL)}`, { email: email.trim().toLowerCase(), password }) as { access_token?: string; refresh_token?: string; token_type?: string; expires_in?: number; user?: AuthSession['user'] };
     if (!result?.access_token || !result.refresh_token || !result.user) return null;
     const session: AuthSession = {
       access_token: result.access_token,
