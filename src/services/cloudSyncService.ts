@@ -2,6 +2,8 @@ import { ChatMessage, DailyQuest, LeaderboardUser, UserStats } from '../types';
 import { ReviewRecord } from './reviewService';
 
 const SESSION_KEY = 'js_duo_auth_session_v1';
+const PENDING_LEARNING_ANSWERS_KEY = 'js_duo_pending_learning_answers_v1';
+const PENDING_LESSONS_KEY = 'js_duo_pending_lessons_v1';
 const API_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const AUTH_REDIRECT_URL_RAW = import.meta.env.VITE_APP_URL || 'https://mixal1279.github.io/JS-Duo/';
@@ -21,6 +23,55 @@ export interface CloudProfile {
   display_name: string | null;
   avatar_emoji: string | null;
 }
+
+export interface DuelPlayer {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_emoji: string | null;
+}
+
+export interface DuelSummary {
+  id: string;
+  challenger_id: string;
+  opponent_id: string;
+  status: 'pending' | 'active' | 'completed' | 'declined' | 'cancelled';
+  created_at: string;
+  completed_at?: string | null;
+  winner_id?: string | null;
+}
+
+export interface OnlineDuelQuestion {
+  id: number;
+  unit_id: number;
+  unit_title: string;
+  question: string;
+  code_snippet?: string | null;
+  type: 'single-choice' | 'output-predict' | 'fill-gap' | 'code-order';
+  options: string[];
+  explanation?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  points: number;
+}
+
+export interface OnlineDuelState {
+  id: string;
+  status: DuelSummary['status'];
+  challenger_id: string;
+  opponent_id: string;
+  challenger_score: number;
+  opponent_score: number;
+  winner_id: string | null;
+  current_round: number;
+  round_count: number;
+  round_started_at: string | null;
+  completed_at: string | null;
+  question: OnlineDuelQuestion | null;
+  my_answer: { answer_index: number; correct: boolean; answered_at: string } | null;
+  opponent_answered: boolean;
+  my_rewards?: { xp: number; gems: number; duel_wins: number; duel_losses: number } | null;
+}
+
 
 export interface CloudProgress {
   user_id: string;
@@ -269,7 +320,145 @@ export const cloudSyncService = {
     });
   },
 
+
+  async submitLearningAnswer(questionId: number, answerIndex: number): Promise<void> {
+    const session = this.getSession();
+    // Learning remains available offline. Queue only for an already signed-in account
+    // so answers cannot silently be transferred to a different account later.
+    if (!session || !Number.isInteger(questionId) || questionId < 1 || !Number.isInteger(answerIndex) || answerIndex < 0) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      try {
+        const raw = localStorage.getItem(PENDING_LEARNING_ANSWERS_KEY);
+        const pending = raw ? JSON.parse(raw) as Array<{ userId: string; questionId: number; answerIndex: number }> : [];
+        if (!pending.some((item) => item.userId === session.user.id && item.questionId === questionId)) {
+          pending.push({ userId: session.user.id, questionId, answerIndex });
+          localStorage.setItem(PENDING_LEARNING_ANSWERS_KEY, JSON.stringify(pending));
+        }
+      } catch { /* Offline queue failures must not interrupt the lesson. */ }
+      return;
+    }
+    const validSession = await this.refreshSession(session);
+    try {
+      await restRequest('rpc/submit_learning_answer', validSession, {
+        method: 'POST',
+        body: JSON.stringify({ p_question_id: questionId, p_answer_index: answerIndex }),
+      });
+    } catch (cause) {
+      // Retrying is safe because the server uses (user_id, question_id) as an idempotency key.
+      try {
+        const raw = localStorage.getItem(PENDING_LEARNING_ANSWERS_KEY);
+        const pending = raw ? JSON.parse(raw) as Array<{ userId: string; questionId: number; answerIndex: number }> : [];
+        if (!pending.some((item) => item.userId === validSession.user.id && item.questionId === questionId)) {
+          pending.push({ userId: validSession.user.id, questionId, answerIndex });
+          localStorage.setItem(PENDING_LEARNING_ANSWERS_KEY, JSON.stringify(pending));
+        }
+      } catch { /* Keep the local lesson playable if storage is unavailable. */ }
+      throw cause;
+    }
+  },
+
+
+  async completeLearningLesson(lessonKey: string, questionIds: number[]): Promise<void> {
+    const session = this.getSession();
+    if (!session || !lessonKey || questionIds.length < 5) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      try {
+        const raw = localStorage.getItem(PENDING_LESSONS_KEY);
+        const pending = raw ? JSON.parse(raw) as Array<{ userId: string; lessonKey: string; questionIds: number[] }> : [];
+        if (!pending.some((item) => item.userId === session.user.id && item.lessonKey === lessonKey)) {
+          pending.push({ userId: session.user.id, lessonKey, questionIds });
+          localStorage.setItem(PENDING_LESSONS_KEY, JSON.stringify(pending));
+        }
+      } catch { /* Preserve offline lesson flow if queue storage is unavailable. */ }
+      return;
+    }
+    const validSession = await this.refreshSession(session);
+    try {
+      await restRequest('rpc/complete_learning_lesson', validSession, {
+        method: 'POST',
+        body: JSON.stringify({ p_lesson_key: lessonKey, p_question_ids: questionIds }),
+      });
+    } catch (cause) {
+      try {
+        const raw = localStorage.getItem(PENDING_LESSONS_KEY);
+        const pending = raw ? JSON.parse(raw) as Array<{ userId: string; lessonKey: string; questionIds: number[] }> : [];
+        if (!pending.some((item) => item.userId === validSession.user.id && item.lessonKey === lessonKey)) {
+          pending.push({ userId: validSession.user.id, lessonKey, questionIds });
+          localStorage.setItem(PENDING_LESSONS_KEY, JSON.stringify(pending));
+        }
+      } catch { /* Keep local lesson completion independent from queue storage. */ }
+      throw cause;
+    }
+  },
+
+  async claimDailyQuest(questId: string): Promise<{ claimed: boolean; duplicate: boolean }> {
+    const session = this.getSession();
+    if (!session || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+      return { claimed: false, duplicate: false };
+    }
+    const validSession = await this.refreshSession(session);
+    const result = await restRequest('rpc/claim_daily_quest', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_quest_id: questId }),
+    }) as { claimed?: boolean; duplicate?: boolean } | null;
+    return { claimed: Boolean(result?.claimed), duplicate: Boolean(result?.duplicate) };
+  },
+
+  async flushPendingLearningAnswers(session: AuthSession): Promise<void> {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    let pending: Array<{ userId: string; questionId: number; answerIndex: number }>;
+    try {
+      const raw = localStorage.getItem(PENDING_LEARNING_ANSWERS_KEY);
+      pending = raw ? JSON.parse(raw) as Array<{ userId: string; questionId: number; answerIndex: number }> : [];
+    } catch {
+      return;
+    }
+    if (!Array.isArray(pending)) pending = [];
+    const remaining: typeof pending = [];
+    const validSession = await this.refreshSession(session);
+    for (const item of pending) {
+      if (item.userId !== validSession.user.id) {
+        remaining.push(item);
+        continue;
+      }
+      try {
+        await restRequest('rpc/submit_learning_answer', validSession, {
+          method: 'POST',
+          body: JSON.stringify({ p_question_id: item.questionId, p_answer_index: item.answerIndex }),
+        });
+      } catch {
+        remaining.push(item);
+      }
+    }
+    try {
+      if (remaining.length) localStorage.setItem(PENDING_LEARNING_ANSWERS_KEY, JSON.stringify(remaining));
+      else localStorage.removeItem(PENDING_LEARNING_ANSWERS_KEY);
+    } catch { /* Do not fail cloud sync because the local retry queue cannot be saved. */ }
+
+    // Complete lessons only after their queued answers have been submitted.
+    let lessons: Array<{ userId: string; lessonKey: string; questionIds: number[] }> = [];
+    try {
+      const rawLessons = localStorage.getItem(PENDING_LESSONS_KEY);
+      lessons = rawLessons ? JSON.parse(rawLessons) as typeof lessons : [];
+    } catch { lessons = []; }
+    const remainingLessons: typeof lessons = [];
+    for (const lesson of lessons) {
+      if (lesson.userId !== validSession.user.id) { remainingLessons.push(lesson); continue; }
+      try {
+        await restRequest('rpc/complete_learning_lesson', validSession, {
+          method: 'POST',
+          body: JSON.stringify({ p_lesson_key: lesson.lessonKey, p_question_ids: lesson.questionIds }),
+        });
+      } catch { remainingLessons.push(lesson); }
+    }
+    try {
+      if (remainingLessons.length) localStorage.setItem(PENDING_LESSONS_KEY, JSON.stringify(remainingLessons));
+      else localStorage.removeItem(PENDING_LESSONS_KEY);
+    } catch { /* Local retry queue is best-effort. */ }
+  },
+
   async loadProgress(session: AuthSession): Promise<CloudProgress | null> {
+    await this.flushPendingLearningAnswers(session);
     const validSession = await this.refreshSession(session);
     const rows = await restRequest('user_progress?select=user_id,stats,quests,review_schedule,completed_projects,updated_at&limit=1', validSession) as CloudProgress[] | null;
     return Array.isArray(rows) && rows.length ? rows[0] : null;
@@ -330,7 +519,71 @@ export const cloudSyncService = {
     }));
   },
 
+  async loadDuelPlayers(session: AuthSession): Promise<DuelPlayer[]> {
+    const validSession = await this.refreshSession(session);
+    const rows = await restRequest(
+      `profiles?select=id,username,display_name,avatar_emoji&order=username.asc&limit=100`,
+      validSession
+    ) as DuelPlayer[] | null;
+    return Array.isArray(rows) ? rows.filter((player) => player.id !== validSession.user.id) : [];
+  },
+
+  async loadMyDuels(session: AuthSession): Promise<DuelSummary[]> {
+    const validSession = await this.refreshSession(session);
+    const userId = encodeURIComponent(validSession.user.id);
+    const rows = await restRequest(
+      `duels?select=id,challenger_id,opponent_id,status,created_at,completed_at,winner_id&or=(challenger_id.eq.${userId},opponent_id.eq.${userId})&order=created_at.desc&limit=30`,
+      validSession
+    ) as DuelSummary[] | null;
+    return Array.isArray(rows) ? rows : [];
+  },
+
+  async createDuel(session: AuthSession, opponentId: string): Promise<string> {
+    const validSession = await this.refreshSession(session);
+    const id = await restRequest('rpc/create_duel', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_opponent_id: opponentId }),
+    });
+    if (typeof id !== 'string') throw new CloudSyncError('Nie udało się utworzyć wyzwania.');
+    return id;
+  },
+
+  async respondToDuel(session: AuthSession, duelId: string, accept: boolean): Promise<OnlineDuelState | null> {
+    const validSession = await this.refreshSession(session);
+    const result = await restRequest('rpc/respond_to_duel', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_duel_id: duelId, p_accept: accept }),
+    });
+    return result && typeof result === 'object' ? result as OnlineDuelState : null;
+  },
+
+  async getDuelState(session: AuthSession, duelId: string): Promise<OnlineDuelState> {
+    const validSession = await this.refreshSession(session);
+    return await restRequest('rpc/get_duel_state', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_duel_id: duelId }),
+    }) as OnlineDuelState;
+  },
+
+  async submitDuelAnswer(session: AuthSession, duelId: string, answerIndex: number): Promise<OnlineDuelState> {
+    const validSession = await this.refreshSession(session);
+    return await restRequest('rpc/submit_duel_answer', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_duel_id: duelId, p_answer_index: answerIndex }),
+    }) as OnlineDuelState;
+  },
+
+  async advanceDuelTimeout(session: AuthSession, duelId: string): Promise<OnlineDuelState> {
+    const validSession = await this.refreshSession(session);
+    return await restRequest('rpc/advance_duel_timeout', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_duel_id: duelId }),
+    }) as OnlineDuelState;
+  },
+
+
   async saveProgress(session: AuthSession, stats: UserStats, quests: DailyQuest[], reviewSchedule: ReviewRecord[] = [], completedProjects: string[] = []): Promise<void> {
+    await this.flushPendingLearningAnswers(session);
     const validSession = await this.refreshSession(session);
     await restRequest('user_progress?on_conflict=user_id', validSession, {
       method: 'POST',

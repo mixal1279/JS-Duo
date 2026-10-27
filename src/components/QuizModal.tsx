@@ -7,6 +7,7 @@ import { CodeBlock } from './CodeBlock';
 import { MascotOwl } from './MascotOwl';
 import { LessonSummary, QuestionResult } from './LessonSummary';
 import { soundService } from '../services/soundService';
+import { cloudSyncService } from '../services/cloudSyncService';
 
 interface QuizModalProps {
   unitId?: number;
@@ -109,6 +110,9 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     if (selectedOption === null || isAnswerChecked) return;
 
     const correct = selectedOption === currentQ.correctIndex;
+    // The server validates the answer against its private question bank and grants XP once.
+    // Local lesson feedback remains immediate; network failures do not block offline learning.
+    void cloudSyncService.submitLearningAnswer(currentQ.id, selectedOption).catch(() => undefined);
     setIsCorrect(correct);
     setIsAnswerChecked(true);
 
@@ -196,6 +200,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     const allLessonQuestionIds = questions.map((q) => q.id);
     const finalCompletedIds = Array.from(new Set([...solvedIds, ...allLessonQuestionIds]));
     const effectiveUnitId = unitId || (questions[0]?.unitId ?? 1);
+    void cloudSyncService.completeLearningLesson(`${effectiveUnitId}:${lessonIndex}`, allLessonQuestionIds).catch(() => undefined);
 
     onComplete({
       earnedXp: Math.max(10, earnedXp),

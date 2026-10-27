@@ -19,7 +19,7 @@ Only the public anon/publishable key belongs in the frontend. Never use the serv
 
 ## 2. Create the schema
 
-Apply the migrations in filename order (first `202610120001_online_foundation.sql`, then `202610270001_security_hardening.sql`) in the Supabase SQL Editor, or apply them with the Supabase CLI. They enable Row Level Security for profiles, private progress, chat, friend requests, and duels, and restrict client-side updates to social data. If you already applied the first migration, apply the security-hardening migration as well.
+Apply the migrations in filename order: `202610120001_online_foundation.sql`, `202610270001_security_hardening.sql`, then `202610280001_realtime_duels.sql`. Run them in the Supabase SQL Editor or apply them with the Supabase CLI. They enable Row Level Security for profiles, private progress, chat, friend requests, and duels, and restrict client-side updates to social data. If you already applied the first migration, apply the security-hardening migration as well.
 
 ## 3. Configure authentication
 
@@ -40,6 +40,6 @@ Open the Konto tab to register or sign in. The first successful sign-in creates 
 
 - Review schedules and completed project IDs are included in the cloud snapshot; active editor text and review-session UI state remain local.
 - The leaderboard is loaded from the public view when a user signs in; league grouping still uses the app's existing client-side presentation.
-- Community chat messages are stored online for authenticated users. Reactions are currently client-side only and are not synchronized between devices. Friend requests and duels are not yet connected to the database.
+- Community chat messages are stored online for authenticated users. Reactions are currently client-side only and are not synchronized between devices. Friend requests are still groundwork; online 1v1 duels use the `duels` table and server-side RPCs from `202610280001_realtime_duels.sql`.
 - The progress snapshot is client-submitted. RLS prevents users from reading or writing another user's private row, but it does not prove that XP was earned legitimately. Server-authoritative lesson grading/reward issuance is required before treating XP or rankings as cheat-resistant.
-- Client accounts cannot directly update duel records or scores. Add a trusted server-side function before connecting duel gameplay to the database.
+- Online duels require the new migration to be applied to the same Supabase project used by the app. It seeds the 500-question bank and creates authenticated RPCs for invitations, answers, timeout handling, and server-side scoring. The app polls duel state about once per second; this is near-real-time polling rather than a Supabase Realtime subscription.
