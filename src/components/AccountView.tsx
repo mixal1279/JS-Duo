@@ -43,7 +43,7 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
     setBusy(true);
     try {
       await cloudSyncService.updatePassword(session, password);
-      await cloudSyncService.signOut(session);
+      cloudSyncService.saveSession(null);
       onSessionChange(null);
       setRecoveryMode(false); setPassword(''); setMode('login');
       setNotice('Hasło zostało zmienione. Zaloguj się nowym hasłem.');
