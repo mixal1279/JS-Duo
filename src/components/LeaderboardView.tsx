@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Trophy, Flame, ChevronUp, ChevronDown, Clock, Shield } from 'lucide-react';
+import React from 'react';
+import { Trophy, Flame } from 'lucide-react';
 import { LeaderboardUser, UserStats } from '../types';
 
 interface LeaderboardViewProps {
@@ -17,8 +17,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   loading = false,
   error = null,
 }) => {
-  const [activeTab, setActiveTab] = useState<'league' | 'global'>('league');
-
   // Sorted list based on XP
   const sortedUsers = [...users].sort((a, b) => {
     // Inject real-time user XP into the user's item
@@ -28,8 +26,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   });
 
   const currentUserRank = sortedUsers.findIndex((u) => u.isCurrentUser) + 1;
-
-  const leagues = ['Brązowa', 'Srebrna', 'Złota', 'Szafirowa', 'Rubinowa', 'Diamentowa'] as const;
 
   if (!isSignedIn) {
     return <div className="mx-auto max-w-xl rounded-3xl border border-[#2A373F] bg-[#172127] p-6 text-center">
@@ -61,60 +57,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         <div className="flex items-center justify-center gap-2 mb-1">
           <Trophy size={26} className="text-yellow-400 fill-yellow-400 shrink-0" />
           <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
-            Liga {userStats.league}
+            Ranking globalny
           </h2>
         </div>
         <p className="text-xs text-gray-300 mb-3">
-          Top 5 graczy awansuje do wyższej ligi na koniec tygodnia!
+          Użytkownicy posortowani według XP zdobytego na koncie.
         </p>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-gray-300">
-          <Clock size={13} className="text-duo-yellow" />
-          <span>Koniec ligi za: 2 dni 14 godz.</span>
-        </div>
-
-        {/* League Badges Row */}
-        <div className="flex items-center justify-center gap-1 sm:gap-2 mt-4 pt-3 border-t border-white/10 overflow-x-auto scrollbar-none touch-pan-x">
-          {leagues.map((lg) => {
-            const isCurrent = lg === userStats.league;
-            return (
-              <span
-                key={lg}
-                className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                  isCurrent
-                    ? 'bg-yellow-400 text-black shadow font-black'
-                    : 'text-gray-500 bg-white/5'
-                }`}
-              >
-                {lg}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex items-center bg-[#1E2930] p-1 rounded-2xl mb-4 border border-[#2A373F]">
-        <button
-          onClick={() => setActiveTab('league')}
-          className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${
-            activeTab === 'league'
-              ? 'bg-duo-green text-black shadow'
-              : 'text-gray-400 hover:text-white'
-          }`}
-        >
-          Twoja Liga ({userStats.league})
-        </button>
-        <button
-          onClick={() => setActiveTab('global')}
-          className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${
-            activeTab === 'global'
-              ? 'bg-duo-green text-black shadow'
-              : 'text-gray-400 hover:text-white'
-          }`}
-        >
-          Globalny TOP 100
-        </button>
       </div>
 
       {/* Top 3 Podium Cards */}
@@ -162,20 +111,12 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         )}
       </div>
 
-      {/* Promotion Zone Label */}
-      <div className="flex items-center gap-2 text-xs font-bold text-duo-green px-2 mb-2">
-        <ChevronUp size={16} />
-        <span>STREFA AWANSU (Miejsca 1 - 5)</span>
-      </div>
-
       {/* Users List */}
       <div className="space-y-2">
         {sortedUsers.map((user, idx) => {
           const rank = idx + 1;
           const isMe = user.isCurrentUser;
           const displayXp = isMe ? userStats.xp : user.xp;
-          const isPromotion = rank <= 5;
-          const isDemotion = rank >= sortedUsers.length - 2;
 
           return (
             <div
@@ -232,15 +173,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
               <div className="text-right">
                 <span className="text-sm font-black text-white">{displayXp} XP</span>
-                <div className="text-[10px] font-bold">
-                  {isPromotion ? (
-                    <span className="text-duo-green">Awans</span>
-                  ) : isDemotion ? (
-                    <span className="text-duo-red">Spadek</span>
-                  ) : (
-                    <span className="text-gray-500">Utrzymanie</span>
-                  )}
-                </div>
               </div>
             </div>
           );
