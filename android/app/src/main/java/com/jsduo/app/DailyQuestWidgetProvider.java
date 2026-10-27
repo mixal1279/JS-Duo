@@ -81,7 +81,11 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
                 views.setTextViewText(R.id.widget_status_desc, "Poświęć kilka minut na JavaScript i zdobądź dzisiejsze XP.");
             }
             views.setTextViewText(R.id.widget_action_button, mood.equals("desperate") ? "URATUJ DZISIEJSZĄ PASSĘ!" : "Rozpocznij lekcję teraz ⚡");
-            views.setImageViewResource(R.id.widget_status_icon, R.drawable.ic_widget_flame);
+            int moodIcon = R.drawable.ic_widget_flame;
+            if (mood.equals("sad")) moodIcon = R.drawable.ic_widget_sad;
+            else if (mood.equals("panicked")) moodIcon = R.drawable.ic_widget_panicked;
+            else if (mood.equals("desperate")) moodIcon = R.drawable.ic_widget_desperate;
+            views.setImageViewResource(R.id.widget_status_icon, moodIcon);
         }
 
         // PendingIntent to launch the app when clicking the widget or action button

@@ -29,7 +29,6 @@ import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
 import { AccountView } from './components/AccountView';
 import { AuthSession, cloudSyncService } from './services/cloudSyncService';
-import { applyDuoFavicon, getDuoMood } from './services/duoMoodService';
 
 const isExpiredAuthSession = (cause: unknown): boolean => {
   const message = cause instanceof Error ? cause.message : String(cause ?? '');
@@ -74,20 +73,6 @@ export const App: React.FC = () => {
   const [explorerQuestionId, setExplorerQuestionId] = useState<number | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHeartRefill, setShowHeartRefill] = useState(false);
-
-  // Update the browser tab/PWA favicon as the day progresses and after lessons.
-  useEffect(() => {
-    const refreshIcon = () => applyDuoFavicon(getDuoMood(new Date(), stats.lastActiveDate));
-    refreshIcon();
-    const timer = window.setInterval(refreshIcon, 60_000);
-    window.addEventListener('focus', refreshIcon);
-    document.addEventListener('visibilitychange', refreshIcon);
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener('focus', refreshIcon);
-      document.removeEventListener('visibilitychange', refreshIcon);
-    };
-  }, [stats.lastActiveDate]);
 
   // Sync to LocalStorage on changes
   useEffect(() => {

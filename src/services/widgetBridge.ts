@@ -1,7 +1,6 @@
 import { registerPlugin } from '@capacitor/core';
 import { UserStats } from '../types';
-import { storageService, getLocalDateString } from './storageService';
-import { getDuoMood } from './duoMoodService';
+import { storageService } from './storageService';
 
 export interface WidgetBridgePluginInterface {
   updateWidgetData(options: {
@@ -11,7 +10,6 @@ export interface WidgetBridgePluginInterface {
     lastActiveDate?: string;
     dailyXp?: number;
     dailyXpTarget?: number;
-    mood?: string;
   }): Promise<void>;
 }
 
@@ -28,7 +26,6 @@ export async function syncWidgetStats(stats: UserStats) {
       lastActiveDate: stats.lastActiveDate,
       dailyXp: xpQuest?.current ?? 0,
       dailyXpTarget: xpQuest?.target ?? 30,
-      mood: getDuoMood(new Date(), stats.lastActiveDate),
     });
   } catch (e) {
     // If running in browser or unsupported, gracefully ignore
