@@ -45,6 +45,7 @@ export const App: React.FC = () => {
   const [profile, setProfile] = useState<CloudProfile | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaveMessage, setProfileSaveMessage] = useState('');
+  const [profileSaveError, setProfileSaveError] = useState(false);
   const [friends, setFriends] = useState<Friend[]>(() => storageService.getFriends());
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => storageService.getChatMessages());
   const [notifConfig, setNotifConfig] = useState<NotificationConfig>(() => storageService.getNotificationConfig());
@@ -166,6 +167,7 @@ export const App: React.FC = () => {
     if (!authSession) return;
     setProfileSaving(true);
     setProfileSaveMessage('');
+    setProfileSaveError(false);
     try {
       const updated = await cloudSyncService.updateProfile(authSession, {
         display_name: displayName,
@@ -177,6 +179,7 @@ export const App: React.FC = () => {
         ? { ...user, name: updated.display_name || updated.username || 'Programista', avatar: updated.avatar_emoji || '🦉' }
         : user));
     } catch (cause) {
+      setProfileSaveError(true);
       setProfileSaveMessage(cause instanceof Error ? cause.message : 'Nie udało się zapisać profilu.');
     } finally {
       setProfileSaving(false);
@@ -905,9 +908,10 @@ export const App: React.FC = () => {
                     onResetProgress={handleResetProgress}
                     displayName={profile?.display_name || profile?.username || authSession?.user.email?.split('@')[0] || 'Programista'}
                     profileAvatar={profile?.avatar_emoji || undefined}
-                    isSignedIn={Boolean(authSession && profile)}
+                    isSignedIn={Boolean(authSession)}
                     profileSaving={profileSaving}
                     profileSaveMessage={profileSaveMessage}
+                    profileSaveError={profileSaveError}
                     onSaveProfile={handleSaveProfile}
                   />
                 )}
