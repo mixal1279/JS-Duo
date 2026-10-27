@@ -170,15 +170,41 @@ export const cloudSyncService = {
   async refreshSession(session: AuthSession): Promise<AuthSession> {
     // Supabase rotates refresh tokens; always prefer the newest locally persisted session.
     const latest = this.getSession() || session;
-    if (!latest.expires_at || latest.expires_at > Math.floor(Date.now() / 1000) + 60) return latest;
-    const result = await authRequest('token?grant_type=refresh_token', { refresh_token: latest.refresh_token }) as AuthSession & { expires_in?: number };
-    if (!result?.access_token || !result.refresh_token || !result.user) {
-      this.saveSession(null);
-      throw new CloudSyncError('Sesja wygasła. Zaloguj się ponownie.');
+    const now = Math.floor(Date.now() / 1000);
+    // Older app builds may have persisted a session without expires_at. Decode exp when
+    // possible; otherwise attempt refresh rather than trusting an unknown token lifetime.
+    let expiresAt = Number(latest.expires_at) || 0;
+    if (!expiresAt && latest.access_token) {
+      try {
+        const payload = latest.access_token.split('.')[1];
+        if (payload) {
+          const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+          const decoded = JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')));
+          expiresAt = Number(decoded.exp) || 0;
+        }
+      } catch { /* An opaque or malformed token must be refreshed, not trusted. */ }
     }
-    const next = { ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + (result.expires_in || 3600) };
-    this.saveSession(next);
-    return next;
+    if (expiresAt && expiresAt > now + 60) return latest;
+
+    try {
+      const result = await authRequest('token?grant_type=refresh_token', { refresh_token: latest.refresh_token }) as AuthSession & { expires_in?: number };
+      if (!result?.access_token || !result.refresh_token || !result.user) {
+        this.saveSession(null);
+        throw new CloudSyncError('Sesja wygasła. Zaloguj się ponownie.', 'session_expired');
+      }
+      const next = { ...result, expires_at: result.expires_at || now + (result.expires_in || 3600) };
+      this.saveSession(next);
+      return next;
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : '';
+      const code = cause instanceof CloudSyncError ? cause.code || '' : '';
+      // Do not keep retrying a refresh token that Supabase has explicitly rejected.
+      if (/refresh.?token|session.?expired|invalid.?jwt|token is expired/i.test(`${code} ${message}`)) {
+        this.saveSession(null);
+        throw new CloudSyncError('Sesja wygasła lub jest nieprawidłowa. Zaloguj się ponownie, aby wznowić synchronizację.', 'session_expired');
+      }
+      throw cause;
+    }
   },
 
   async loadChatMessages(session: AuthSession): Promise<ChatMessage[]> {

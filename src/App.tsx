@@ -30,6 +30,11 @@ import { syncWidgetStats } from './services/widgetBridge';
 import { AccountView } from './components/AccountView';
 import { AuthSession, cloudSyncService } from './services/cloudSyncService';
 
+const isExpiredAuthSession = (cause: unknown): boolean => {
+  const message = cause instanceof Error ? cause.message : String(cause ?? '');
+  return /session_expired|invalid refresh token|refresh token not found|invalid jwt|token is expired|jwt expired/i.test(message);
+};
+
 export const App: React.FC = () => {
   // Application State
   const [stats, setStats] = useState<UserStats>(() => storageService.getStats());
@@ -165,6 +170,14 @@ export const App: React.FC = () => {
         setCloudState('synced');
       } catch (cause) {
         if (cancelled) return;
+        if (isExpiredAuthSession(cause)) {
+          cloudSyncService.saveSession(null);
+          setAuthSession(null);
+          setCloudReady(false);
+          setCloudState('error');
+          setCloudMessage('Sesja wygasła. Zaloguj się ponownie; lokalny postęp pozostaje na tym urządzeniu.');
+          return;
+        }
         setCloudState(typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'error');
         setCloudMessage(cause instanceof Error ? cause.message : 'Nie udało się zsynchronizować postępów.');
       }
@@ -182,6 +195,14 @@ export const App: React.FC = () => {
         setCloudState('synced');
         setCloudMessage(`Zapisano ${new Date().toLocaleTimeString()}.`);
       } catch (cause) {
+        if (isExpiredAuthSession(cause)) {
+          cloudSyncService.saveSession(null);
+          setAuthSession(null);
+          setCloudReady(false);
+          setCloudState('error');
+          setCloudMessage('Sesja wygasła. Zaloguj się ponownie; lokalny postęp pozostaje na tym urządzeniu.');
+          return;
+        }
         setCloudState(typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'error');
         setCloudMessage(cause instanceof Error ? cause.message : 'Nie udało się zapisać postępów.');
       }
@@ -203,6 +224,14 @@ export const App: React.FC = () => {
       setCloudState('synced');
       setCloudMessage(`Synchronizacja zakończona o ${new Date().toLocaleTimeString()}.`);
     } catch (cause) {
+      if (isExpiredAuthSession(cause)) {
+        cloudSyncService.saveSession(null);
+        setAuthSession(null);
+        setCloudReady(false);
+        setCloudState('error');
+        setCloudMessage('Sesja wygasła. Zaloguj się ponownie; lokalny postęp pozostaje na tym urządzeniu.');
+        return;
+      }
       setCloudState('error');
       setCloudMessage(cause instanceof Error ? cause.message : 'Synchronizacja nie powiodła się.');
     }
