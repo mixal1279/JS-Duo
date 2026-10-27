@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Gem, Heart, Sparkles, BookOpen, Bell } from 'lucide-react';
 import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, Question, AppTheme } from './types';
-import { storageService, DEFAULT_DAILY_QUESTS, getLocalDateString, getDaysDifference } from './services/storageService';
+import { storageService, DEFAULT_USER_STATS, DEFAULT_DAILY_QUESTS, getLocalDateString, getDaysDifference } from './services/storageService';
 import { notificationService } from './services/notificationService';
 import { soundService } from './services/soundService';
 import { ALL_QUESTIONS, getQuestionsByLesson } from './data/questionsData';
@@ -201,7 +201,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // Restore account progress from Supabase without replacing newer local progress.
+  // Account data is isolated by Supabase user: never merge another account's local cache into this session.
   useEffect(() => {
     let cancelled = false;
     if (!authSession) {
@@ -213,54 +213,51 @@ export const App: React.FC = () => {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setCloudReady(false);
       setCloudState('offline');
-      setCloudMessage('Brak internetu. Lokalne postępy pozostają dostępne.');
+      setCloudMessage('Brak internetu. Połącz się z siecią, aby bezpiecznie wczytać postęp tego konta.');
       return () => { cancelled = true; };
     }
 
     setCloudReady(false);
     setCloudState('loading');
-    setCloudMessage('Pobieranie postępów z chmury…');
+    setCloudMessage('Pobieranie postępów z konta…');
     (async () => {
       try {
         const remote = await cloudSyncService.loadProgress(authSession);
         if (cancelled) return;
+
         if (remote) {
-          setStats((local) => {
-            const localXp = Math.max(0, Number(local.xp) || 0);
-            const cloudXp = Math.max(0, Number(remote.stats?.xp) || 0);
-            const xp = Math.max(localXp, cloudXp);
-            return {
-              ...remote.stats,
-              ...local,
-              xp,
-              level: storageService.calculateLevel(xp).level,
-              streak: Math.max(Number(local.streak) || 0, Number(remote.stats?.streak) || 0),
-              gems: Math.max(Number(local.gems) || 0, Number(remote.stats?.gems) || 0),
-              hearts: Math.min(Number(local.hearts) || 0, Number(remote.stats?.hearts) || 0),
-              maxHearts: Math.max(Number(local.maxHearts) || 5, Number(remote.stats?.maxHearts) || 5),
-              lastActiveDate: local.lastActiveDate > (remote.stats?.lastActiveDate || '') ? local.lastActiveDate : (remote.stats?.lastActiveDate || local.lastActiveDate),
-              completedQuestionIds: [...new Set([...(local.completedQuestionIds || []), ...(remote.stats?.completedQuestionIds || [])])],
-              completedLessonKeys: [...new Set([...(local.completedLessonKeys || []), ...(remote.stats?.completedLessonKeys || [])])],
-              unlockedUnit: Math.max(Number(local.unlockedUnit) || 1, Number(remote.stats?.unlockedUnit) || 1),
-              duelWins: Math.max(Number(local.duelWins) || 0, Number(remote.stats?.duelWins) || 0),
-              duelLosses: Math.max(Number(local.duelLosses) || 0, Number(remote.stats?.duelLosses) || 0),
-              streakFreeze: Math.max(Number(local.streakFreeze) || 0, Number(remote.stats?.streakFreeze) || 0),
-            };
+          const remoteStats = { ...DEFAULT_USER_STATS, ...(remote.stats || {}) };
+          const normalizedXp = Math.max(0, Number(remoteStats.xp) || 0);
+          setStats({
+            ...remoteStats,
+            xp: normalizedXp,
+            level: storageService.calculateLevel(normalizedXp).level,
+            completedQuestionIds: Array.isArray(remoteStats.completedQuestionIds) ? remoteStats.completedQuestionIds : [],
+            completedLessonKeys: Array.isArray(remoteStats.completedLessonKeys) ? remoteStats.completedLessonKeys : [],
           });
-          setQuests((local) => {
-            if (remote.updated_at?.slice(0, 10) !== getLocalDateString()) return local;
-            const byId = new Map((remote.quests || []).map((quest) => [quest.id, quest]));
-            return local.map((quest) => {
-              const other = byId.get(quest.id);
-              return other ? { ...quest, current: Math.min(quest.target, Math.max(quest.current, other.current)), claimed: quest.claimed || other.claimed } : quest;
-            });
-          });
-          setCloudMessage('Połączono lokalne postępy z zapisanymi w chmurze.');
+
+          const isToday = remote.updated_at?.slice(0, 10) === getLocalDateString();
+          if (isToday && Array.isArray(remote.quests)) {
+            const remoteById = new Map(remote.quests.map((quest) => [quest.id, quest]));
+            setQuests(DEFAULT_DAILY_QUESTS.map((quest) => {
+              const saved = remoteById.get(quest.id);
+              return saved ? { ...quest, ...saved, target: quest.target } : { ...quest };
+            }));
+          } else {
+            setQuests(DEFAULT_DAILY_QUESTS.map((quest) => ({ ...quest })));
+          }
+          setCloudMessage('Wczytano postęp przypisany do tego konta.');
         } else {
-          await cloudSyncService.saveProgress(authSession, stats, quests);
+          // A new account starts clean; never seed it from progress left by a different account on this device.
+          const freshStats = { ...DEFAULT_USER_STATS };
+          const freshQuests = DEFAULT_DAILY_QUESTS.map((quest) => ({ ...quest }));
+          setStats(freshStats);
+          setQuests(freshQuests);
+          await cloudSyncService.saveProgress(authSession, freshStats, freshQuests);
           if (cancelled) return;
-          setCloudMessage('Zapisano lokalne postępy na koncie po raz pierwszy.');
+          setCloudMessage('Nowe konto: rozpoczęto od początku i zapisano pierwszy postęp.');
         }
+
         if (cancelled) return;
         setCloudReady(true);
         setCloudState('synced');
@@ -274,8 +271,9 @@ export const App: React.FC = () => {
           setCloudMessage('Sesja wygasła. Zaloguj się ponownie; lokalny postęp pozostaje na tym urządzeniu.');
           return;
         }
+        setCloudReady(false);
         setCloudState(typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'error');
-        setCloudMessage(cause instanceof Error ? cause.message : 'Nie udało się zsynchronizować postępów.');
+        setCloudMessage(cause instanceof Error ? cause.message : 'Nie udało się pobrać postępu z konta.');
       }
     })();
     return () => { cancelled = true; };
