@@ -1,0 +1,98 @@
+name: Validate Supabase recovery
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'supabase/**'
+      - '.env.example'
+      - '.github/workflows/build-apk.yml'
+      - '.github/workflows/validate-supabase-recovery.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: TypeScript and Vite build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Vite production build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+        run: npm run build
+
+
+  android-build:
+    name: Android debug APK compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+        run: npm run build
+
+      - name: Prepare and sync Capacitor Android
+        run: |
+          if [ ! -f "android/settings.gradle" ] && [ ! -f "android/settings.gradle.kts" ]; then
+            echo "Gradle project files missing; regenerating Android wrapper/project."
+            rm -rf android
+            npx cap add android
+          fi
+
+          npx cap sync android
+
+          # Preserve the repository's custom widget manifest/resources.
+          git checkout -- android/app/src/main/AndroidManifest.xml android/app/src/main/res
+          grep -q "DailyQuestWidgetProvider" android/app/src/main/AndroidManifest.xml
+          echo "android.builder.sdkDownload=true" >> android/gradle.properties
+          chmod +x android/gradlew
+
+      - name: Compile debug APK
+        run: cd android && ./gradlew assembleDebug --no-daemon

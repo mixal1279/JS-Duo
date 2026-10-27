@@ -27,6 +27,8 @@ import { StreakToast } from './components/StreakToast';
 import { NotificationBanner } from './components/NotificationBanner';
 import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
+import { AccountView } from './components/AccountView';
+import { AuthSession, cloudSyncService } from './services/cloudSyncService';
 
 export const App: React.FC = () => {
   // Application State
@@ -37,9 +39,21 @@ export const App: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => storageService.getChatMessages());
   const [notifConfig, setNotifConfig] = useState<NotificationConfig>(() => storageService.getNotificationConfig());
   const [theme, setTheme] = useState<AppTheme>(() => storageService.getTheme());
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => cloudSyncService.getSession());
+  const [cloudReady, setCloudReady] = useState(false);
+  const [cloudState, setCloudState] = useState<'idle' | 'loading' | 'synced' | 'error' | 'offline'>('idle');
+  const [cloudMessage, setCloudMessage] = useState('Zaloguj się, aby włączyć synchronizację między urządzeniami.');
 
   // Navigation State
   const [currentTab, setCurrentTab] = useState<TabType>('path');
+
+  // Password-reset links return to the hosted app with a recovery token in the URL hash.
+  // Open the account panel so it can validate the token and render the new-password form.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const authParams = new URLSearchParams(window.location.hash.slice(1));
+    if (authParams.get('type') === 'recovery') setCurrentTab('profile');
+  }, []);
 
   // Modal & Toast States
   const [showStreakToast, setShowStreakToast] = useState(false);
@@ -85,6 +99,114 @@ export const App: React.FC = () => {
   useEffect(() => {
     storageService.saveNotificationConfig(notifConfig);
   }, [notifConfig]);
+
+  // Restore account progress from Supabase without replacing newer local progress.
+  useEffect(() => {
+    let cancelled = false;
+    if (!authSession) {
+      setCloudReady(false);
+      setCloudState('idle');
+      setCloudMessage('Zaloguj się, aby włączyć synchronizację między urządzeniami.');
+      return () => { cancelled = true; };
+    }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setCloudReady(false);
+      setCloudState('offline');
+      setCloudMessage('Brak internetu. Lokalne postępy pozostają dostępne.');
+      return () => { cancelled = true; };
+    }
+
+    setCloudReady(false);
+    setCloudState('loading');
+    setCloudMessage('Pobieranie postępów z chmury…');
+    (async () => {
+      try {
+        const remote = await cloudSyncService.loadProgress(authSession);
+        if (cancelled) return;
+        if (remote) {
+          setStats((local) => {
+            const localXp = Math.max(0, Number(local.xp) || 0);
+            const cloudXp = Math.max(0, Number(remote.stats?.xp) || 0);
+            const xp = Math.max(localXp, cloudXp);
+            return {
+              ...remote.stats,
+              ...local,
+              xp,
+              level: storageService.calculateLevel(xp).level,
+              streak: Math.max(Number(local.streak) || 0, Number(remote.stats?.streak) || 0),
+              gems: Math.max(Number(local.gems) || 0, Number(remote.stats?.gems) || 0),
+              hearts: Math.min(Number(local.hearts) || 0, Number(remote.stats?.hearts) || 0),
+              maxHearts: Math.max(Number(local.maxHearts) || 5, Number(remote.stats?.maxHearts) || 5),
+              lastActiveDate: local.lastActiveDate > (remote.stats?.lastActiveDate || '') ? local.lastActiveDate : (remote.stats?.lastActiveDate || local.lastActiveDate),
+              completedQuestionIds: [...new Set([...(local.completedQuestionIds || []), ...(remote.stats?.completedQuestionIds || [])])],
+              completedLessonKeys: [...new Set([...(local.completedLessonKeys || []), ...(remote.stats?.completedLessonKeys || [])])],
+              unlockedUnit: Math.max(Number(local.unlockedUnit) || 1, Number(remote.stats?.unlockedUnit) || 1),
+              duelWins: Math.max(Number(local.duelWins) || 0, Number(remote.stats?.duelWins) || 0),
+              duelLosses: Math.max(Number(local.duelLosses) || 0, Number(remote.stats?.duelLosses) || 0),
+              streakFreeze: Math.max(Number(local.streakFreeze) || 0, Number(remote.stats?.streakFreeze) || 0),
+            };
+          });
+          setQuests((local) => {
+            if (remote.updated_at?.slice(0, 10) !== getLocalDateString()) return local;
+            const byId = new Map((remote.quests || []).map((quest) => [quest.id, quest]));
+            return local.map((quest) => {
+              const other = byId.get(quest.id);
+              return other ? { ...quest, current: Math.min(quest.target, Math.max(quest.current, other.current)), claimed: quest.claimed || other.claimed } : quest;
+            });
+          });
+          setCloudMessage('Połączono lokalne postępy z zapisanymi w chmurze.');
+        } else {
+          await cloudSyncService.saveProgress(authSession, stats, quests);
+          if (cancelled) return;
+          setCloudMessage('Zapisano lokalne postępy na koncie po raz pierwszy.');
+        }
+        if (cancelled) return;
+        setCloudReady(true);
+        setCloudState('synced');
+      } catch (cause) {
+        if (cancelled) return;
+        setCloudState(typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'error');
+        setCloudMessage(cause instanceof Error ? cause.message : 'Nie udało się zsynchronizować postępów.');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authSession]);
+
+  // Debounce cloud writes to avoid a request for every local state change.
+  useEffect(() => {
+    if (!authSession || !cloudReady) return;
+    const timer = window.setTimeout(async () => {
+      try {
+        setCloudState('loading');
+        await cloudSyncService.saveProgress(authSession, stats, quests);
+        setCloudState('synced');
+        setCloudMessage(`Zapisano ${new Date().toLocaleTimeString()}.`);
+      } catch (cause) {
+        setCloudState(typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'error');
+        setCloudMessage(cause instanceof Error ? cause.message : 'Nie udało się zapisać postępów.');
+      }
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [authSession, cloudReady, stats, quests]);
+
+  const handleManualCloudSync = async () => {
+    if (!authSession) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setCloudState('offline');
+      setCloudMessage('Brak internetu. Postęp jest zachowany lokalnie.');
+      return;
+    }
+    setCloudState('loading');
+    try {
+      await cloudSyncService.saveProgress(authSession, stats, quests);
+      setCloudReady(true);
+      setCloudState('synced');
+      setCloudMessage(`Synchronizacja zakończona o ${new Date().toLocaleTimeString()}.`);
+    } catch (cause) {
+      setCloudState('error');
+      setCloudMessage(cause instanceof Error ? cause.message : 'Synchronizacja nie powiodła się.');
+    }
+  };
 
   // Synchronize App Theme (Deep Night vs Light Mode)
   useEffect(() => {
@@ -669,6 +791,18 @@ export const App: React.FC = () => {
                     onToggleTheme={setTheme}
                     onResetProgress={handleResetProgress}
                   />
+                )}
+
+                {currentTab === 'profile' && (
+                  <div className="mt-6">
+                    <AccountView
+                      session={authSession}
+                      onSessionChange={setAuthSession}
+                      syncState={cloudState}
+                      syncMessage={cloudMessage}
+                      onSyncNow={handleManualCloudSync}
+                    />
+                  </div>
                 )}
               </motion.div>
             </AnimatePresence>
