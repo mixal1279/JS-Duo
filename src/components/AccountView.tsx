@@ -75,9 +75,16 @@ const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
 
   const handleSignOut = async () => {
     setBusy(true); setError('');
-    try { if (session) await cloudSyncService.signOut(session); onSessionChange(null); setNotice('Wylogowano. Postęp lokalny pozostał na tym urządzeniu.'); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'Nie udało się wylogować.'); }
-    finally { setBusy(false); }
+    try {
+      if (session) await cloudSyncService.signOut(session);
+      setNotice('Wylogowano. Postęp lokalny pozostał na tym urządzeniu.');
+    } catch (cause) {
+      // signOut clears the local session even if the remote endpoint is unavailable.
+      setError(cause instanceof Error ? cause.message : 'Wylogowano lokalnie; serwer nie potwierdził wylogowania.');
+    } finally {
+      onSessionChange(null);
+      setBusy(false);
+    }
   };
 
   const StateIcon = syncState === 'synced' ? CheckCircle2 : syncState === 'error' ? AlertCircle : syncState === 'offline' ? CloudOff : Cloud;
