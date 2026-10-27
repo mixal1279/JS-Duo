@@ -1104,7 +1104,7 @@ declare v_duel public.duels%rowtype; v_ids integer[];
 begin
   select * into v_duel from public.duels where id=p_duel_id for update;
   if not found then raise exception 'Duel not found'; end if;
-  if auth.uid() <> v_duel.opponent_id then raise exception 'Only the invited player can respond'; end if;
+  if auth.uid() is null or auth.uid() <> v_duel.opponent_id then raise exception 'Only the invited player can respond'; end if;
   if v_duel.status <> 'pending' then raise exception 'Duel is no longer pending'; end if;
   if not p_accept then
     update public.duels set status='declined' where id=p_duel_id;
@@ -1134,12 +1134,12 @@ declare
 begin
   select * into v_duel from public.duels where id=p_duel_id for update;
   if not found then raise exception 'Duel not found'; end if;
-  if auth.uid() not in (v_duel.challenger_id, v_duel.opponent_id) then raise exception 'Not a participant'; end if;
+  if auth.uid() is null or auth.uid() not in (v_duel.challenger_id, v_duel.opponent_id) then raise exception 'Not a participant'; end if;
   if v_duel.status <> 'active' then raise exception 'Duel is not active'; end if;
   if v_duel.current_round < 0 or v_duel.current_round >= array_length(v_duel.question_ids,1) then raise exception 'No active round'; end if;
   v_qid := v_duel.question_ids[v_duel.current_round+1];
   select correct_index, points into v_correct, v_points from public.duel_question_bank where id=v_qid;
-  if p_answer_index < 0 or p_answer_index >= (select jsonb_array_length(options) from public.duel_question_bank where id=v_qid) then
+  if p_answer_index is null or p_answer_index < 0 or p_answer_index >= (select jsonb_array_length(options) from public.duel_question_bank where id=v_qid) then
     raise exception 'Invalid answer';
   end if;
   v_round_key := v_duel.current_round::text;
@@ -1187,7 +1187,7 @@ declare v_duel public.duels%rowtype; v_q jsonb; v_round_key text;
 begin
   select * into v_duel from public.duels where id=p_duel_id;
   if not found then raise exception 'Duel not found'; end if;
-  if auth.uid() not in (v_duel.challenger_id, v_duel.opponent_id) then raise exception 'Not a participant'; end if;
+  if auth.uid() is null or auth.uid() not in (v_duel.challenger_id, v_duel.opponent_id) then raise exception 'Not a participant'; end if;
   v_round_key := v_duel.current_round::text;
   if v_duel.status='active' and v_duel.current_round < array_length(v_duel.question_ids,1) then
     select jsonb_build_object(
@@ -1208,8 +1208,11 @@ begin
 end;
 $$;
 
+revoke all on function public.create_duel(uuid) from public, anon;
 grant execute on function public.create_duel(uuid) to authenticated;
+revoke all on function public.respond_to_duel(uuid, boolean) from public, anon;
 grant execute on function public.respond_to_duel(uuid, boolean) to authenticated;
+revoke all on function public.submit_duel_answer(uuid, integer) from public, anon;
 grant execute on function public.submit_duel_answer(uuid, integer) to authenticated;
 
 create or replace function public.advance_duel_timeout(p_duel_id uuid)
@@ -1222,7 +1225,7 @@ declare v_duel public.duels%rowtype; v_key text;
 begin
   select * into v_duel from public.duels where id=p_duel_id for update;
   if not found then raise exception 'Duel not found'; end if;
-  if auth.uid() not in (v_duel.challenger_id, v_duel.opponent_id) then raise exception 'Not a participant'; end if;
+  if auth.uid() is null or auth.uid() not in (v_duel.challenger_id, v_duel.opponent_id) then raise exception 'Not a participant'; end if;
   if v_duel.status <> 'active' then return public.get_duel_state(p_duel_id); end if;
   if v_duel.round_started_at is null or now() < v_duel.round_started_at + interval '15 seconds' then
     return public.get_duel_state(p_duel_id);
@@ -1252,5 +1255,7 @@ begin
 end;
 $;
 
+revoke all on function public.get_duel_state(uuid) from public, anon;
 grant execute on function public.get_duel_state(uuid) to authenticated;
+revoke all on function public.advance_duel_timeout(uuid) from public, anon;
 grant execute on function public.advance_duel_timeout(uuid) to authenticated;
