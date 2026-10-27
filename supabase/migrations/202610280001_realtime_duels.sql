@@ -1211,4 +1211,46 @@ $$;
 grant execute on function public.create_duel(uuid) to authenticated;
 grant execute on function public.respond_to_duel(uuid, boolean) to authenticated;
 grant execute on function public.submit_duel_answer(uuid, integer) to authenticated;
+
+create or replace function public.advance_duel_timeout(p_duel_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $
+declare v_duel public.duels%rowtype; v_key text;
+begin
+  select * into v_duel from public.duels where id=p_duel_id for update;
+  if not found then raise exception 'Duel not found'; end if;
+  if auth.uid() not in (v_duel.challenger_id, v_duel.opponent_id) then raise exception 'Not a participant'; end if;
+  if v_duel.status <> 'active' then return public.get_duel_state(p_duel_id); end if;
+  if v_duel.round_started_at is null or now() < v_duel.round_started_at + interval '15 seconds' then
+    return public.get_duel_state(p_duel_id);
+  end if;
+  v_key := v_duel.current_round::text;
+  if not (v_duel.challenger_answers ? v_key) then
+    update public.duels set challenger_answers=challenger_answers || jsonb_build_object(v_key,
+      jsonb_build_object('answer_index',-1,'correct',false,'answered_at',now()))
+    where id=p_duel_id;
+  end if;
+  if not (v_duel.opponent_answers ? v_key) then
+    update public.duels set opponent_answers=opponent_answers || jsonb_build_object(v_key,
+      jsonb_build_object('answer_index',-1,'correct',false,'answered_at',now()))
+    where id=p_duel_id;
+  end if;
+  select * into v_duel from public.duels where id=p_duel_id;
+  if v_duel.current_round + 1 >= array_length(v_duel.question_ids,1) then
+    update public.duels set status='completed',
+      winner_id=case when challenger_score > opponent_score then challenger_id
+                     when opponent_score > challenger_score then opponent_id else null end,
+      completed_at=now()
+    where id=p_duel_id;
+  else
+    update public.duels set current_round=current_round+1, round_started_at=now() where id=p_duel_id;
+  end if;
+  return public.get_duel_state(p_duel_id);
+end;
+$;
+
 grant execute on function public.get_duel_state(uuid) to authenticated;
+grant execute on function public.advance_duel_timeout(uuid) to authenticated;
