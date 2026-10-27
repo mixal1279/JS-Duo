@@ -52,7 +52,11 @@ public class WidgetBridgePlugin extends Plugin {
                 editor.putInt("daily_xp_target", dailyXpTarget);
             }
 
+            String mood = call.getString("mood");
+            if (mood != null) editor.putString("duo_mood", mood);
+
             editor.apply();
+            if (mood != null) DuoAppIcon.update(context, mood);
 
             // Trigger widget update broadcast
             Intent intent = new Intent(context, DailyQuestWidgetProvider.class);

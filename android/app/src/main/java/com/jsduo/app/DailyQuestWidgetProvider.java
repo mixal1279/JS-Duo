@@ -61,6 +61,7 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         boolean practicedToday = todayStr.equals(lastActiveDate);
 
         String mood = practicedToday ? "happy" : moodForHour(java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY));
+        DuoAppIcon.update(context, mood);
 
         // Update Views
         views.setTextViewText(R.id.widget_streak_count, String.valueOf(streak));
