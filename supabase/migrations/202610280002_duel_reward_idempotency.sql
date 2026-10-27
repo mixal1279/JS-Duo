@@ -317,7 +317,7 @@ declare
   v_gems integer;
   v_correct integer;
   v_wrong integer;
-  v_units integer;
+  v_lessons integer;
   v_has_duel_win boolean;
   v_inserted boolean := false;
 begin
@@ -329,10 +329,9 @@ begin
   from public.learning_answer_events
   where user_id = v_uid and created_at >= date_trunc('day', now());
 
-  select count(distinct q.unit_id) into v_units
-  from public.learning_answer_events e
-  join public.duel_question_bank q on q.id = e.question_id
-  where e.user_id = v_uid and e.is_correct and e.created_at >= date_trunc('day', now());
+  select count(*) into v_lessons
+  from public.learning_lesson_events
+  where user_id = v_uid and completion_date = current_date;
 
   select exists (
     select 1 from public.duel_reward_events
@@ -350,7 +349,7 @@ begin
       if v_correct < 5 or v_wrong > 0 then raise exception 'Quest requirement not met'; end if;
       v_xp := 35; v_gems := 15;
     when 'q3' then
-      if v_units < 2 then raise exception 'Quest requirement not met'; end if;
+      if v_lessons < 2 then raise exception 'Quest requirement not met'; end if;
       v_xp := 30; v_gems := 15;
     when 'q4' then
       if not v_has_duel_win then raise exception 'Quest requirement not met'; end if;
@@ -378,3 +377,65 @@ end;
 $$;
 revoke all on function public.claim_daily_quest(text) from public, anon;
 grant execute on function public.claim_daily_quest(text) to authenticated;
+
+
+create table if not exists public.learning_lesson_events (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  lesson_key text not null check (length(lesson_key) between 1 and 80),
+  unit_id integer not null,
+  question_ids integer[] not null,
+  completion_date date not null default current_date,
+  created_at timestamptz not null default now(),
+  primary key (user_id, lesson_key, completion_date)
+);
+alter table public.learning_lesson_events enable row level security;
+revoke all on public.learning_lesson_events from public, anon, authenticated;
+
+create or replace function public.complete_learning_lesson(p_lesson_key text, p_question_ids integer[])
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_unit integer;
+  v_count integer;
+  v_inserted boolean := false;
+begin
+  if v_uid is null then raise exception 'Sign in required'; end if;
+  if p_lesson_key is null or length(p_lesson_key) < 1 or length(p_lesson_key) > 80 then
+    raise exception 'Invalid lesson key';
+  end if;
+  if p_question_ids is null or cardinality(p_question_ids) < 5 or cardinality(p_question_ids) > 30 then
+    raise exception 'Invalid lesson question count';
+  end if;
+  select count(distinct qid) into v_count from unnest(p_question_ids) qid;
+  if v_count <> cardinality(p_question_ids) then raise exception 'Duplicate lesson question'; end if;
+  select min(unit_id), count(*) into v_unit, v_count
+  from public.duel_question_bank
+  where id = any(p_question_ids);
+  if v_count <> cardinality(p_question_ids) then raise exception 'Unknown lesson question'; end if;
+  if exists (select 1 from public.duel_question_bank where id = any(p_question_ids) and unit_id <> v_unit) then
+    raise exception 'Lesson questions must belong to one unit';
+  end if;
+  if exists (
+    select 1 from unnest(p_question_ids) qid
+    where not exists (
+      select 1 from public.learning_answer_events e
+      where e.user_id = v_uid and e.question_id = qid
+    )
+  ) then
+    raise exception 'Lesson answers are incomplete';
+  end if;
+
+  insert into public.learning_lesson_events (user_id, lesson_key, unit_id, question_ids, completion_date)
+  values (v_uid, p_lesson_key, v_unit, p_question_ids, current_date)
+  on conflict (user_id, lesson_key, completion_date) do nothing
+  returning true into v_inserted;
+
+  return jsonb_build_object('completed', coalesce(v_inserted, false), 'duplicate', not coalesce(v_inserted, false));
+end;
+$$;
+revoke all on function public.complete_learning_lesson(text, integer[]) from public, anon;
+grant execute on function public.complete_learning_lesson(text, integer[]) to authenticated;
