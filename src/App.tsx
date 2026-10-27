@@ -21,6 +21,7 @@ import { QuestionDetailModal } from './components/QuestionDetailModal';
 import { NotificationSettingsModal } from './components/NotificationSettingsModal';
 import { HeartRefillModal } from './components/HeartRefillModal';
 import { ProfileView } from './components/ProfileView';
+import { AchievementsView } from './components/AchievementsView';
 import { CodePlaygroundView } from './components/CodePlaygroundView';
 import { StreakToast } from './components/StreakToast';
 import { NotificationBanner } from './components/NotificationBanner';
@@ -436,6 +437,7 @@ export const App: React.FC = () => {
       else if (e.key === '5') setCurrentTab('duels');
       else if (e.key === '6') setCurrentTab('chat');
       else if (e.key === '7') setCurrentTab('profile');
+      else if (e.key === '8') setCurrentTab('achievements');
       else if (e.key === 'q' || e.key === 'Q') {
         setExplorerQuestionId(null);
         setShowExplorer(true);
@@ -906,6 +908,11 @@ export const App: React.FC = () => {
                     onSelectQuestion={handleOpenExplorerAt}
                     onClearChat={handleClearChat}
                   />
+                )}
+
+
+                {currentTab === 'achievements' && (
+                  <AchievementsView userStats={stats} />
                 )}
 
                 {currentTab === 'profile' && (
