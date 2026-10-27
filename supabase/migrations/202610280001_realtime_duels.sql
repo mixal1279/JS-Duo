@@ -1223,7 +1223,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare v_duel public.duels%rowtype; v_key text;
 begin
   select * into v_duel from public.duels where id=p_duel_id for update;
@@ -1256,7 +1256,7 @@ begin
   end if;
   return public.get_duel_state(p_duel_id);
 end;
-$;
+$$;
 
 revoke all on function public.get_duel_state(uuid) from public, anon;
 grant execute on function public.get_duel_state(uuid) to authenticated;
