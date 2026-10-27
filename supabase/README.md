@@ -18,7 +18,7 @@ Only the public anon/publishable key belongs in the frontend. Never use the serv
 
 ## 2. Create the schema
 
-Run supabase/migrations/202610120001_online_foundation.sql in the Supabase SQL Editor, or apply it with the Supabase CLI. The migration enables Row Level Security and policies for profiles, private progress, chat, friend requests, and duels.
+Apply the migrations in filename order (first `202610120001_online_foundation.sql`, then `202610270001_security_hardening.sql`) in the Supabase SQL Editor, or apply them with the Supabase CLI. They enable Row Level Security for profiles, private progress, chat, friend requests, and duels, and restrict client-side updates to social data. If you already applied the first migration, apply the security-hardening migration as well.
 
 ## 3. Configure authentication
 
@@ -40,4 +40,5 @@ Open the Konto tab to register or sign in. The first successful sign-in creates 
 - Review schedules and completed project IDs are included in the cloud snapshot; active editor text and review-session UI state remain local.
 - The leaderboard is loaded from the public view when a user signs in; league grouping still uses the app's existing client-side presentation.
 - Community chat messages are stored online for authenticated users. Reactions are currently client-side only and are not synchronized between devices. Friend requests and duels are not yet connected to the database.
-- The progress snapshot is client-submitted. RLS prevents users from reading or writing another user's private row, but it does not prove that XP was earned legitimately. Server-authoritative lesson grading/reward issuance is required before treating XP, rankings, or duel results as cheat-resistant.
+- The progress snapshot is client-submitted. RLS prevents users from reading or writing another user's private row, but it does not prove that XP was earned legitimately. Server-authoritative lesson grading/reward issuance is required before treating XP or rankings as cheat-resistant.
+- Client accounts cannot directly update duel records or scores. Add a trusted server-side function before connecting duel gameplay to the database.
