@@ -3,7 +3,7 @@
 revoke all on table public.profiles from anon;
 revoke all on table public.profiles from authenticated;
 grant select on table public.profiles to authenticated;
-grant update (username, display_name, avatar_emoji) on table public.profiles to authenticated;
+grant update (display_name, avatar_emoji) on table public.profiles to authenticated;
 
 revoke all on table public.user_progress from anon;
 revoke all on table public.user_progress from authenticated;
