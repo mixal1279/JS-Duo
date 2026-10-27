@@ -1086,7 +1086,7 @@ create or replace function public.create_duel(p_opponent_id uuid)
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_id uuid;
@@ -1104,7 +1104,7 @@ create or replace function public.respond_to_duel(p_duel_id uuid, p_accept boole
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare v_duel public.duels%rowtype; v_ids integer[];
 begin
@@ -1132,7 +1132,7 @@ create or replace function public.submit_duel_answer(p_duel_id uuid, p_answer_in
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_duel public.duels%rowtype; v_qid integer; v_correct integer; v_points integer;
@@ -1190,7 +1190,7 @@ create or replace function public.get_duel_state(p_duel_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare v_duel public.duels%rowtype; v_q jsonb; v_round_key text;
 begin
@@ -1228,7 +1228,7 @@ create or replace function public.advance_duel_timeout(p_duel_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare v_duel public.duels%rowtype; v_key text;
 begin
