@@ -12,7 +12,8 @@ import {
   Sparkles,
   User,
   Award,
-  Code2
+  Code2,
+  Award
 } from 'lucide-react';
 import { TabType } from './BottomNavigation';
 import { UserStats } from '../types';
@@ -47,7 +48,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { id: 'leaderboard' as TabType, label: 'Ranking', icon: Trophy, shortcut: '4' },
     { id: 'duels' as TabType, label: 'Pojedynki 1v1', icon: Swords, shortcut: '5' },
     { id: 'chat' as TabType, label: 'Społeczność', icon: MessageSquareText, badge: unreadChatCount, shortcut: '6' },
-    { id: 'profile' as TabType, label: 'Osiągnięcia & Profil', icon: Award, shortcut: '7' },
+    { id: 'profile' as TabType, label: 'Profil', icon: User, shortcut: '7' },
+    { id: 'achievements' as TabType, label: 'Osiągnięcia', icon: Award, shortcut: '8' },
   ];
 
   return (
