@@ -124,6 +124,7 @@ export const cloudSyncService = {
     return session;
   },
 
+  // Supabase sends the recovery link to the hosted web app, including its recovery token in the URL hash.
   async requestPasswordReset(email: string): Promise<void> {
     await authRequest(`recover?redirect_to=${encodeURIComponent(AUTH_REDIRECT_URL)}`, {
       email: email.trim().toLowerCase(),
