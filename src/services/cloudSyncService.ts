@@ -2,6 +2,7 @@ import { ChatMessage, DailyQuest, LeaderboardUser, UserStats } from '../types';
 import { ReviewRecord } from './reviewService';
 
 const SESSION_KEY = 'js_duo_auth_session_v1';
+const PENDING_LEARNING_ANSWERS_KEY = 'js_duo_pending_learning_answers_v1';
 const API_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const AUTH_REDIRECT_URL_RAW = import.meta.env.VITE_APP_URL || 'https://mixal1279.github.io/JS-Duo/';
@@ -316,7 +317,64 @@ export const cloudSyncService = {
     });
   },
 
+
+  async submitLearningAnswer(questionId: number, answerIndex: number): Promise<void> {
+    const session = this.getSession();
+    // Learning remains available offline. Queue only for an already signed-in account
+    // so answers cannot silently be transferred to a different account later.
+    if (!session || !Number.isInteger(questionId) || questionId < 1 || !Number.isInteger(answerIndex) || answerIndex < 0) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      try {
+        const raw = localStorage.getItem(PENDING_LEARNING_ANSWERS_KEY);
+        const pending = raw ? JSON.parse(raw) as Array<{ userId: string; questionId: number; answerIndex: number }> : [];
+        if (!pending.some((item) => item.userId === session.user.id && item.questionId === questionId)) {
+          pending.push({ userId: session.user.id, questionId, answerIndex });
+          localStorage.setItem(PENDING_LEARNING_ANSWERS_KEY, JSON.stringify(pending));
+        }
+      } catch { /* Offline queue failures must not interrupt the lesson. */ }
+      return;
+    }
+    const validSession = await this.refreshSession(session);
+    await restRequest('rpc/submit_learning_answer', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_question_id: questionId, p_answer_index: answerIndex }),
+    });
+  },
+
+  async flushPendingLearningAnswers(session: AuthSession): Promise<void> {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    let pending: Array<{ userId: string; questionId: number; answerIndex: number }>;
+    try {
+      const raw = localStorage.getItem(PENDING_LEARNING_ANSWERS_KEY);
+      pending = raw ? JSON.parse(raw) as Array<{ userId: string; questionId: number; answerIndex: number }> : [];
+    } catch {
+      return;
+    }
+    if (!Array.isArray(pending) || !pending.length) return;
+    const remaining: typeof pending = [];
+    const validSession = await this.refreshSession(session);
+    for (const item of pending) {
+      if (item.userId !== validSession.user.id) {
+        remaining.push(item);
+        continue;
+      }
+      try {
+        await restRequest('rpc/submit_learning_answer', validSession, {
+          method: 'POST',
+          body: JSON.stringify({ p_question_id: item.questionId, p_answer_index: item.answerIndex }),
+        });
+      } catch {
+        remaining.push(item);
+      }
+    }
+    try {
+      if (remaining.length) localStorage.setItem(PENDING_LEARNING_ANSWERS_KEY, JSON.stringify(remaining));
+      else localStorage.removeItem(PENDING_LEARNING_ANSWERS_KEY);
+    } catch { /* Do not fail cloud sync because the local retry queue cannot be saved. */ }
+  },
+
   async loadProgress(session: AuthSession): Promise<CloudProgress | null> {
+    await this.flushPendingLearningAnswers(session);
     const validSession = await this.refreshSession(session);
     const rows = await restRequest('user_progress?select=user_id,stats,quests,review_schedule,completed_projects,updated_at&limit=1', validSession) as CloudProgress[] | null;
     return Array.isArray(rows) && rows.length ? rows[0] : null;
@@ -440,6 +498,7 @@ export const cloudSyncService = {
   },
 
   async saveProgress(session: AuthSession, stats: UserStats, quests: DailyQuest[], reviewSchedule: ReviewRecord[] = [], completedProjects: string[] = []): Promise<void> {
+    await this.flushPendingLearningAnswers(session);
     const validSession = await this.refreshSession(session);
     await restRequest('user_progress?on_conflict=user_id', validSession, {
       method: 'POST',
