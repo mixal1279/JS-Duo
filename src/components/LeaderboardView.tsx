@@ -11,19 +11,14 @@ interface LeaderboardViewProps {
 }
 
 export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
-  userStats,
   users,
   isSignedIn = false,
   loading = false,
   error = null,
 }) => {
-  // Sorted list based on XP
-  const sortedUsers = [...users].sort((a, b) => {
-    // Inject real-time user XP into the user's item
-    const xpA = a.isCurrentUser ? userStats.xp : a.xp;
-    const xpB = b.isCurrentUser ? userStats.xp : b.xp;
-    return xpB - xpA;
-  });
+  // Use the same server-sourced XP for ordering and display so local unsynced
+  // progress cannot temporarily put the current user at an incorrect rank.
+  const sortedUsers = [...users].sort((a, b) => b.xp - a.xp);
 
   const currentUserRank = sortedUsers.findIndex((u) => u.isCurrentUser) + 1;
 
@@ -77,7 +72,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               {sortedUsers[1].name}
             </span>
             <span className="text-[11px] font-extrabold text-gray-400">
-              {sortedUsers[1].isCurrentUser ? userStats.xp : sortedUsers[1].xp} XP
+              {sortedUsers[1].xp} XP
             </span>
           </div>
         )}
@@ -91,7 +86,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               {sortedUsers[0].name}
             </span>
             <span className="text-xs font-black text-white">
-              {sortedUsers[0].isCurrentUser ? userStats.xp : sortedUsers[0].xp} XP
+              {sortedUsers[0].xp} XP
             </span>
           </div>
         )}
@@ -105,7 +100,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               {sortedUsers[2].name}
             </span>
             <span className="text-[11px] font-extrabold text-gray-400">
-              {sortedUsers[2].isCurrentUser ? userStats.xp : sortedUsers[2].xp} XP
+              {sortedUsers[2].xp} XP
             </span>
           </div>
         )}
@@ -116,7 +111,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         {sortedUsers.map((user, idx) => {
           const rank = idx + 1;
           const isMe = user.isCurrentUser;
-          const displayXp = isMe ? userStats.xp : user.xp;
 
           return (
             <div
@@ -172,7 +166,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               </div>
 
               <div className="text-right">
-                <span className="text-sm font-black text-white">{displayXp} XP</span>
+                <span className="text-sm font-black text-white">{user.xp} XP</span>
               </div>
             </div>
           );
