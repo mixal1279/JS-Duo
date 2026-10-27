@@ -29,6 +29,7 @@ import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
 import { AccountView } from './components/AccountView';
 import { AuthSession, cloudSyncService } from './services/cloudSyncService';
+import { updatePwaManifestMood } from './services/pwaIconService';
 
 const isExpiredAuthSession = (cause: unknown): boolean => {
   const message = cause instanceof Error ? cause.message : String(cause ?? '');
@@ -73,6 +74,21 @@ export const App: React.FC = () => {
   const [explorerQuestionId, setExplorerQuestionId] = useState<number | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHeartRefill, setShowHeartRefill] = useState(false);
+
+  // Experimental: switch the linked PWA manifest as the mascot's daily mood changes.
+  // Browsers control whether/when an already-installed PWA launcher icon is refreshed.
+  useEffect(() => {
+    const refreshPwaMood = () => updatePwaManifestMood(stats.lastActiveDate);
+    refreshPwaMood();
+    const interval = window.setInterval(refreshPwaMood, 60_000);
+    window.addEventListener('focus', refreshPwaMood);
+    document.addEventListener('visibilitychange', refreshPwaMood);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshPwaMood);
+      document.removeEventListener('visibilitychange', refreshPwaMood);
+    };
+  }, [stats.lastActiveDate]);
 
   // Sync to LocalStorage on changes
   useEffect(() => {

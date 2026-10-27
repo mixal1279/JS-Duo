@@ -66,20 +66,43 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_xp_count, dailyXp + "/" + dailyXpTarget + " XP");
         views.setProgressBar(R.id.widget_xp_progress, Math.max(1, dailyXpTarget), Math.min(dailyXpTarget, dailyXp), false);
 
+        String mood = DuoAppIcon.moodFor(lastActiveDate);
+        DuoAppIcon.update(context, mood);
+        int moodIcon;
+        switch (mood) {
+            case "worried": moodIcon = R.drawable.ic_widget_worried; break;
+            case "sad": moodIcon = R.drawable.ic_widget_sad; break;
+            case "panicked": moodIcon = R.drawable.ic_widget_panicked; break;
+            case "desperate": moodIcon = R.drawable.ic_widget_desperate; break;
+            default: moodIcon = R.drawable.ic_widget_happy; break;
+        }
+        views.setImageViewResource(R.id.widget_status_icon, moodIcon);
+        views.setImageViewResource(R.id.widget_mascot_logo, moodIcon);
+
         if (practicedToday) {
             views.setTextViewText(R.id.widget_status_title, "Dzisiejsza lekcja zaliczona!");
-            views.setTextViewText(R.id.widget_status_desc, "Świetna robota! Dzisiejszy cel XP jest ukończony.");
+            views.setTextViewText(R.id.widget_status_desc, "Świetna robota! Sowa jest zadowolona.");
             views.setTextViewText(R.id.widget_action_button, "Powtórz materiał");
-            views.setImageViewResource(R.id.widget_status_icon, R.drawable.ic_widget_check);
         } else {
-            views.setTextViewText(R.id.widget_status_title, "Nie zapomnij o dzisiejszej lekcji!");
-            if (streak > 0) {
-                views.setTextViewText(R.id.widget_status_desc, "Masz " + dailyXp + "/" + dailyXpTarget + " XP. Zrób krótką lekcję i utrzymaj passę.");
-            } else {
-                views.setTextViewText(R.id.widget_status_desc, "Poświęć kilka minut na JavaScript i zdobądź dzisiejsze XP.");
+            switch (mood) {
+                case "worried":
+                    views.setTextViewText(R.id.widget_status_title, "Hej, zaczynam się martwić…");
+                    views.setTextViewText(R.id.widget_status_desc, "Zrób krótką lekcję i zacznij dzień z kodem.");
+                    break;
+                case "sad":
+                    views.setTextViewText(R.id.widget_status_title, "Długo Cię nie było…");
+                    views.setTextViewText(R.id.widget_status_desc, "Sowa robi się smutna. Wystarczy kilka minut nauki.");
+                    break;
+                case "panicked":
+                    views.setTextViewText(R.id.widget_status_title, "Zaraz koniec dnia!");
+                    views.setTextViewText(R.id.widget_status_desc, "Sowa panikuje — uratuj swoją passę krótką lekcją.");
+                    break;
+                default:
+                    views.setTextViewText(R.id.widget_status_title, "Ostatnia szansa na dziś!");
+                    views.setTextViewText(R.id.widget_status_desc, "Sowa jest zrozpaczona. Zrób choć jedną lekcję.");
+                    break;
             }
-            views.setTextViewText(R.id.widget_action_button, "Rozpocznij lekcję teraz ⚡");
-            views.setImageViewResource(R.id.widget_status_icon, R.drawable.ic_widget_flame);
+            views.setTextViewText(R.id.widget_action_button, "Rozpocznij lekcję teraz");
         }
 
         // PendingIntent to launch the app when clicking the widget or action button

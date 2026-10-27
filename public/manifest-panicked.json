@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "JS Duo - Nauka JavaScript",
+  "short_name": "JS Duo",
+  "description": "Interaktywna platforma do nauki JavaScript w stylu Duolingo",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080B14",
+  "theme_color": "#58cc02",
+  "icons": [
+    {
+      "src": "./pwa-icons/duo-panicked.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
