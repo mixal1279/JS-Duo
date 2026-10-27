@@ -275,6 +275,20 @@ export const App: React.FC = () => {
         await cloudSyncService.saveProgress(authSession, stats, quests);
         setCloudState('synced');
         setCloudMessage(`Zapisano ${new Date().toLocaleTimeString()}.`);
+
+        // Once progress is persisted, refresh the leaderboard from Supabase.
+        // This keeps ordering and displayed XP based on the same server snapshot.
+        if (currentTab === 'leaderboard') {
+          try {
+            const users = await cloudSyncService.loadLeaderboard(authSession);
+            setLeaderboard(users);
+            setLeaderboardError(null);
+          } catch (cause) {
+            setLeaderboardError(
+              cause instanceof Error ? cause.message : 'Nie udało się odświeżyć rankingu.'
+            );
+          }
+        }
       } catch (cause) {
         if (isExpiredAuthSession(cause)) {
           cloudSyncService.saveSession(null);
@@ -289,7 +303,7 @@ export const App: React.FC = () => {
       }
     }, 1200);
     return () => window.clearTimeout(timer);
-  }, [authSession, cloudReady, stats, quests]);
+  }, [authSession, cloudReady, stats, quests, currentTab]);
 
   const handleManualCloudSync = async () => {
     if (!authSession) return;
