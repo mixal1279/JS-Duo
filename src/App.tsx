@@ -565,23 +565,49 @@ export const App: React.FC = () => {
   };
 
   // Claim Daily Quest
-  const handleClaimQuest = (questId: string) => {
+  const handleClaimQuest = async (questId: string) => {
     const quest = quests.find((q) => q.id === questId);
-    if (!quest) return;
+    if (!quest || quest.claimed) return;
 
-    setQuests((prev) =>
-      prev.map((q) => (q.id === questId ? { ...q, claimed: true } : q))
-    );
+    const session = cloudSyncService.getSession();
+    const online = typeof navigator === 'undefined' || navigator.onLine;
+    if (session && online) {
+      try {
+        const result = await cloudSyncService.claimDailyQuest(questId);
+        if (!result.claimed && !result.duplicate) {
+          setCloudState('error');
+          setCloudMessage('Nagroda nie została przyznana przez serwer. Sprawdź wymagania zadania i spróbuj ponownie.');
+          return;
+        }
+        setQuests((prev) => prev.map((q) => q.id === questId ? { ...q, claimed: true } : q));
+        if (result.duplicate) {
+          setCloudMessage('Ta nagroda została już przyznana na serwerze.');
+          return;
+        }
+        const newXp = stats.xp + quest.xpReward;
+        setStats((prev) => ({
+          ...prev,
+          xp: newXp,
+          gems: prev.gems + quest.gemsReward,
+          level: storageService.calculateLevel(newXp).level,
+        }));
+        setCloudMessage('Nagroda została zweryfikowana i przyznana przez serwer.');
+        return;
+      } catch (cause) {
+        setCloudState('error');
+        setCloudMessage(cause instanceof Error ? cause.message : 'Serwer nie potwierdził nagrody. Spróbuj ponownie.');
+        return;
+      }
+    }
 
+    // Offline or guest rewards remain local-only; the server never trusts them for ranking.
+    setQuests((prev) => prev.map((q) => q.id === questId ? { ...q, claimed: true } : q));
     const newXp = stats.xp + quest.xpReward;
-    const newGems = stats.gems + quest.gemsReward;
-    const newLevel = storageService.calculateLevel(newXp).level;
-
     setStats((prev) => ({
       ...prev,
       xp: newXp,
-      gems: newGems,
-      level: newLevel,
+      gems: prev.gems + quest.gemsReward,
+      level: storageService.calculateLevel(newXp).level,
     }));
   };
 
