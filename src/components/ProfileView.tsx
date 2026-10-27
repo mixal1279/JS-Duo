@@ -40,6 +40,12 @@ interface ProfileViewProps {
   currentTheme?: AppTheme;
   onToggleTheme?: (theme: AppTheme) => void;
   onResetProgress?: () => void;
+  displayName?: string;
+  profileAvatar?: string;
+  isSignedIn?: boolean;
+  profileSaving?: boolean;
+  profileSaveMessage?: string;
+  onSaveProfile?: (displayName: string, avatarEmoji: string) => Promise<void>;
 }
 
 const AVATAR_OPTIONS = [
@@ -59,10 +65,26 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   currentTheme,
   onToggleTheme,
   onResetProgress,
+  displayName,
+  profileAvatar,
+  isSignedIn = false,
+  profileSaving = false,
+  profileSaveMessage,
+  onSaveProfile,
 }) => {
   const [selectedAvatar, setSelectedAvatar] = useState<string>(() => {
-    return localStorage.getItem('js_duo_avatar_v1') || '🦉';
+    return profileAvatar || localStorage.getItem('js_duo_avatar_v1') || '🦉';
   });
+  const [displayNameInput, setDisplayNameInput] = useState(displayName || '');
+  React.useEffect(() => {
+    if (profileAvatar) {
+      setSelectedAvatar(profileAvatar);
+      localStorage.setItem('js_duo_avatar_v1', profileAvatar);
+    }
+  }, [profileAvatar]);
+  React.useEffect(() => {
+    if (displayName !== undefined) setDisplayNameInput(displayName);
+  }, [displayName]);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [filterCategory, setFilterCategory] = useState<'all' | 'unlocked' | 'locked' | 'streak' | 'skills'>('all');
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
@@ -205,7 +227,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <div>
                 <div className="flex items-center justify-center sm:justify-start gap-2">
                   <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    Michał (Ty)
+                    {displayName || 'Programista'}
                   </h1>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-duo-green/20 text-duo-green border border-duo-green/40">
                     Lvl {levelInfo.level}
@@ -231,15 +253,47 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </div>
             </div>
 
-            {/* Member since tag & bio */}
+            {/* Account identity and editable public profile fields */}
             <div className="mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-gray-400 font-medium">
               <span className="flex items-center gap-1">
                 <Calendar size={13} className="text-gray-400" />
-                <span>Uczeń od września 2026</span>
+                <span>{userStats.completedQuestionIds.length} pytań ukończonych</span>
               </span>
-              <span>•</span>
-              <span className="text-gray-300 font-bold">500 pytań w toku</span>
+              {isSignedIn && <span className="rounded-full border border-duo-green/30 bg-duo-green/10 px-2 py-0.5 text-duo-green">Profil synchronizowany</span>}
             </div>
+            {isSignedIn && (
+              <form
+                className="mt-4 flex flex-col gap-2 sm:flex-row"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (onSaveProfile) void onSaveProfile(displayNameInput, selectedAvatar);
+                }}
+              >
+                <label className="min-w-0 flex-1">
+                  <span className="mb-1 block text-xs font-bold text-gray-400">Nazwa wyświetlana</span>
+                  <input
+                    value={displayNameInput}
+                    onChange={(event) => setDisplayNameInput(event.target.value)}
+                    maxLength={24}
+                    minLength={1}
+                    required
+                    aria-label="Nazwa wyświetlana profilu"
+                    placeholder="Wpisz nazwę profilu"
+                    className="w-full rounded-xl border border-[#34444D] bg-[#10191E] px-3 py-2.5 text-sm font-semibold text-white outline-none focus:border-duo-green"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={profileSaving || !onSaveProfile}
+                  className="self-end rounded-xl bg-duo-green px-4 py-2.5 text-sm font-black text-black disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {profileSaving ? 'Zapisywanie…' : 'Zapisz profil'}
+                </button>
+              </form>
+            )}
+            {profileSaveMessage && (
+              <p role="status" className="mt-2 text-xs font-semibold text-duo-green">{profileSaveMessage}</p>
+            )}
 
             {/* Overall Level Progress Bar */}
             <div className="mt-4">
