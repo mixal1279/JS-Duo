@@ -707,6 +707,16 @@ class NotificationService {
     const notSpammedRecently = elapsedSinceLastNotif >= 20 * 60 * 60 * 1000;
 
     if (force || (isOver24h && notSpammedRecently)) {
+      // A denied permission must not trigger repeated in-app side effects every monitor tick.
+      // Keep force=true available for the explicit test flow.
+      if (!force && !this.checkPermission()) {
+        return {
+          notified: false,
+          reason: 'Brak uprawnień do powiadomień',
+          hoursInactive,
+        };
+      }
+
       const msg = this.get24HourInactivityMessage(streak, tone);
       const sent = await this.sendPushNotification(msg.title, {
         body: msg.body,
@@ -765,6 +775,10 @@ class NotificationService {
       this.previousHeartsCount = currentHearts;
       return false;
     }
+
+    // Do not dispatch toast/sound/history repeatedly while OS notifications are disabled.
+    // Keep previousHeartsCount low so a later monitor tick can retry after permission is granted.
+    if (!this.checkPermission()) return false;
 
     const msg = this.getHeartsRestoredMessage();
     const sent = await this.sendPushNotification(msg.title, {
