@@ -77,6 +77,7 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
             default: moodIcon = R.drawable.ic_widget_happy; break;
         }
         views.setImageViewResource(R.id.widget_status_icon, moodIcon);
+        views.setImageViewResource(R.id.widget_mascot_logo, moodIcon);
 
         if (practicedToday) {
             views.setTextViewText(R.id.widget_status_title, "Dzisiejsza lekcja zaliczona!");
