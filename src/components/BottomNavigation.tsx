@@ -1,7 +1,7 @@
 import React from 'react';
-import { Compass, Trophy, Swords, MessageSquareText, Target, User, Code2 } from 'lucide-react';
+import { Compass, Trophy, Swords, MessageSquareText, Target, User, Code2, Award } from 'lucide-react';
 
-export type TabType = 'path' | 'quests' | 'leaderboard' | 'duels' | 'playground' | 'chat' | 'profile';
+export type TabType = 'path' | 'quests' | 'leaderboard' | 'duels' | 'playground' | 'chat' | 'profile' | 'achievements';
 
 interface BottomNavigationProps {
   currentTab: TabType;
@@ -22,6 +22,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     { id: 'duels' as TabType, label: 'Pojedynki', icon: Swords },
     { id: 'chat' as TabType, label: 'Czat', icon: MessageSquareText, badge: unreadChatCount },
     { id: 'profile' as TabType, label: 'Profil', icon: User },
+    { id: 'achievements' as TabType, label: 'Odznaki', icon: Award },
   ];
 
   return (
