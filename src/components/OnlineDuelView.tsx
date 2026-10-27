@@ -17,7 +17,7 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
   const [duels, setDuels] = useState<DuelSummary[]>([]);
   const [selectedDuelId, setSelectedDuelId] = useState<string | null>(null);
   const [duel, setDuel] = useState<OnlineDuelState | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [busyPlayerId, setBusyPlayerId] = useState<string | null>(null);
   const [answering, setAnswering] = useState(false);
   const [error, setError] = useState('');
@@ -39,6 +39,8 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
         if (!cancelled) setPlayers(result);
       } catch (cause) {
         if (!cancelled) setError(errorMessage(cause));
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
     void loadPlayers();
