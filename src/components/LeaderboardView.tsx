@@ -5,11 +5,17 @@ import { LeaderboardUser, UserStats } from '../types';
 interface LeaderboardViewProps {
   userStats: UserStats;
   users: LeaderboardUser[];
+  isSignedIn?: boolean;
+  loading?: boolean;
+  error?: string | null;
 }
 
 export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   userStats,
   users,
+  isSignedIn = false,
+  loading = false,
+  error = null,
 }) => {
   const [activeTab, setActiveTab] = useState<'league' | 'global'>('league');
 
@@ -24,6 +30,29 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const currentUserRank = sortedUsers.findIndex((u) => u.isCurrentUser) + 1;
 
   const leagues = ['Brązowa', 'Srebrna', 'Złota', 'Szafirowa', 'Rubinowa', 'Diamentowa'] as const;
+
+  if (!isSignedIn) {
+    return <div className="mx-auto max-w-xl rounded-3xl border border-[#2A373F] bg-[#172127] p-6 text-center">
+      <Trophy size={34} className="mx-auto mb-3 text-duo-yellow" />
+      <h2 className="text-xl font-black text-white">Ranking JS Duo</h2>
+      <p className="mt-2 text-sm leading-6 text-gray-400">Zaloguj się na konto, aby zobaczyć prawdziwy ranking społeczności.</p>
+    </div>;
+  }
+
+  if (loading) {
+    return <div role="status" className="mx-auto max-w-xl rounded-3xl border border-[#2A373F] bg-[#172127] p-6 text-center text-sm font-semibold text-gray-300">Pobieranie rankingu z Supabase…</div>;
+  }
+
+  if (error) {
+    return <div role="alert" className="mx-auto max-w-xl rounded-3xl border border-duo-red/30 bg-[#172127] p-6 text-center">
+      <h2 className="font-black text-white">Nie udało się pobrać rankingu</h2>
+      <p className="mt-2 break-words text-sm text-gray-400">{error}</p>
+    </div>;
+  }
+
+  if (!sortedUsers.length) {
+    return <div className="mx-auto max-w-xl rounded-3xl border border-[#2A373F] bg-[#172127] p-6 text-center text-sm text-gray-400">Ranking jest jeszcze pusty. Ukończ lekcję, aby rozpocząć zdobywanie XP.</div>;
+  }
 
   return (
     <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-8 select-none">
