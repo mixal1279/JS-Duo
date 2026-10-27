@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'src/**'
+      - 'android/**'
+      - 'capacitor.config.ts'
       - 'supabase/**'
       - '.env.example'
       - '.github/workflows/build-apk.yml'
@@ -42,3 +44,46 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
         run: npm run build
+
+
+  android-build:
+    name: Android debug APK compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+        run: npm run build
+
+      - name: Sync Capacitor Android
+        run: |
+          npx cap sync android
+          git checkout -- android/app/src/main/AndroidManifest.xml android/app/src/main/res
+          grep -q "DailyQuestWidgetProvider" android/app/src/main/AndroidManifest.xml
+          chmod +x android/gradlew
+
+      - name: Compile debug APK
+        run: cd android && ./gradlew assembleDebug --no-daemon
