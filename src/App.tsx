@@ -5,7 +5,6 @@ import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, Notificati
 import { storageService, DEFAULT_DAILY_QUESTS, getLocalDateString, getDaysDifference } from './services/storageService';
 import { notificationService } from './services/notificationService';
 import { soundService } from './services/soundService';
-import { INITIAL_LEADERBOARD } from './data/mockUsers';
 import { ALL_QUESTIONS, getQuestionsByLesson } from './data/questionsData';
 import { UNITS } from './data/units';
 import { Navbar } from './components/Navbar';
@@ -22,13 +21,14 @@ import { QuestionDetailModal } from './components/QuestionDetailModal';
 import { NotificationSettingsModal } from './components/NotificationSettingsModal';
 import { HeartRefillModal } from './components/HeartRefillModal';
 import { ProfileView } from './components/ProfileView';
+import { AchievementsView } from './components/AchievementsView';
 import { CodePlaygroundView } from './components/CodePlaygroundView';
 import { StreakToast } from './components/StreakToast';
 import { NotificationBanner } from './components/NotificationBanner';
 import { InAppNotificationToast } from './components/InAppNotificationToast';
 import { syncWidgetStats } from './services/widgetBridge';
 import { AccountView } from './components/AccountView';
-import { AuthSession, cloudSyncService } from './services/cloudSyncService';
+import { AuthSession, CloudProfile, cloudSyncService } from './services/cloudSyncService';
 import { updatePwaManifestMood } from './services/pwaIconService';
 
 const isExpiredAuthSession = (cause: unknown): boolean => {
@@ -40,7 +40,13 @@ export const App: React.FC = () => {
   // Application State
   const [stats, setStats] = useState<UserStats>(() => storageService.getStats());
   const [quests, setQuests] = useState<DailyQuest[]>(() => storageService.getQuests());
-  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>(() => storageService.getLeaderboard());
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<CloudProfile | null>(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaveMessage, setProfileSaveMessage] = useState('');
+  const [profileSaveError, setProfileSaveError] = useState(false);
   const [friends, setFriends] = useState<Friend[]>(() => storageService.getFriends());
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => storageService.getChatMessages());
   const [notifConfig, setNotifConfig] = useState<NotificationConfig>(() => storageService.getNotificationConfig());
@@ -106,10 +112,6 @@ export const App: React.FC = () => {
   }, [quests, stats]);
 
   useEffect(() => {
-    storageService.saveLeaderboard(leaderboard);
-  }, [leaderboard]);
-
-  useEffect(() => {
     storageService.saveFriends(friends);
   }, [friends]);
 
@@ -120,6 +122,70 @@ export const App: React.FC = () => {
   useEffect(() => {
     storageService.saveNotificationConfig(notifConfig);
   }, [notifConfig]);
+
+  // Load public profile data only through the signed-in user's allowed Supabase access.
+  useEffect(() => {
+    let cancelled = false;
+    if (!authSession) {
+      setProfile(null);
+      setProfileSaveMessage('');
+      return () => { cancelled = true; };
+    }
+    cloudSyncService.loadProfile(authSession).then((nextProfile) => {
+      if (!cancelled) setProfile(nextProfile);
+    }).catch(() => {
+      if (!cancelled) setProfile(null);
+    });
+    return () => { cancelled = true; };
+  }, [authSession]);
+
+  // Fetch the real community leaderboard when the user opens the ranking.
+  useEffect(() => {
+    let cancelled = false;
+    if (!authSession) {
+      setLeaderboard([]);
+      setLeaderboardLoading(false);
+      setLeaderboardError(null);
+      return () => { cancelled = true; };
+    }
+    if (currentTab !== 'leaderboard') return () => { cancelled = true; };
+    setLeaderboardLoading(true);
+    setLeaderboardError(null);
+    cloudSyncService.loadLeaderboard(authSession).then((users) => {
+      if (!cancelled) setLeaderboard(users);
+    }).catch((cause) => {
+      if (!cancelled) {
+        setLeaderboard([]);
+        setLeaderboardError(cause instanceof Error ? cause.message : 'Nie udało się pobrać rankingu.');
+      }
+    }).finally(() => {
+      if (!cancelled) setLeaderboardLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [authSession, currentTab]);
+
+  const handleSaveProfile = async (displayName: string, avatarEmoji: string) => {
+    if (!authSession) return;
+    setProfileSaving(true);
+    setProfileSaveMessage('');
+    setProfileSaveError(false);
+    try {
+      const updated = await cloudSyncService.updateProfile(authSession, {
+        display_name: displayName,
+        avatar_emoji: avatarEmoji,
+      });
+      setProfile(updated);
+      setProfileSaveMessage('Profil zapisany.');
+      setLeaderboard((current) => current.map((user) => user.id === updated.id
+        ? { ...user, name: updated.display_name || updated.username || 'Programista', avatar: updated.avatar_emoji || '🦉' }
+        : user));
+    } catch (cause) {
+      setProfileSaveError(true);
+      setProfileSaveMessage(cause instanceof Error ? cause.message : 'Nie udało się zapisać profilu.');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   // Restore account progress from Supabase without replacing newer local progress.
   useEffect(() => {
@@ -210,6 +276,20 @@ export const App: React.FC = () => {
         await cloudSyncService.saveProgress(authSession, stats, quests);
         setCloudState('synced');
         setCloudMessage(`Zapisano ${new Date().toLocaleTimeString()}.`);
+
+        // Once progress is persisted, refresh the leaderboard from Supabase.
+        // This keeps ordering and displayed XP based on the same server snapshot.
+        if (currentTab === 'leaderboard') {
+          try {
+            const users = await cloudSyncService.loadLeaderboard(authSession);
+            setLeaderboard(users);
+            setLeaderboardError(null);
+          } catch (cause) {
+            setLeaderboardError(
+              cause instanceof Error ? cause.message : 'Nie udało się odświeżyć rankingu.'
+            );
+          }
+        }
       } catch (cause) {
         if (isExpiredAuthSession(cause)) {
           cloudSyncService.saveSession(null);
@@ -224,7 +304,7 @@ export const App: React.FC = () => {
       }
     }, 1200);
     return () => window.clearTimeout(timer);
-  }, [authSession, cloudReady, stats, quests]);
+  }, [authSession, cloudReady, stats, quests, currentTab]);
 
   const handleManualCloudSync = async () => {
     if (!authSession) return;
@@ -357,6 +437,7 @@ export const App: React.FC = () => {
       else if (e.key === '5') setCurrentTab('duels');
       else if (e.key === '6') setCurrentTab('chat');
       else if (e.key === '7') setCurrentTab('profile');
+      else if (e.key === '8') setCurrentTab('achievements');
       else if (e.key === 'q' || e.key === 'Q') {
         setExplorerQuestionId(null);
         setShowExplorer(true);
@@ -479,7 +560,7 @@ export const App: React.FC = () => {
     const cleanStats = storageService.resetAllProgress();
     setStats(cleanStats);
     setQuests(DEFAULT_DAILY_QUESTS);
-    setLeaderboard(INITIAL_LEADERBOARD);
+    setLeaderboard([]);
     soundService.playLevelUp();
   };
 
@@ -792,7 +873,13 @@ export const App: React.FC = () => {
                 )}
 
                 {currentTab === 'leaderboard' && (
-                  <LeaderboardView userStats={stats} users={leaderboard} />
+                  <LeaderboardView
+                    userStats={stats}
+                    users={leaderboard}
+                    isSignedIn={Boolean(authSession)}
+                    loading={leaderboardLoading}
+                    error={leaderboardError}
+                  />
                 )}
 
                 {currentTab === 'duels' && (
@@ -823,6 +910,11 @@ export const App: React.FC = () => {
                   />
                 )}
 
+
+                {currentTab === 'achievements' && (
+                  <AchievementsView userStats={stats} />
+                )}
+
                 {currentTab === 'profile' && (
                   <ProfileView
                     userStats={stats}
@@ -835,6 +927,13 @@ export const App: React.FC = () => {
                     currentTheme={theme}
                     onToggleTheme={setTheme}
                     onResetProgress={handleResetProgress}
+                    displayName={profile?.display_name || profile?.username || authSession?.user.email?.split('@')[0] || 'Programista'}
+                    profileAvatar={profile?.avatar_emoji || undefined}
+                    isSignedIn={Boolean(authSession)}
+                    profileSaving={profileSaving}
+                    profileSaveMessage={profileSaveMessage}
+                    profileSaveError={profileSaveError}
+                    onSaveProfile={handleSaveProfile}
                   />
                 )}
 
