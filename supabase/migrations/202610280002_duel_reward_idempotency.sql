@@ -140,7 +140,9 @@ begin
     'my_answer', case when auth.uid() = v_duel.challenger_id
       then v_duel.challenger_answers -> v_round_key else v_duel.opponent_answers -> v_round_key end,
     'opponent_answered', case when auth.uid() = v_duel.challenger_id
-      then v_duel.opponent_answers ? v_round_key else v_duel.challenger_answers ? v_round_key end
+      then v_duel.opponent_answers ? v_round_key else v_duel.challenger_answers ? v_round_key end,
+    'my_rewards', (select jsonb_build_object('xp', xp, 'gems', gems, 'duel_wins', duel_wins, 'duel_losses', duel_losses)
+      from public.duel_reward_balances where user_id = auth.uid())
   );
 end;
 $$;
