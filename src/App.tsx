@@ -36,6 +36,8 @@ const isExpiredAuthSession = (cause: unknown): boolean => {
   return /session_expired|invalid refresh token|refresh token not found|invalid jwt|token is expired|jwt expired/i.test(message);
 };
 
+const STREAK_TOAST_SHOWN_KEY = 'js_duo_streak_toast_date_v1';
+
 export const App: React.FC = () => {
   // Application State
   const [stats, setStats] = useState<UserStats>(() => storageService.getStats());
@@ -69,6 +71,18 @@ export const App: React.FC = () => {
 
   // Modal & Toast States
   const [showStreakToast, setShowStreakToast] = useState(false);
+
+  // Show the automatic streak toast once per local calendar day. Manual clicks remain unrestricted.
+  const showStreakToastOncePerDay = () => {
+    const today = getLocalDateString();
+    try {
+      if (localStorage.getItem(STREAK_TOAST_SHOWN_KEY) === today) return;
+      localStorage.setItem(STREAK_TOAST_SHOWN_KEY, today);
+    } catch {
+      // If storage is unavailable, keep the feature usable without blocking the toast.
+    }
+    window.setTimeout(() => setShowStreakToast(true), 600);
+  };
   const [activeLesson, setActiveLesson] = useState<{
     unitId: number;
     questions: Question[];
@@ -409,14 +423,9 @@ export const App: React.FC = () => {
     };
   }, [notifConfig.enabled, notifConfig.notifyOnStreakFreeze]);
 
-  // Toast informujący o passie (streak) tuż po zalogowaniu / uruchomieniu aplikacji (gdy passa > 0)
+  // Welcome toast: never repeat automatically more than once per local day.
   useEffect(() => {
-    if (stats.streak > 0) {
-      const toastTimer = setTimeout(() => {
-        setShowStreakToast(true);
-      }, 600);
-      return () => clearTimeout(toastTimer);
-    }
+    if (stats.streak > 0) showStreakToastOncePerDay();
   }, []);
 
   // Desktop keyboard shortcuts (when no modal is open and user isn't typing in an input)
@@ -517,7 +526,7 @@ export const App: React.FC = () => {
     }
 
     if (streakIncreased) {
-      setTimeout(() => setShowStreakToast(true), 600);
+      showStreakToastOncePerDay();
     }
 
     // Check if next unit is unlocked (every 50 questions = new unit)
