@@ -14,7 +14,7 @@ import { DesktopRightPanel } from './components/DesktopRightPanel';
 import { PathView } from './components/PathView';
 import { LeaderboardView } from './components/LeaderboardView';
 import { DailyQuestsView } from './components/DailyQuestsView';
-import { DuelView } from './components/DuelView';
+import { OnlineDuelView } from './components/OnlineDuelView';
 import { CommunityChatView } from './components/CommunityChatView';
 import { QuizModal } from './components/QuizModal';
 import { QuestionDetailModal } from './components/QuestionDetailModal';
@@ -883,13 +883,12 @@ export const App: React.FC = () => {
                 )}
 
                 {currentTab === 'duels' && (
-                  <DuelView
-                    friends={friends}
+                  <OnlineDuelView
+                    session={authSession}
                     userStats={stats}
                     onUpdateStats={(newSt) => {
                       setStats((prev) => ({ ...prev, ...newSt }));
                       if (newSt.duelWins) {
-                        // Update duel quest progress
                         setQuests((prev) =>
                           prev.map((q) =>
                             q.type === 'duel' ? { ...q, current: Math.min(q.target, q.current + 1) } : q
