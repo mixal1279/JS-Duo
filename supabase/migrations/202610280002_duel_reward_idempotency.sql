@@ -412,7 +412,7 @@ begin
   if p_question_ids is null or cardinality(p_question_ids) < 5 or cardinality(p_question_ids) > 30 then
     raise exception 'Invalid lesson question count';
   end if;
-  select count(distinct qid) into v_count from unnest(p_question_ids) qid;
+  select count(distinct t.qid) into v_count from unnest(p_question_ids) as t(qid);
   if v_count <> cardinality(p_question_ids) then raise exception 'Duplicate lesson question'; end if;
   select min(unit_id), count(*) into v_unit, v_count
   from public.duel_question_bank
@@ -422,10 +422,10 @@ begin
     raise exception 'Lesson questions must belong to one unit';
   end if;
   if exists (
-    select 1 from unnest(p_question_ids) qid
+    select 1 from unnest(p_question_ids) as t(qid)
     where not exists (
       select 1 from public.learning_answer_events e
-      where e.user_id = v_uid and e.question_id = qid
+      where e.user_id = v_uid and e.question_id = t.qid
     )
   ) then
     raise exception 'Lesson answers are incomplete';
