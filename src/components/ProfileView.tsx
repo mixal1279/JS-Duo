@@ -7,6 +7,7 @@ import {
   BookOpen,
   Award,
   Sparkles,
+  CheckCircle2,
   ChevronRight,
   Shield,
   Calendar,
