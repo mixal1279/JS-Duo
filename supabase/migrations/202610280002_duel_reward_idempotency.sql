@@ -29,7 +29,7 @@ create or replace function public.settle_duel_rewards(p_duel_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_duel public.duels%rowtype;
@@ -98,7 +98,7 @@ create or replace function public.get_duel_state(p_duel_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_duel public.duels%rowtype;
