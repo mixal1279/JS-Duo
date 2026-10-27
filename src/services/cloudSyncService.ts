@@ -3,6 +3,7 @@ import { ReviewRecord } from './reviewService';
 
 const SESSION_KEY = 'js_duo_auth_session_v1';
 const PENDING_LEARNING_ANSWERS_KEY = 'js_duo_pending_learning_answers_v1';
+const PENDING_LESSONS_KEY = 'js_duo_pending_lessons_v1';
 const API_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const AUTH_REDIRECT_URL_RAW = import.meta.env.VITE_APP_URL || 'https://mixal1279.github.io/JS-Duo/';
@@ -341,6 +342,41 @@ export const cloudSyncService = {
     });
   },
 
+
+  async completeLearningLesson(lessonKey: string, questionIds: number[]): Promise<void> {
+    const session = this.getSession();
+    if (!session || !lessonKey || questionIds.length < 5) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      try {
+        const raw = localStorage.getItem(PENDING_LESSONS_KEY);
+        const pending = raw ? JSON.parse(raw) as Array<{ userId: string; lessonKey: string; questionIds: number[] }> : [];
+        if (!pending.some((item) => item.userId === session.user.id && item.lessonKey === lessonKey)) {
+          pending.push({ userId: session.user.id, lessonKey, questionIds });
+          localStorage.setItem(PENDING_LESSONS_KEY, JSON.stringify(pending));
+        }
+      } catch { /* Preserve offline lesson flow if queue storage is unavailable. */ }
+      return;
+    }
+    const validSession = await this.refreshSession(session);
+    await restRequest('rpc/complete_learning_lesson', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_lesson_key: lessonKey, p_question_ids: questionIds }),
+    });
+  },
+
+  async claimDailyQuest(questId: string): Promise<{ claimed: boolean; duplicate: boolean }> {
+    const session = this.getSession();
+    if (!session || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+      return { claimed: false, duplicate: false };
+    }
+    const validSession = await this.refreshSession(session);
+    const result = await restRequest('rpc/claim_daily_quest', validSession, {
+      method: 'POST',
+      body: JSON.stringify({ p_quest_id: questId }),
+    }) as { claimed?: boolean; duplicate?: boolean } | null;
+    return { claimed: Boolean(result?.claimed), duplicate: Boolean(result?.duplicate) };
+  },
+
   async flushPendingLearningAnswers(session: AuthSession): Promise<void> {
     if (typeof navigator !== 'undefined' && !navigator.onLine) return;
     let pending: Array<{ userId: string; questionId: number; answerIndex: number }>;
@@ -371,6 +407,27 @@ export const cloudSyncService = {
       if (remaining.length) localStorage.setItem(PENDING_LEARNING_ANSWERS_KEY, JSON.stringify(remaining));
       else localStorage.removeItem(PENDING_LEARNING_ANSWERS_KEY);
     } catch { /* Do not fail cloud sync because the local retry queue cannot be saved. */ }
+
+    // Complete lessons only after their queued answers have been submitted.
+    let lessons: Array<{ userId: string; lessonKey: string; questionIds: number[] }> = [];
+    try {
+      const rawLessons = localStorage.getItem(PENDING_LESSONS_KEY);
+      lessons = rawLessons ? JSON.parse(rawLessons) as typeof lessons : [];
+    } catch { lessons = []; }
+    const remainingLessons: typeof lessons = [];
+    for (const lesson of lessons) {
+      if (lesson.userId !== validSession.user.id) { remainingLessons.push(lesson); continue; }
+      try {
+        await restRequest('rpc/complete_learning_lesson', validSession, {
+          method: 'POST',
+          body: JSON.stringify({ p_lesson_key: lesson.lessonKey, p_question_ids: lesson.questionIds }),
+        });
+      } catch { remainingLessons.push(lesson); }
+    }
+    try {
+      if (remainingLessons.length) localStorage.setItem(PENDING_LESSONS_KEY, JSON.stringify(remainingLessons));
+      else localStorage.removeItem(PENDING_LESSONS_KEY);
+    } catch { /* Local retry queue is best-effort. */ }
   },
 
   async loadProgress(session: AuthSession): Promise<CloudProgress | null> {
