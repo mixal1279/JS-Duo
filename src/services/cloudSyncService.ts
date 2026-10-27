@@ -4,6 +4,7 @@ import { ReviewRecord } from './reviewService';
 const SESSION_KEY = 'js_duo_auth_session_v1';
 const API_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const AUTH_REDIRECT_URL = (import.meta.env.VITE_APP_URL || 'https://mixal1279.github.io/JS-Duo/').replace(/\\/$/, '/');
 
 export interface AuthSession {
   access_token: string;
@@ -42,12 +43,12 @@ const parseError = async (response: Response): Promise<never> => {
   throw new CloudSyncError(message, code);
 };
 
-const authRequest = async (path: string, body?: unknown, token?: string) => {
+const authRequest = async (path: string, body?: unknown, token?: string, method?: 'GET' | 'POST' | 'PUT') => {
   if (!isCloudConfigured()) {
     throw new CloudSyncError('Synchronizacja nie jest skonfigurowana. Ustaw VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY.');
   }
   const response = await fetch(`${API_URL}/auth/v1/${path}`, {
-    method: body === undefined ? 'GET' : 'POST',
+    method: method || (body === undefined ? 'GET' : 'POST'),
     headers: {
       apikey: ANON_KEY,
       'Content-Type': 'application/json',
@@ -120,6 +121,42 @@ export const cloudSyncService = {
     const session = { ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + (result.expires_in || 3600) };
     this.saveSession(session);
     return session;
+  },
+
+  async requestPasswordReset(email: string): Promise<void> {
+    await authRequest(`recover?redirect_to=${encodeURIComponent(AUTH_REDIRECT_URL)}`, {
+      email: email.trim().toLowerCase(),
+    });
+  },
+
+  async consumeRecoverySessionFromUrl(): Promise<AuthSession | null> {
+    if (typeof window === 'undefined' || !window.location.hash) return null;
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    if (params.get('type') !== 'recovery') return null;
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    if (!accessToken || !refreshToken) {
+      throw new CloudSyncError('Link resetowania hasła jest niekompletny. Poproś o nowy link.');
+    }
+    const user = await authRequest('user', undefined, accessToken) as AuthSession['user'];
+    if (!user?.id) throw new CloudSyncError('Nie udało się zweryfikować linku resetowania hasła.');
+    const expiresIn = Number(params.get('expires_in')) || 3600;
+    const session: AuthSession = {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      token_type: params.get('token_type') || 'bearer',
+      expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+      user,
+    };
+    this.saveSession(session);
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    return session;
+  },
+
+  async updatePassword(session: AuthSession, password: string): Promise<void> {
+    if (password.length < 8) throw new CloudSyncError('Hasło musi mieć co najmniej 8 znaków.');
+    const validSession = await this.refreshSession(session);
+    await authRequest('user', { password }, validSession.access_token, 'PUT');
   },
 
   async signOut(session: AuthSession): Promise<void> {
