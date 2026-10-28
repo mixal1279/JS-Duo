@@ -4,57 +4,49 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
-    android:orientation="vertical"
-    android:padding="14dp">
+    android:orientation="horizontal"
+    android:padding="12dp">
 
-    <!-- Header: logo + brand -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/widget_mascot_logo"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:src="@mipmap/ic_launcher"
-            android:contentDescription="@string/app_name" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="JS Duo"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <!-- Stats row -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <!-- Streak Pill -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/widget_stat_pill_bg"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:id="@+id/widget_mascot_logo"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_widget_happy"
+                android:contentDescription="Nastrój cyberkota" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="JS-DUO"
+                android:textColor="#D8F9FF"
+                android:textSize="13sp"
+                android:letterSpacing="0.08"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="9dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:src="@drawable/ic_widget_flame"
                 android:contentDescription="Passa" />
 
@@ -62,139 +54,108 @@
                 android:id="@+id/widget_streak_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="5dp"
                 android:text="0"
-                android:textColor="#FF9600"
-                android:textSize="12sp"
+                android:textColor="#FF9A45"
+                android:textSize="20sp"
                 android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Daily XP Pill -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.35"
-            android:layout_marginStart="6dp"
-            android:background="@drawable/widget_stat_pill_bg"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp">
 
             <TextView
-                android:id="@+id/widget_xp_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0/30 XP"
-                android:textColor="#58CC02"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:layout_marginStart="5dp"
+                android:text="dni"
+                android:textColor="#A9BBCB"
+                android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Hearts Pill -->
-        <LinearLayout
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/widget_xp_count"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="0/30 XP dzisiaj"
+            android:textColor="#75E7F2"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/widget_xp_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:layout_marginTop="5dp"
+            android:max="30"
+            android:progress="0"
+            android:progressTint="#6A5CFF"
+            android:progressBackgroundTint="#263B52" />
+
+        <TextView
+            android:id="@+id/widget_status_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Gotowy na kod?"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/widget_status_desc"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginStart="6dp"
-            android:background="@drawable/widget_stat_pill_bg"
-            android:orientation="horizontal"
+            android:layout_marginTop="2dp"
+            android:text="Odblokuj kolejną umiejętność."
+            android:textColor="#B7C8D8"
+            android:textSize="10sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/widget_action_button"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/widget_button_bg"
             android:gravity="center"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp">
-
-            <ImageView
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:src="@drawable/ic_widget_heart"
-                android:contentDescription="Serca" />
-
-            <TextView
-                android:id="@+id/widget_hearts_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:text="5/5"
-                android:textColor="#FF4B4B"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+            android:text="Ćwicz teraz  ›"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
-    <ProgressBar
-        android:id="@+id/widget_xp_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="6dp"
-        android:layout_marginTop="8dp"
-        android:progress="0"
-        android:max="30"
-        android:progressTint="#58CC02"
-        android:progressBackgroundTint="#2A373F" />
-
-    <!-- Motivational Content in Middle -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="6dp">
+    <FrameLayout
+        android:layout_width="112dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/widget_mascot_panel_bg">
 
         <ImageView
             android:id="@+id/widget_status_icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_widget_flame"
-            android:contentDescription="Status" />
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="3dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_widget_happy"
+            android:contentDescription="Aktualny nastrój cyberkota" />
 
-        <LinearLayout
-            android:layout_width="0dp"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="10dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/widget_status_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Zrób codzienną lekcję!"
-                android:textColor="#FFFFFF"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <TextView
-                android:id="@+id/widget_status_desc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Utrzymaj swoją passę i zdobądź +25 XP dzisiaj."
-                android:textColor="#9EACB4"
-                android:textSize="11sp"
-                android:maxLines="2"
-                android:ellipsize="end"
-                android:includeFontPadding="false" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- CTA Button to directly jump into practice -->
-    <TextView
-        android:id="@+id/widget_action_button"
-        android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:background="@drawable/widget_button_bg"
-        android:gravity="center"
-        android:text="Rozpocznij lekcję teraz ⚡"
-        android:textColor="#000000"
-        android:textSize="12sp"
-        android:textStyle="bold" />
-
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/widget_mood_badge_bg"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:text="TRYB CYBER"
+            android:textColor="#BDF8FF"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </FrameLayout>
 </LinearLayout>
