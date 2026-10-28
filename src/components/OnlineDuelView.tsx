@@ -318,7 +318,7 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
 
       <section className="rounded-2xl border border-[#293246] bg-[#151B2A] p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-black text-white">Gracze JS Duo</h3>
+          <h3 className="font-black text-white">Gracze Codexa</h3>
           <span className="text-xs text-gray-400">{players.length} kont</span>
         </div>
         {loading ? <p className="text-sm text-gray-400">Ładowanie graczy…</p> : players.length === 0 ? (
