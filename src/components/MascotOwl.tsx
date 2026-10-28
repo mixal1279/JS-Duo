@@ -25,7 +25,7 @@ export const MascotOwl: React.FC<MascotOwlProps> = ({
     style={{ width: size, height: size }}
   >
     <img
-      src={`./pwa-icons/${moodAsset[mood]}`}
+      src={`${import.meta.env.BASE_URL}pwa-icons/${moodAsset[mood]}`}
       alt={`Cyberkot Codexa — ${mood === 'sad' ? 'smutny' : mood === 'thinking' ? 'zastanawiający się' : mood === 'surprised' ? 'zaskoczony' : 'wesoły'}`}
       className="w-full h-full object-contain drop-shadow-lg pointer-events-none"
       draggable={false}
