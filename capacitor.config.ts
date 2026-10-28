@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.jsduo.app',
-  appName: 'JS Duo',
+  appName: 'Codexa',
   webDir: 'dist',
   server: {
     androidScheme: 'https'
