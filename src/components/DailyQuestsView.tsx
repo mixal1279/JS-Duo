@@ -150,7 +150,7 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
                     disabled={!isDone}
                     className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                       isDone
-                        ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_3px_0_#46a302] active:translate-y-0.5 cursor-pointer animate-pulse'
+                        ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_3px_0_#1BAEAA] active:translate-y-0.5 cursor-pointer animate-pulse'
                         : 'bg-[#2A373F] text-gray-500 cursor-not-allowed'
                     }`}
                   >
