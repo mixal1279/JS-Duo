@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">JS Duo</string>
-    <string name="title_activity_main">JS Duo</string>
+    <string name="app_name">Codexa</string>
+    <string name="title_activity_main">Codexa</string>
     <string name="package_name">com.jsduo.app</string>
     <string name="custom_url_scheme">com.jsduo.app</string>
-    <string name="widget_name">Codzienna Lekcja JS Duo</string>
-    <string name="widget_description">Widget przypominający o codziennej lekcji JavaScript i chroniący Twoją passę.</string>
+    <string name="widget_name">Codexa — codzienna lekcja</string>
+    <string name="widget_description">Widget przypominający o codziennej lekcji JavaScript i wspierający regularną naukę.</string>
 </resources>
