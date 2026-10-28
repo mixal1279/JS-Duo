@@ -213,9 +213,9 @@ export const PathView: React.FC<PathViewProps> = ({
                   onClick={() => handleNodeClick(lessonIdx)}
                   className={`group relative w-16 h-16 rounded-full flex items-center justify-center font-black text-lg transition-all active:translate-y-1 ${
                     isCompleted
-                      ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_6px_0_#46a302] active:shadow-none'
+                      ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_6px_0_#1BAEAA] active:shadow-none'
                       : isCurrent
-                      ? 'bg-duo-blue hover:bg-duo-blueDark text-white ring-4 ring-duo-blue/30 shadow-[0_6px_0_#1899d6] animate-pulse active:shadow-none'
+                      ? 'bg-duo-blue hover:bg-duo-blueDark text-white ring-4 ring-duo-blue/30 shadow-[0_6px_0_#6D42D8] animate-pulse active:shadow-none'
                       : 'bg-[#2A373F] text-gray-500 shadow-[0_6px_0_#1C262C] cursor-not-allowed opacity-60'
                   }`}
                 >
