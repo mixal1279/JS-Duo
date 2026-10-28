@@ -39,7 +39,7 @@ export const LESSON_STUDY_UNITS: Record<number, LessonStudyUnit> = {
   6: {
     description: 'DOM i Web API łączą kod JavaScript z interfejsem strony, formularzami i zdarzeniami przeglądarki.',
     topics: ['Wyszukiwanie elementów DOM', 'Manipulacja DOM i bezpieczeństwo', 'Klasy, atrybuty i dataset', 'Fazy zdarzeń', 'Delegacja zdarzeń', 'Formularze i preventDefault', 'Reflow i repaint', 'Obserwatory przeglądarki', 'Storage, cookies i IndexedDB', 'Cykl życia strony i Web API'],
-    example: 'const button = document.querySelector("button");\nbutton?.addEventListener("click", () => {\n  document.querySelector("#status")?.textContent = "Gotowe";\n});',
+    example: 'const button = document.querySelector("button");\nbutton?.addEventListener("click", () => {\n  const status = document.querySelector("#status");\n  if (status) status.textContent = "Gotowe";\n});',
     exampleExplanation: 'querySelector zwraca element albo null, dlatego opcjonalne sprawdzenie chroni przed wywołaniem metody na nieistniejącym elemencie.',
   },
   7: {
