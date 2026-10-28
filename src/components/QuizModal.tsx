@@ -617,7 +617,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
       )}
 
       {/* Bottom Action Footer */}
-      {!isLessonFinished && (
+      {!isLessonFinished && !showStudyCard && (
         <motion.div
           animate={
             isAnswerChecked
