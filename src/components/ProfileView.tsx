@@ -161,11 +161,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <div className="relative group">
             <button
               onClick={() => setShowAvatarPicker(!showAvatarPicker)}
-              className="w-24 h-24 rounded-3xl bg-[#0D111B] border-4 border-duo-green/60 shadow-[0_6px_0_#225006] flex items-center justify-center text-5xl hover:scale-105 active:scale-95 transition-transform cursor-pointer relative"
+              className="w-24 h-24 rounded-3xl bg-[#0D111B] border-2 border-[#42E8D4]/50 shadow-[0_8px_24px_rgba(66,232,212,0.12)] flex items-center justify-center text-5xl hover:scale-105 active:scale-95 transition-transform cursor-pointer relative"
               title="Kliknij, aby zmienić awatar"
             >
               <span>{selectedAvatar}</span>
-              <div className="absolute -bottom-1.5 -right-1.5 bg-duo-green text-black p-1 rounded-xl shadow border border-[#0D111B]">
+              <div className="absolute -bottom-1.5 -right-1.5 bg-[#42E8D4] text-[#0D111B] p-1 rounded-xl shadow border border-[#0D111B]">
                 <Sparkles size={14} className="fill-black" />
               </div>
             </button>
@@ -392,7 +392,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   Motyw i Wygląd Aplikacji
                 </h3>
                 <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-duo-blue/20 text-duo-blue border border-duo-blue/30">
-                  Styl JS Duo
+                  Styl Codexa
                 </span>
               </div>
               <p className="text-xs text-gray-400">
@@ -467,7 +467,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
 
             <p className="text-xs text-gray-300 leading-relaxed mb-3">
-              Domyślny nocny motyw JS Duo. Głęboki ciemny grafit chroni oczy podczas nocnych sesji kodowania i nauki.
+              Domyślny nocny motyw Codexa. Głęboki ciemny grafit chroni oczy podczas nocnych sesji kodowania i nauki.
             </p>
 
             {/* Mini Color Swatch & Preview */}
@@ -591,7 +591,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
             <div>
               <h3 className="text-base font-black text-white">Aktualizacja aplikacji</h3>
-              <p className="text-xs text-gray-400 font-medium">Sprawdzaj nowe wydania JS Duo z GitHuba.</p>
+              <p className="text-xs text-gray-400 font-medium">Sprawdzaj nowe wydania Codexa z GitHuba.</p>
             </div>
           </div>
           <span className="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-[#1F2C33] text-gray-300 border border-[#2B3B44]">
