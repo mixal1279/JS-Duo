@@ -47,11 +47,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-2 cursor-pointer group shrink-0"
           title="Kliknij, aby otworzyć Profil i Osiągnięcia"
         >
-          <CyberCatLogo size={36} className="transform active:translate-y-0.5 group-hover:scale-105 transition-all shadow-[0_0_12px_rgba(168,85,247,0.4)]" />
+          <CyberCatLogo size={36} className="transform active:translate-y-0.5 group-hover:scale-105 transition-all shadow-[0_0_12px_rgba(66,232,212,0.24)]" />
           <div>
             <div className="flex items-center gap-1">
               <span className="font-extrabold text-sm sm:text-base tracking-tight text-white font-sans group-hover:text-cyan-400 transition-colors">
-                JS Duo
+                Codexa
               </span>
               <span className="text-[9px] uppercase font-bold bg-[#FFD700]/20 text-[#FFD700] px-1 py-0.2 rounded border border-[#FFD700]/40 hidden xs:inline-block sm:hidden">
                 500
