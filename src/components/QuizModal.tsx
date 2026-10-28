@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Heart, CheckCircle2, XCircle, HelpCircle, MessageSquareShare, ArrowRight, Award, Zap, Sparkles } from 'lucide-react';
+import { X, Heart, CheckCircle2, XCircle, HelpCircle, MessageSquareShare, ArrowRight, Award, Zap, Sparkles, BookOpen, Lightbulb, Code2 } from 'lucide-react';
+import { getLessonStudyContent } from '../data/lessonStudyContent';
 import confetti from 'canvas-confetti';
 import { Question, UserStats } from '../types';
 import { CodeBlock } from './CodeBlock';
@@ -37,6 +38,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   onAskCommunity,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showStudyCard, setShowStudyCard] = useState(true);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -56,6 +58,8 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   const [currentGems, setCurrentGems] = useState(userStats.gems);
 
   const currentQ = questions[currentIndex];
+  const previousQ = currentIndex > 0 ? questions[currentIndex - 1] : undefined;
+  const studyContent = getLessonStudyContent(unitId || questions[0]?.unitId || 1, lessonIndex);
   const progressPercent = ((currentIndex) / questions.length) * 100;
 
   // Handle Keyboard shortcuts 1, 2, 3, 4, Enter and Escape
@@ -79,6 +83,11 @@ export const QuizModal: React.FC<QuizModalProps> = ({
 
       if (outOfHeartsModal) return;
 
+      if (showStudyCard) {
+        if (e.key === 'Enter' || e.key === ' ') setShowStudyCard(false);
+        return;
+      }
+
       if (!isAnswerChecked) {
         if (['1', '2', '3', '4'].includes(e.key)) {
           const idx = parseInt(e.key, 10) - 1;
@@ -98,7 +107,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, selectedOption, isAnswerChecked, isLessonFinished, earnedXp, perfectLesson, solvedIds, outOfHeartsModal]);
+  }, [currentIndex, selectedOption, isAnswerChecked, isLessonFinished, earnedXp, perfectLesson, solvedIds, outOfHeartsModal, showStudyCard]);
 
   const handleSelect = (idx: number) => {
     if (isAnswerChecked) return;
@@ -163,10 +172,13 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     }
 
     if (currentIndex + 1 < questions.length) {
-      setCurrentIndex((prev) => prev + 1);
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
       setSelectedOption(null);
       setIsAnswerChecked(false);
       setShowExplanation(false);
+      // Pause after questions 2 and 4 for a short recap before continuing.
+      setShowStudyCard(nextIndex === 2 || nextIndex === 4);
     } else {
       // Finished
       setIsLessonFinished(true);
@@ -287,6 +299,54 @@ export const QuizModal: React.FC<QuizModalProps> = ({
       {/* Main Content Area */}
       {!isLessonFinished ? (
         <div className="max-w-2xl w-full mx-auto px-3 sm:px-4 py-2 flex-1 flex flex-col justify-center">
+          {showStudyCard ? (
+            <motion.div
+              key={`study-${currentIndex}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25 }}
+              className="rounded-3xl border-2 border-[#2A373F] bg-[#17252D] p-5 sm:p-7 shadow-xl"
+            >
+              <div className="flex items-center gap-2 text-duo-blue font-extrabold text-xs uppercase tracking-wider mb-3">
+                {previousQ ? <Lightbulb size={18} /> : <BookOpen size={18} />}
+                <span>{previousQ ? 'Krótka powtórka' : 'Wprowadzenie do lekcji'}</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white mb-2">
+                {previousQ ? 'Zapamiętaj najważniejsze' : studyContent.topic}
+              </h2>
+              <p className="text-sm text-gray-300 leading-relaxed mb-4">
+                {previousQ ? previousQ.explanation : studyContent.description}
+              </p>
+              {!previousQ && (
+                <div className="rounded-2xl bg-[#101A20] border border-[#2A373F] p-4 mb-3">
+                  <div className="flex items-center gap-2 text-duo-green font-bold text-xs mb-2"><Code2 size={16} /> Przykład kodu</div>
+                  <CodeBlock code={studyContent.example} />
+                  <p className="text-xs text-gray-400 leading-relaxed mt-3">{studyContent.exampleExplanation}</p>
+                </div>
+              )}
+              {previousQ?.codeSnippet && (
+                <div className="rounded-2xl bg-[#101A20] border border-[#2A373F] p-3 mb-3">
+                  <div className="text-xs text-gray-400 font-bold mb-2">Kod z poprzedniego pytania</div>
+                  <CodeBlock code={previousQ.codeSnippet} />
+                </div>
+              )}
+              <p className="text-xs text-gray-400 mb-5">
+                {previousQ ? 'Zanim przejdziesz dalej, spróbuj własnymi słowami wyjaśnić, dlaczego ta zasada działa.' : 'Najpierw poznaj ideę i przykład, a potem sprawdź zrozumienie w pytaniach. Po drodze pojawią się krótkie powtórki.'}
+              </p>
+              <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
+                <span className="rounded-full bg-[#24343D] px-2.5 py-1">Lekcja {lessonIndex}</span>
+                <span>•</span>
+                <span>{previousQ ? `Omówiono pytanie ${currentIndex}` : 'Teoria + przykład'}</span>
+              </div>
+              <button
+                onClick={() => { setShowStudyCard(false); soundService.playClick(); }}
+                className="w-full min-h-[50px] px-6 py-3 rounded-2xl bg-duo-green hover:bg-duo-greenDark text-black font-black text-sm uppercase tracking-wider shadow-[0_4px_0_#46a302] active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
+              >
+                {previousQ ? 'Rozumiem, dalej' : 'Zaczynamy ćwiczenia'} <ArrowRight size={18} />
+              </button>
+            </motion.div>
+          ) : (
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
@@ -495,6 +555,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
               )}
             </motion.div>
           </AnimatePresence>
+          )}
         </div>
       ) : (
         /* Lesson Finished Summary Screen with Recharts Accuracy Chart */
