@@ -117,7 +117,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               key={user.id}
               className={`flex items-center justify-between p-3 sm:p-3.5 rounded-2xl border-2 transition-all ${
                 isMe
-                  ? 'bg-[#1C3545] border-duo-blue shadow-[0_3px_0_#1899d6] -translate-y-0.5'
+                  ? 'bg-[#1C3545] border-duo-blue shadow-[0_3px_0_#6D42D8] -translate-y-0.5'
                   : 'bg-[#1C262C] border-[#2A373F] hover:bg-[#223038]'
               }`}
             >
