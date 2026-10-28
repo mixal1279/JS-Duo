@@ -88,7 +88,7 @@ export const PathView: React.FC<PathViewProps> = ({
     <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-8 select-none">
       {/* Unit Header Card */}
       <div
-        className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-6 sm:mb-8 border-2 shadow-lg relative overflow-hidden transition-all"
+        className="rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-5 mb-6 sm:mb-8 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.22)] relative overflow-hidden transition-all bg-gradient-to-br from-[#182338] via-[#151B2A] to-[#0D111B]"
         style={{
           backgroundColor: '#151B2A',
           borderColor: currentUnit.color,
@@ -114,10 +114,10 @@ export const PathView: React.FC<PathViewProps> = ({
         {/* Progress Bar */}
         <div className="w-full bg-black/40 rounded-full h-2.5 sm:h-3 p-0.5 border border-white/10">
           <div
-            className="h-full rounded-full transition-all duration-500 relative"
+            className="h-full rounded-full transition-all duration-500 relative bg-gradient-to-r from-[#42E8D4] to-[#8B5CF6]"
             style={{
               width: `${unitProgressPercent}%`,
-              backgroundColor: currentUnit.color,
+              background: 'linear-gradient(90deg, #42E8D4, #8B5CF6)',
             }}
           >
             <div className="absolute inset-0 bg-white/20 rounded-full h-1"></div>
@@ -211,7 +211,7 @@ export const PathView: React.FC<PathViewProps> = ({
                 /* Standard Lesson Node */
                 <button
                   onClick={() => handleNodeClick(lessonIdx)}
-                  className={`group relative w-16 h-16 rounded-full flex items-center justify-center font-black text-lg transition-all active:translate-y-1 ${
+                  className={`group relative w-16 h-16 rounded-2xl rotate-0 flex items-center justify-center font-black text-lg transition-all active:translate-y-1 ${
                     isCompleted
                       ? 'bg-[#42E8D4] hover:bg-[#1BAEAA] text-[#0D111B] shadow-[0_6px_0_#176F72] active:shadow-none'
                       : isCurrent
