@@ -159,7 +159,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           title="Kliknij, aby otworzyć Profil i Osiągnięcia"
         >
           <div className="w-10 h-10 rounded-xl bg-duo-yellow/20 border border-duo-yellow/40 flex items-center justify-center text-xl shrink-0">
-            </>
+            <Code2 size={20} className="text-cyan-300" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
