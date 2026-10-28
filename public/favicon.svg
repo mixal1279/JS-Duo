@@ -1,13 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-  <title id="title">Codexa</title>
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#111827"/><stop offset="1" stop-color="#090D18"/></linearGradient>
-    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#42E8D4"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <path d="M206 144 108 256l98 112" fill="none" stroke="#42E8D4" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="m306 144 98 112-98 112" fill="none" stroke="#8B5CF6" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="m278 175-48 162" fill="none" stroke="#F8FAFC" stroke-width="28" stroke-linecap="round"/>
-  <circle cx="256" cy="256" r="15" fill="#42E8D4"/>
-  <path d="M72 90h74M72 112h42M366 400h74M398 422h42" stroke="#64748B" stroke-width="6" stroke-linecap="round" opacity=".55"/>
+<title id="title">Cyberkot Codexa</title>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#101827"/><stop offset="1" stop-color="#080B14"/></linearGradient>
+ <linearGradient id="fur" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#26354D"/><stop offset=".55" stop-color="#111827"/><stop offset="1" stop-color="#070B14"/></linearGradient>
+ <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#42E8D4"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+ <radialGradient id="eye"><stop stop-color="#A5F3FC"/><stop offset=".45" stop-color="#22D3EE"/><stop offset="1" stop-color="#0891B2"/></radialGradient>
+</defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<circle cx="256" cy="246" r="198" fill="none" stroke="url(#neon)" stroke-width="5" opacity=".22"/>
+<path d="M111 206 130 75Q135 49 158 68L222 122Q256 108 290 122L354 68Q377 49 382 75L401 206Q419 265 386 312L350 352 162 352 126 312Q93 265 111 206Z" fill="url(#fur)" stroke="url(#neon)" stroke-width="13" stroke-linejoin="round"/>
+<path d="M148 109 160 183 207 145Z" fill="#8B5CF6" opacity=".85"/><path d="M364 109 352 183 305 145Z" fill="#42E8D4" opacity=".85"/>
+<path d="M132 175Q98 173 99 218L105 264Q110 286 133 278L151 263" fill="#18263B" stroke="#42E8D4" stroke-width="12"/>
+<path d="M380 175Q414 173 413 218L407 264Q402 286 379 278L361 263" fill="#18263B" stroke="#8B5CF6" stroke-width="12"/>
+<rect x="91" y="207" width="37" height="74" rx="16" fill="#42E8D4" stroke="#A5F3FC" stroke-width="5"/><rect x="384" y="207" width="37" height="74" rx="16" fill="#8B5CF6" stroke="#C4B5FD" stroke-width="5"/>
+<path d="M142 366Q156 333 194 328L224 350 288 350 318 328Q356 333 370 366L393 451H119Z" fill="#151D30" stroke="url(#neon)" stroke-width="10" stroke-linejoin="round"/>
+<path d="M226 379l-28 24 28 24M286 379l28 24-28 24M270 372l-28 65" fill="none" stroke="#42E8D4" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M172 245Q180 216 212 226Q230 235 228 259Q220 285 194 281Q169 273 172 245Z" fill="url(#eye)" stroke="#67E8F9" stroke-width="4"/>
+<path d="M284 259Q282 235 300 226Q332 216 340 245Q343 273 318 281Q292 285 284 259Z" fill="url(#eye)" stroke="#67E8F9" stroke-width="4"/>
+<ellipse cx="203" cy="250" rx="8" ry="15" fill="#07111D"/><ellipse cx="309" cy="250" rx="8" ry="15" fill="#07111D"/>
+<path d="M164 218l44-7M304 211l44 7" stroke="#42E8D4" stroke-width="10" stroke-linecap="round"/>
+<path d="M242 278Q256 267 270 278L256 292Z" fill="#F0A6D8"/>
+<path d="M220 286 Q256 330 292 286 Q280 326 256 326 Q232 326 220 286Z" fill="#F8FAFC"/>
+<path d="M214 316l-30 9M298 325l-30-9" stroke="#8B5CF6" stroke-width="6" stroke-linecap="round"/>
+<path d="M210 154l-18-15M302 139l-18 15" stroke="#42E8D4" stroke-width="7" stroke-linecap="round"/>
+<path d="M72 392h54M386 392h54M82 412h34M396 412h34" stroke="#64748B" stroke-width="5" stroke-linecap="round" opacity=".65"/>
 </svg>
