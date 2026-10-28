@@ -41,7 +41,6 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         int streak = prefs.getInt("streak", 0);
-        int hearts = prefs.getInt("hearts", 5);
         int dailyXp = prefs.getInt("daily_xp", 0);
         int dailyXpTarget = Math.max(1, prefs.getInt("daily_xp_target", 30));
         String lastActiveDate = prefs.getString("lastActiveDate", "");
@@ -60,7 +59,6 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         }
 
         views.setTextViewText(R.id.widget_streak_count, String.valueOf(streak));
-        views.setTextViewText(R.id.widget_hearts_count, hearts + "/5");
         views.setTextViewText(R.id.widget_xp_count, dailyXp + "/" + dailyXpTarget + " XP");
         views.setProgressBar(R.id.widget_xp_progress, dailyXpTarget, Math.min(dailyXpTarget, dailyXp), false);
         views.setImageViewResource(R.id.widget_status_icon, moodIcon);
