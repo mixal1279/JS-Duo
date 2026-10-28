@@ -77,10 +77,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Gems */}
           <div
-            className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] text-[#1CB0F6] font-bold text-xs sm:text-sm cursor-default shrink-0"
+            className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] text-[#8B5CF6] font-bold text-xs sm:text-sm cursor-default shrink-0"
             title={`Kryształy: ${stats.gems}`}
           >
-            <Gem size={15} className="fill-[#1CB0F6]" />
+            <Gem size={15} className="fill-[#8B5CF6]" />
             <span>{stats.gems}</span>
           </div>
 
