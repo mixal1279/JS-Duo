@@ -72,7 +72,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onSaveProfile,
 }) => {
   const [selectedAvatar, setSelectedAvatar] = useState<string>(() => {
-    return profileAvatar || localStorage.getItem('codexa_avatar_v1') || '💠';
+    return profileAvatar || localStorage.getItem('js_duo_avatar_v1') || '💠';
   });
   const [displayNameInput, setDisplayNameInput] = useState(displayName || '');
   React.useEffect(() => {
