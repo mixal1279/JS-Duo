@@ -56,7 +56,7 @@ export const PathView: React.FC<PathViewProps> = ({
   ).length;
   const unitProgressPercent = Math.min(100, Math.round((completedLessonsInUnit / totalLessons) * 100));
 
-  // Horizontal S-curve offsets for Duolingo serpentine path
+  // Offsets for Codexa's guided lesson route
   const getOffsetClass = (index: number) => {
     const offsets = [
       'translate-x-0',
@@ -90,7 +90,7 @@ export const PathView: React.FC<PathViewProps> = ({
       <div
         className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-6 sm:mb-8 border-2 shadow-lg relative overflow-hidden transition-all"
         style={{
-          backgroundColor: '#1B262C',
+          backgroundColor: '#151B2A',
           borderColor: currentUnit.color,
         }}
       >
@@ -143,7 +143,7 @@ export const PathView: React.FC<PathViewProps> = ({
                       ? 'bg-white text-black scale-110 shadow'
                       : isLocked
                       ? 'bg-gray-800 text-gray-500 opacity-60'
-                      : 'bg-[#2A373F] text-gray-200 hover:bg-[#394953]'
+                      : 'bg-[#293246] text-gray-200 hover:bg-[#394953]'
                   }`}
                   title={u.title}
                 >
@@ -156,11 +156,11 @@ export const PathView: React.FC<PathViewProps> = ({
       </div>
 
       {/* Mascot encouragement banner */}
-      <div className="flex items-center gap-4 bg-[#1E2930] border border-[#2A373F] p-3.5 rounded-2xl mb-8 shadow-sm">
+      <div className="flex items-center gap-4 bg-[#182338] border border-[#293246] p-3.5 rounded-2xl mb-8 shadow-sm">
         <MascotOwl mood="happy" size={54} className="shrink-0" />
         <div className="flex-1">
           <h4 className="text-xs font-bold text-duo-green uppercase tracking-wide">
-            Wskazówka od Sowy JS
+            Wskazówka Codexa
           </h4>
           <p className="text-xs text-gray-200 leading-snug mt-0.5">
             Każda lekcja to 5 pytań z precyzyjnymi wyjaśnieniami. Regularna nauka zwiększa Twój streak i daje awans w lidze!
@@ -196,7 +196,7 @@ export const PathView: React.FC<PathViewProps> = ({
                   className={`relative w-16 h-16 rounded-3xl flex items-center justify-center transition-transform active:scale-95 shadow-[0_6px_0_#996515] ${
                     !isLocked
                       ? 'bg-[#FFD700] hover:bg-[#FFC000] animate-bounce cursor-pointer'
-                      : 'bg-[#2A373F] opacity-50 cursor-not-allowed shadow-[0_6px_0_#1E272C]'
+                      : 'bg-[#293246] opacity-50 cursor-not-allowed shadow-[0_6px_0_#1E272C]'
                   }`}
                   title="Skrzynia z nagrodą: 25 kryształów!"
                 >
@@ -213,10 +213,10 @@ export const PathView: React.FC<PathViewProps> = ({
                   onClick={() => handleNodeClick(lessonIdx)}
                   className={`group relative w-16 h-16 rounded-full flex items-center justify-center font-black text-lg transition-all active:translate-y-1 ${
                     isCompleted
-                      ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_6px_0_#1BAEAA] active:shadow-none'
+                      ? 'bg-[#42E8D4] hover:bg-[#1BAEAA] text-[#0D111B] shadow-[0_6px_0_#176F72] active:shadow-none'
                       : isCurrent
-                      ? 'bg-duo-blue hover:bg-duo-blueDark text-white ring-4 ring-duo-blue/30 shadow-[0_6px_0_#6D42D8] animate-pulse active:shadow-none'
-                      : 'bg-[#2A373F] text-gray-500 shadow-[0_6px_0_#1C262C] cursor-not-allowed opacity-60'
+                      ? 'bg-gradient-to-br from-[#42E8D4] to-[#8B5CF6] hover:brightness-110 text-[#0D111B] ring-4 ring-[#42E8D4]/20 shadow-[0_6px_0_#6D42D8] active:shadow-none'
+                      : 'bg-[#293246] text-gray-500 shadow-[0_6px_0_#151B2A] cursor-not-allowed opacity-60'
                   }`}
                 >
                   {isCompleted ? (
@@ -252,7 +252,7 @@ export const PathView: React.FC<PathViewProps> = ({
       <div className="mt-8 text-center">
         <button
           onClick={onOpenExplorer}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#232E35] hover:bg-[#2F3D46] border border-[#2A373F] text-xs font-bold text-gray-200 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#232E35] hover:bg-[#293246] border border-[#293246] text-xs font-bold text-gray-200 transition-colors"
         >
           <span>Otwórz Bazę Wszystkich 500 Pytań z Wyjaśnieniami</span>
           <ChevronRight size={16} />
