@@ -90,8 +90,8 @@ export const PathView: React.FC<PathViewProps> = ({
       <div
         className="rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-5 mb-6 sm:mb-8 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.22)] relative overflow-hidden transition-all bg-gradient-to-br from-[#182338] via-[#151B2A] to-[#0D111B]"
         style={{
-          backgroundColor: '#151B2A',
-          borderColor: currentUnit.color,
+          background: 'linear-gradient(135deg, #182338 0%, #151B2A 55%, #0D111B 100%)',
+          borderColor: '#293246',
         }}
       >
         <div className="flex items-center justify-between mb-3">
@@ -99,7 +99,7 @@ export const PathView: React.FC<PathViewProps> = ({
             Rozdział {currentUnit.id} z 10
           </span>
           <div className="flex items-center gap-1 text-xs font-bold text-gray-300">
-            <BookCheck size={15} style={{ color: currentUnit.color }} />
+            <BookCheck size={15} className="text-[#42E8D4]" />
             <span>{completedInUnit} / 50 pytań</span>
           </div>
         </div>
@@ -140,7 +140,7 @@ export const PathView: React.FC<PathViewProps> = ({
                   }}
                   className={`w-7 h-7 rounded-lg text-xs font-black flex items-center justify-center transition-all ${
                     isSelected
-                      ? 'bg-white text-black scale-110 shadow'
+                      ? 'bg-gradient-to-br from-[#42E8D4] to-[#8B5CF6] text-[#0D111B] scale-110 shadow'
                       : isLocked
                       ? 'bg-gray-800 text-gray-500 opacity-60'
                       : 'bg-[#293246] text-gray-200 hover:bg-[#394953]'
@@ -222,7 +222,7 @@ export const PathView: React.FC<PathViewProps> = ({
                   {isCompleted ? (
                     <Check size={26} strokeWidth={3.5} />
                   ) : isCurrent ? (
-                    <Star size={24} className="fill-white" />
+                    <Star size={24} className="fill-[#0D111B]" />
                   ) : (
                     <Lock size={20} />
                   )}
