@@ -39,7 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-[#131F24]/95 backdrop-blur border-b border-[#2A373F] px-2.5 sm:px-4 py-1.5 sm:py-2.5 safe-top select-none">
+    <header className="sticky top-0 z-30 bg-[#0D111B]/95 backdrop-blur border-b border-[#293246] px-2.5 sm:px-4 py-1.5 sm:py-2.5 safe-top select-none">
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-1">
         {/* Left: Brand */}
         <div
@@ -47,11 +47,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-2 cursor-pointer group shrink-0"
           title="Kliknij, aby otworzyć Profil i Osiągnięcia"
         >
-          <CyberCatLogo size={36} className="transform active:translate-y-0.5 group-hover:scale-105 transition-all shadow-[0_0_12px_rgba(168,85,247,0.4)]" />
+          <CyberCatLogo size={36} className="transform active:translate-y-0.5 group-hover:scale-105 transition-all shadow-[0_0_12px_rgba(66,232,212,0.24)]" />
           <div>
             <div className="flex items-center gap-1">
               <span className="font-extrabold text-sm sm:text-base tracking-tight text-white font-sans group-hover:text-cyan-400 transition-colors">
-                JS Duo
+                Codexa
               </span>
               <span className="text-[9px] uppercase font-bold bg-[#FFD700]/20 text-[#FFD700] px-1 py-0.2 rounded border border-[#FFD700]/40 hidden xs:inline-block sm:hidden">
                 500
@@ -68,7 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Streak Flame */}
           <button
             onClick={onShowStreakToast}
-            className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] hover:border-[#FF9600] text-[#FF9600] font-bold text-xs sm:text-sm cursor-pointer transition-colors active:scale-95 shrink-0"
+            className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl bg-[#151B2A] border border-[#293246] hover:border-[#42E8D4]/50 text-[#FF9600] font-bold text-xs sm:text-sm cursor-pointer transition-colors active:scale-95 shrink-0"
             title={`Passa nauki: ${stats.streak} dni z rzędu!`}
           >
             <Flame size={15} className="fill-[#FF9600] animate-pulse-subtle" />
@@ -77,10 +77,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Gems */}
           <div
-            className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] text-[#1CB0F6] font-bold text-xs sm:text-sm cursor-default shrink-0"
+            className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl bg-[#151B2A] border border-[#293246] text-[#8B5CF6] font-bold text-xs sm:text-sm cursor-default shrink-0"
             title={`Kryształy: ${stats.gems}`}
           >
-            <Gem size={15} className="fill-[#1CB0F6]" />
+            <Gem size={15} className="fill-[#8B5CF6]" />
             <span>{stats.gems}</span>
           </div>
 
@@ -89,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onRefillHearts}
             className={`flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl border font-bold text-xs sm:text-sm transition-transform active:scale-95 shrink-0 ${
               stats.hearts > 0
-                ? 'bg-[#232E35] border-[#2A373F] text-[#FF4B4B]'
+                ? 'bg-[#151B2A] border-[#293246] text-[#FF4B4B]'
                 : 'bg-red-500/20 border-red-500 text-red-400 animate-pulse'
             }`}
             title="Serca/Życia. Kliknij, aby uzupełnić!"
@@ -131,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* 500 Questions Bank Explorer Button */}
           <button
             onClick={onOpenExplorer}
-            className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-[#232E35] hover:bg-[#2F3D46] border border-[#2A373F] text-gray-200 text-xs font-bold flex items-center gap-1 transition-colors active:scale-95 shrink-0"
+            className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-[#151B2A] hover:bg-[#2F3D46] border border-[#293246] text-gray-200 text-xs font-bold flex items-center gap-1 transition-colors active:scale-95 shrink-0"
             title="Przeglądaj wszystkie 500 pytań z wyjaśnieniami"
           >
             <BookOpen size={15} className="text-duo-yellow" />
@@ -141,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Notification Reminders Bell */}
           <button
             onClick={onOpenNotifications}
-            className="p-1.5 sm:p-2 rounded-xl bg-[#232E35] hover:bg-[#2F3D46] border border-[#2A373F] text-gray-300 hover:text-white transition-colors relative active:scale-95 shrink-0"
+            className="p-1.5 sm:p-2 rounded-xl bg-[#151B2A] hover:bg-[#2F3D46] border border-[#293246] text-gray-300 hover:text-white transition-colors relative active:scale-95 shrink-0"
             title="Powiadomienia i przypomnienia o nauce"
           >
             <Bell size={15} />

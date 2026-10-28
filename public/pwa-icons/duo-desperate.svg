@@ -1,10 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
- <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#211f42"/><stop offset="1" stop-color="#071723"/></linearGradient><linearGradient id="feather" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a58aff"/><stop offset="1" stop-color="#315a70"/></linearGradient></defs>
- <rect width="512" height="512" rx="112" fill="url(#bg)"/><path d="M38 105 H474 M38 126 H160" stroke="#a58aff" stroke-width="4" opacity=".28"/><text x="40" y="83" font-family="monospace" font-size="28" font-weight="700" fill="#a58aff" opacity=".85">&lt;/&gt;</text>
- <path d="M89 200 Q70 92 163 94 L220 143 L292 143 L349 94 Q442 92 423 200 L393 230 L119 230Z" fill="url(#feather)" stroke="#0b202c" stroke-width="14" stroke-linejoin="round"/>
- <ellipse cx="256" cy="245" rx="177" ry="169" fill="url(#feather)" stroke="#0b202c" stroke-width="14"/><ellipse cx="256" cy="255" rx="139" ry="126" fill="#e9dfbd"/>
- <path d="M158 213 Q202 190 246 213" fill="none" stroke="#f6f2dc" stroke-width="16" stroke-linecap="round"/><path d="M266 213 Q310 190 354 213" fill="none" stroke="#f6f2dc" stroke-width="16" stroke-linecap="round"/><path d="M160 185 L215 174 M297 174 L352 185" fill="none" stroke="#0b202c" stroke-width="13" stroke-linecap="round"/>
- <path d="M237 246 L256 268 L275 246Z" fill="#ff9b45" stroke="#0b202c" stroke-width="7" stroke-linejoin="round"/><path d="M238 278 Q256 264 274 278" fill="none" stroke="#0b202c" stroke-width="11" stroke-linecap="round"/>
- <path d="M102 362 Q256 322 410 362 L438 426 Q256 455 74 426Z" fill="#102b3b" stroke="#a58aff" stroke-width="8" stroke-linejoin="round"/><rect x="119" y="352" width="274" height="69" rx="13" fill="#071722" stroke="#a58aff" stroke-width="5"/><text x="256" y="398" text-anchor="middle" font-family="monospace" font-size="35" font-weight="700" fill="#a58aff">&lt;/JS&gt;</text>
- <circle cx="410" cy="104" r="20" fill="#a58aff" opacity=".9"/><path d="M401 104h18 M410 95v18" stroke="#071722" stroke-width="4" stroke-linecap="round"/>
- </svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Codexa</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#111827"/><stop offset="1" stop-color="#090D18"/></linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#42E8D4"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M206 144 108 256l98 112" fill="none" stroke="#42E8D4" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m306 144 98 112-98 112" fill="none" stroke="#8B5CF6" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m278 175-48 162" fill="none" stroke="#F8FAFC" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="15" fill="#42E8D4"/>
+  <path d="M72 90h74M72 112h42M366 400h74M398 422h42" stroke="#64748B" stroke-width="6" stroke-linecap="round" opacity=".55"/>
+</svg>

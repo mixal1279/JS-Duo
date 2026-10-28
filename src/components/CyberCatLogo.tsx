@@ -5,24 +5,15 @@ interface CyberCatLogoProps {
   className?: string;
 }
 
+/** Shared Codexa brand mark used by the web, PWA and app navigation. */
 export const CyberCatLogo: React.FC<CyberCatLogoProps> = ({
   size = 40,
   className = '',
-}) => {
-  return (
-    <div
-      className={`relative inline-flex items-center justify-center shrink-0 rounded-2xl overflow-hidden shadow-lg border border-purple-500/40 select-none ${className}`}
-      style={{
-        width: size,
-        height: size,
-        background: 'radial-gradient(circle at 50% 40%, #1E163B 0%, #0E1126 55%, #05060E 100%)',
-      }}
-    >
-      <img
-        src="/favicon.svg"
-        alt="JS Duo Cyber Icon"
-        className="w-full h-full object-cover transform scale-110 pointer-events-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]"
-      />
-    </div>
-  );
-};
+}) => (
+  <div
+    className={`relative inline-flex items-center justify-center shrink-0 rounded-2xl overflow-hidden border border-cyan-300/25 select-none shadow-[0_8px_24px_rgba(66,232,212,0.12)] ${className}`}
+    style={{ width: size, height: size, background: 'linear-gradient(145deg, #151B2A, #090D18)' }}
+  >
+    <img src="/favicon.svg" alt="Codexa" className="w-full h-full object-cover pointer-events-none" />
+  </div>
+);

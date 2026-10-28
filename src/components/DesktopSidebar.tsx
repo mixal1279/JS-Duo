@@ -59,11 +59,11 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-black text-2xl tracking-tight text-white font-sans">
-              JS Duo
+              Codexa
             </h1>
           </div>
           <span className="text-[11px] font-bold text-gray-400">
-            Duolingo dla JavaScript
+            Nauka programowania po Twojemu
           </span>
         </div>
       </div>
@@ -159,7 +159,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           title="Kliknij, aby otworzyć Profil i Osiągnięcia"
         >
           <div className="w-10 h-10 rounded-xl bg-duo-yellow/20 border border-duo-yellow/40 flex items-center justify-center text-xl shrink-0">
-            🦉
+            <Code2 size={20} className="text-cyan-300" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">

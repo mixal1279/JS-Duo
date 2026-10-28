@@ -47,7 +47,7 @@ interface ProfileViewProps {
 }
 
 const AVATAR_OPTIONS = [
-  { id: 'owl', emoji: '🦉', label: 'Sowa Duo' },
+  { id: 'spark', emoji: '💠', label: 'Iskra Codexa' },
   { id: 'wizard', emoji: '🧙‍♂️', label: 'Czarodziej Kodu' },
   { id: 'robot', emoji: '🤖', label: 'Robot V8' },
   { id: 'cat', emoji: '🐱', label: 'Koder Kiciuś' },
@@ -72,7 +72,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onSaveProfile,
 }) => {
   const [selectedAvatar, setSelectedAvatar] = useState<string>(() => {
-    return profileAvatar || localStorage.getItem('js_duo_avatar_v1') || '🦉';
+    return profileAvatar || localStorage.getItem('js_duo_avatar_v1') || '💠';
   });
   const [displayNameInput, setDisplayNameInput] = useState(displayName || '');
   React.useEffect(() => {
@@ -152,7 +152,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   return (
     <div className="space-y-5 sm:space-y-6 pb-8 select-none">
       {/* Header Profile Card */}
-      <div className="bg-gradient-to-b from-[#1E2E38] to-[#152026] border-2 border-[#2A3B46] rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-b from-[#182338] to-[#0D111B] border-2 border-[#293246] rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg relative overflow-hidden">
         {/* Ambient glow accent */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-duo-green/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
@@ -161,18 +161,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <div className="relative group">
             <button
               onClick={() => setShowAvatarPicker(!showAvatarPicker)}
-              className="w-24 h-24 rounded-3xl bg-[#131F24] border-4 border-duo-green/60 shadow-[0_6px_0_#225006] flex items-center justify-center text-5xl hover:scale-105 active:scale-95 transition-transform cursor-pointer relative"
+              className="w-24 h-24 rounded-3xl bg-[#0D111B] border-2 border-[#42E8D4]/50 shadow-[0_8px_24px_rgba(66,232,212,0.12)] flex items-center justify-center text-5xl hover:scale-105 active:scale-95 transition-transform cursor-pointer relative"
               title="Kliknij, aby zmienić awatar"
             >
               <span>{selectedAvatar}</span>
-              <div className="absolute -bottom-1.5 -right-1.5 bg-duo-green text-black p-1 rounded-xl shadow border border-[#131F24]">
+              <div className="absolute -bottom-1.5 -right-1.5 bg-[#42E8D4] text-[#0D111B] p-1 rounded-xl shadow border border-[#0D111B]">
                 <Sparkles size={14} className="fill-black" />
               </div>
             </button>
 
             {/* Avatar Picker Dropdown */}
             {showAvatarPicker && (
-              <div className="absolute left-1/2 sm:left-0 -translate-x-1/2 sm:translate-x-0 top-full mt-3 bg-[#1C2830] border-2 border-duo-green/50 rounded-2xl p-3 shadow-2xl z-30 w-64 backdrop-blur">
+              <div className="absolute left-1/2 sm:left-0 -translate-x-1/2 sm:translate-x-0 top-full mt-3 bg-[#151B2A] border-2 border-duo-green/50 rounded-2xl p-3 shadow-2xl z-30 w-64 backdrop-blur">
                 <div className="text-xs font-black uppercase text-gray-300 mb-2 px-1 flex items-center justify-between">
                   <span>Wybierz awatar</span>
                   <button
@@ -190,7 +190,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       className={`p-2 rounded-xl text-2xl border transition-all flex flex-col items-center gap-1 ${
                         selectedAvatar === av.emoji
                           ? 'bg-duo-green/20 border-duo-green scale-105'
-                          : 'bg-[#141E24] border-[#2A3A44] hover:bg-[#20303A]'
+                          : 'bg-[#111827] border-[#293246] hover:bg-[#20303A]'
                       }`}
                     >
                       <span>{av.emoji}</span>
@@ -212,7 +212,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     {displayName || 'Programista'}
                   </h1>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-duo-green/20 text-duo-green border border-duo-green/40">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-[#42E8D4]/10 text-[#42E8D4] border border-[#42E8D4]/30">
                     Lvl {levelInfo.level}
                   </span>
                 </div>
@@ -225,7 +225,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               {/* League Badge Pill */}
               <div
                 onClick={onOpenLeaderboard}
-                className="inline-flex items-center justify-center gap-2 bg-[#141E24] border border-[#2D3F4B] px-3.5 py-1.5 rounded-2xl cursor-pointer hover:border-duo-yellow transition-colors self-center sm:self-auto"
+                className="inline-flex items-center justify-center gap-2 bg-[#111827] border border-[#2D3F4B] px-3.5 py-1.5 rounded-2xl cursor-pointer hover:border-duo-yellow transition-colors self-center sm:self-auto"
                 title="Kliknij, aby otworzyć ranking ligowy"
               >
                 <Trophy size={16} className="text-duo-yellow" />
@@ -286,7 +286,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   {userStats.xp} / {levelInfo.nextLevelXp} XP
                 </span>
               </div>
-              <div className="w-full h-2.5 bg-[#141E24] rounded-full overflow-hidden border border-[#263742]">
+              <div className="w-full h-2.5 bg-[#111827] rounded-full overflow-hidden border border-[#263742]">
                 <div
                   className="h-full bg-duo-green rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(88,204,2,0.5)]"
                   style={{
@@ -311,7 +311,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {/* Streak Card */}
-          <div className="bg-[#172227] border-2 border-[#2A373F] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
+          <div className="bg-[#172227] border-2 border-[#293246] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between text-gray-400 mb-1">
               <span className="text-xs font-bold uppercase">Passa dni</span>
               <Flame size={20} className="text-[#FF9600] fill-[#FF9600]" />
@@ -336,7 +336,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           {/* Solved Questions Card */}
           <div
             onClick={onOpenExplorer}
-            className="bg-[#172227] border-2 border-[#2A373F] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm cursor-pointer hover:border-duo-yellow transition-colors"
+            className="bg-[#172227] border-2 border-[#293246] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm cursor-pointer hover:border-duo-yellow transition-colors"
             title="Kliknij, aby otworzyć Bazę 500 Pytań"
           >
             <div className="flex items-center justify-between text-gray-400 mb-1">
@@ -352,7 +352,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
 
           {/* Duels Record Card */}
-          <div className="bg-[#172227] border-2 border-[#2A373F] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
+          <div className="bg-[#172227] border-2 border-[#293246] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between text-gray-400 mb-1">
               <span className="text-xs font-bold uppercase">Pojedynki 1v1</span>
               <Swords size={20} className="text-duo-blue" />
@@ -366,10 +366,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
 
           {/* Total Gems Card */}
-          <div className="bg-[#172227] border-2 border-[#2A373F] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
+          <div className="bg-[#172227] border-2 border-[#293246] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between text-gray-400 mb-1">
               <span className="text-xs font-bold uppercase">Kryształy</span>
-              <Gem size={20} className="text-[#1CB0F6] fill-[#1CB0F6]" />
+              <Gem size={20} className="text-[#8B5CF6] fill-[#8B5CF6]" />
             </div>
             <div>
               <span className="text-2xl font-black text-white">{userStats.gems}</span>
@@ -380,8 +380,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       </div>
 
       {/* Settings / Theme Switcher Section: Deep Night vs Light Mode */}
-      <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#2A373F]">
+      <div className="bg-[#172227] border-2 border-[#293246] rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#293246]">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-duo-blue/20 border-2 border-duo-blue/40 flex items-center justify-center text-duo-blue shadow-sm">
               <Palette size={24} />
@@ -392,7 +392,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   Motyw i Wygląd Aplikacji
                 </h3>
                 <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-duo-blue/20 text-duo-blue border border-duo-blue/30">
-                  Styl JS Duo
+                  Styl Codexa
                 </span>
               </div>
               <p className="text-xs text-gray-400">
@@ -402,12 +402,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
 
           {/* Quick Pill Switch */}
-          <div className="inline-flex p-1 rounded-2xl bg-[#131F24] border border-[#2A373F] self-start sm:self-auto">
+          <div className="inline-flex p-1 rounded-2xl bg-[#0D111B] border border-[#293246] self-start sm:self-auto">
             <button
               onClick={() => handleSelectTheme('deep-night')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                 activeTheme === 'deep-night'
-                  ? 'bg-[#202F36] text-white shadow-sm border border-[#2A373F]'
+                  ? 'bg-[#202F36] text-white shadow-sm border border-[#293246]'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -435,8 +435,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             onClick={() => handleSelectTheme('deep-night')}
             className={`p-4 rounded-2xl border-2 cursor-pointer transition-all relative overflow-hidden group ${
               activeTheme === 'deep-night'
-                ? 'bg-[#1C3545]/60 border-duo-blue ring-2 ring-duo-blue/30 shadow-[0_4px_0_#1899d6] -translate-y-0.5'
-                : 'bg-[#141B20] border-[#2A373F] hover:border-[#3A4E5C] hover:bg-[#182329]'
+                ? 'bg-[#182338]/60 border-duo-blue ring-2 ring-duo-blue/30 shadow-[0_4px_0_#6D42D8] -translate-y-0.5'
+                : 'bg-[#141B20] border-[#293246] hover:border-[#3A4E5C] hover:bg-[#182329]'
             }`}
           >
             <div className="flex items-start justify-between mb-2.5">
@@ -467,19 +467,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
 
             <p className="text-xs text-gray-300 leading-relaxed mb-3">
-              Domyślny nocny motyw JS Duo. Głęboki ciemny grafit chroni oczy podczas nocnych sesji kodowania i nauki.
+              Domyślny nocny motyw Codexa. Głęboki ciemny grafit chroni oczy podczas nocnych sesji kodowania i nauki.
             </p>
 
             {/* Mini Color Swatch & Preview */}
-            <div className="p-2.5 rounded-xl bg-[#0D1117] border border-[#243038] flex items-center justify-between">
+            <div className="p-2.5 rounded-xl bg-[#0D1117] border border-[#293246] flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 rounded-full bg-[#131F24] border border-[#2A373F]" title="Tło #131F24" />
-                <span className="w-3.5 h-3.5 rounded-full bg-duo-green" title="Duo Green #58CC02" />
-                <span className="w-3.5 h-3.5 rounded-full bg-duo-blue" title="Duo Blue #1CB0F6" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#0D111B] border border-[#293246]" title="Tło #0D111B" />
+                <span className="w-3.5 h-3.5 rounded-full bg-duo-green" title="Duo Green #42E8D4" />
+                <span className="w-3.5 h-3.5 rounded-full bg-duo-blue" title="Duo Blue #8B5CF6" />
                 <span className="w-3.5 h-3.5 rounded-full bg-duo-yellow" title="Duo Yellow #FFD700" />
               </div>
               <span className="text-[10px] font-mono font-bold text-gray-400">
-                #131F24 • Ciemny grafit
+                #0D111B • Ciemny grafit
               </span>
             </div>
           </div>
@@ -489,8 +489,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             onClick={() => handleSelectTheme('light')}
             className={`p-4 rounded-2xl border-2 cursor-pointer transition-all relative overflow-hidden group ${
               activeTheme === 'light'
-                ? 'bg-[#1C3545]/60 border-duo-blue ring-2 ring-duo-blue/30 shadow-[0_4px_0_#1899d6] -translate-y-0.5'
-                : 'bg-[#141B20] border-[#2A373F] hover:border-[#3A4E5C] hover:bg-[#182329]'
+                ? 'bg-[#182338]/60 border-duo-blue ring-2 ring-duo-blue/30 shadow-[0_4px_0_#6D42D8] -translate-y-0.5'
+                : 'bg-[#141B20] border-[#293246] hover:border-[#3A4E5C] hover:bg-[#182329]'
             }`}
           >
             <div className="flex items-start justify-between mb-2.5">
@@ -521,15 +521,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
 
             <p className="text-xs text-gray-300 leading-relaxed mb-3">
-              Lekki, przejrzysty motyw dzienny. Czyste jasne tła, wyrazisty kontrast tekstu i oryginalne barwy JS Duo.
+              Lekki, przejrzysty motyw dzienny. Czyste jasne tła, wyrazisty kontrast tekstu i oryginalne barwy Codexa.
             </p>
 
             {/* Mini Color Swatch & Preview */}
             <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <span className="w-3.5 h-3.5 rounded-full bg-[#FFFFFF] border border-gray-300 shadow-sm" title="Tło #FFFFFF" />
-                <span className="w-3.5 h-3.5 rounded-full bg-duo-green" title="Duo Green #58CC02" />
-                <span className="w-3.5 h-3.5 rounded-full bg-duo-blue" title="Duo Blue #1CB0F6" />
+                <span className="w-3.5 h-3.5 rounded-full bg-duo-green" title="Duo Green #42E8D4" />
+                <span className="w-3.5 h-3.5 rounded-full bg-duo-blue" title="Duo Blue #8B5CF6" />
                 <span className="w-3.5 h-3.5 rounded-full bg-duo-yellow" title="Duo Yellow #FFD700" />
               </div>
               <span className="text-[10px] font-mono font-bold text-gray-600">
@@ -541,7 +541,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       </div>
 
       {/* Offline Storage & Question Cache Status */}
-      <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-5 shadow-sm space-y-4">
+      <div className="bg-[#172227] border-2 border-[#293246] rounded-3xl p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
@@ -583,7 +583,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       </div>
 
       {/* App Updates */}
-      <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-5 shadow-sm space-y-4">
+      <div className="bg-[#172227] border-2 border-[#293246] rounded-3xl p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-duo-blue/20 border border-duo-blue/40 flex items-center justify-center text-duo-blue shrink-0">
@@ -591,7 +591,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
             <div>
               <h3 className="text-base font-black text-white">Aktualizacja aplikacji</h3>
-              <p className="text-xs text-gray-400 font-medium">Sprawdzaj nowe wydania JS Duo z GitHuba.</p>
+              <p className="text-xs text-gray-400 font-medium">Sprawdzaj nowe wydania Codexa z GitHuba.</p>
             </div>
           </div>
           <span className="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-[#1F2C33] text-gray-300 border border-[#2B3B44]">
@@ -643,7 +643,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       </div>
 
       {/* Reset Progress & Data Section */}
-      <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-5 shadow-sm space-y-3">
+      <div className="bg-[#172227] border-2 border-[#293246] rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
             <RotateCcw size={20} />
@@ -671,7 +671,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       {/* Reset Confirmation Modal */}
       {showResetModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#172127] border-2 border-red-500/50 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4 animate-scale-up">
+          <div className="bg-[#151B2A] border-2 border-red-500/50 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4 animate-scale-up">
             <div className="w-16 h-16 rounded-3xl bg-red-500/20 border-2 border-red-500 mx-auto flex items-center justify-center text-red-400">
               <RotateCcw size={32} />
             </div>

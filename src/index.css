@@ -170,7 +170,7 @@ html.theme-light .to-\[\#17232A\] {
 /* Quiz success & error banner backgrounds in Light Mode */
 html.theme-light .bg-\[\#1A3324\] {
   background-color: #DCFCE7 !important;
-  border-color: #58CC02 !important;
+  border-color: #42E8D4 !important;
 }
 html.theme-light .bg-\[\#331B1E\] {
   background-color: #FEE2E2 !important;
@@ -279,3 +279,19 @@ html.theme-light .border-2.border-\[\#263742\],
 html.theme-light .border-2.border-\[\#253540\] {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
+
+
+/* Codexa brand accents and accessible focus states */
+:root {
+  --codexa-bg: #0D111B;
+  --codexa-surface: #151B2A;
+  --codexa-border: #293246;
+  --codexa-teal: #42E8D4;
+  --codexa-violet: #8B5CF6;
+}
+html:not(.theme-light) body { background-color: var(--codexa-bg); }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--codexa-teal);
+  outline-offset: 3px;
+}
+::selection { background: rgba(66, 232, 212, .28); color: #F8FAFC; }

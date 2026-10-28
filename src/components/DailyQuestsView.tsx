@@ -37,7 +37,7 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
   return (
     <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-8 select-none">
       {/* Daily Challenges Header */}
-      <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-5 sm:mb-6 bg-[#1B262C] border-2 border-duo-green/40 shadow-lg">
+      <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-5 sm:mb-6 bg-[#151B2A] border-2 border-duo-green/40 shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Target size={24} className="text-duo-green" />
@@ -55,7 +55,7 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
         </p>
 
         {/* Streak Weekly Tracker */}
-        <div className="bg-[#131F24] p-3 rounded-2xl border border-[#2A373F]">
+        <div className="bg-[#0D111B] p-3 rounded-2xl border border-[#293246]">
           <div className="flex items-center justify-between text-xs font-bold text-gray-300 mb-2">
             <span>Passa w tym tygodniu:</span>
             <span className="text-[#FF9600] font-black">{userStats.streak} dni z rzędu 🔥</span>
@@ -70,8 +70,8 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
                     idx === todayIdx
                       ? 'bg-orange-500/20 border-[#FF9600] text-[#FF9600] font-black'
                       : isPastOrToday
-                      ? 'bg-[#1C2C35] border-duo-green/40 text-duo-green font-bold'
-                      : 'bg-[#172026] border-[#2A373F] text-gray-500 font-medium'
+                      ? 'bg-[#1C2C35] border-[#42E8D4]/35 text-[#42E8D4] font-bold'
+                      : 'bg-[#172026] border-[#293246] text-gray-500 font-medium'
                   }`}
                 >
                   <span className="text-[10px] uppercase">{day}</span>
@@ -94,10 +94,10 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
               key={quest.id}
               className={`p-4 rounded-2xl border-2 transition-all ${
                 quest.claimed
-                  ? 'bg-[#151E24] border-[#243038] opacity-70'
+                  ? 'bg-[#151E24] border-[#293246] opacity-70'
                   : isDone
-                  ? 'bg-[#1A2F25] border-duo-green shadow-md'
-                  : 'bg-[#1C262C] border-[#2A373F]'
+                  ? 'bg-[#12302F] border-[#42E8D4]/60 shadow-md'
+                  : 'bg-[#151B2A] border-[#293246]'
               }`}
             >
               <div className="flex items-start justify-between gap-3 mb-2">
@@ -150,8 +150,8 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
                     disabled={!isDone}
                     className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                       isDone
-                        ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_3px_0_#46a302] active:translate-y-0.5 cursor-pointer animate-pulse'
-                        : 'bg-[#2A373F] text-gray-500 cursor-not-allowed'
+                        ? 'bg-[#42E8D4] hover:bg-[#1BAEAA] text-[#0D111B] shadow-[0_3px_0_#176F72] active:translate-y-0.5 cursor-pointer animate-pulse'
+                        : 'bg-[#293246] text-gray-500 cursor-not-allowed'
                     }`}
                   >
                     Odbierz
@@ -187,7 +187,7 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
           className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase shrink-0 transition-all ${
             allCompleted && !allClaimed
               ? 'bg-yellow-400 text-black shadow-[0_3px_0_#b28900] active:translate-y-0.5 animate-bounce'
-              : 'bg-[#2A373F] text-gray-500 cursor-not-allowed'
+              : 'bg-[#293246] text-gray-500 cursor-not-allowed'
           }`}
         >
           {allClaimed ? 'Odebrano' : 'Otwórz'}
@@ -200,7 +200,7 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
           Sklep za Diamenty (Gems Shop)
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="p-4 rounded-2xl bg-[#1C262C] border border-[#2A373F] flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-[#151B2A] border border-[#293246] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-red-500/10 text-duo-red">
                 <Heart size={22} className="fill-duo-red" />
@@ -220,7 +220,7 @@ export const DailyQuestsView: React.FC<DailyQuestsViewProps> = ({
             </button>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#1C262C] border border-[#2A373F] flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-[#151B2A] border border-[#293246] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-blue-500/10 text-duo-blue">
                 <ShieldAlert size={22} />

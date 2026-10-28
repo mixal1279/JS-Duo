@@ -137,7 +137,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
           particleCount: 25 + Math.min(nextCombo * 10, 60),
           spread: 55,
           origin: { y: 0.75 },
-          colors: ['#58cc02', '#22c55e', '#38bdf8', '#fbbf24'],
+          colors: ['#42E8D4', '#22c55e', '#38bdf8', '#fbbf24'],
         });
       } else {
         soundService.playCorrect();
@@ -399,12 +399,12 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                   let optionStyle = 'bg-[#202F36] border-[#2A373F] text-gray-200 hover:bg-[#253942]';
 
                   if (isSelected && !isAnswerChecked) {
-                    optionStyle = 'bg-[#1C3545] border-duo-blue text-duo-blue shadow-[0_4px_0_#1899d6] -translate-y-0.5';
+                    optionStyle = 'bg-[#1C3545] border-duo-blue text-duo-blue shadow-[0_4px_0_#6D42D8] -translate-y-0.5';
                   }
 
                   if (isAnswerChecked) {
                     if (isThisCorrect) {
-                      optionStyle = 'bg-green-950/50 border-duo-green text-green-300 shadow-[0_4px_0_#46a302]';
+                      optionStyle = 'bg-green-950/50 border-duo-green text-green-300 shadow-[0_4px_0_#1BAEAA]';
                     } else if (isThisWrongSelected) {
                       optionStyle = 'bg-red-950/50 border-duo-red text-red-300 shadow-[0_4px_0_#ea2b2b]';
                     } else {
@@ -425,9 +425,9 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                             ? {
                                 scale: [1, 1.035, 0.99, 1.02, 1],
                                 boxShadow: [
-                                  '0 4px 0 #46a302',
-                                  '0 0 24px rgba(88,204,2,0.65), 0 4px 0 #46a302',
-                                  '0 0 10px rgba(88,204,2,0.3), 0 4px 0 #46a302',
+                                  '0 4px 0 #1BAEAA',
+                                  '0 0 24px rgba(88,204,2,0.65), 0 4px 0 #1BAEAA',
+                                  '0 0 10px rgba(88,204,2,0.3), 0 4px 0 #1BAEAA',
                                 ],
                               }
                             : isThisWrongSelected
@@ -530,7 +530,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
             <div className="space-y-2.5 pt-2">
               <button
                 onClick={handleFreeHeartRefill}
-                className="w-full py-3 px-4 rounded-2xl bg-duo-green hover:bg-duo-greenDark text-black font-extrabold text-sm uppercase tracking-wider shadow-[0_4px_0_#46a302] active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-2xl bg-duo-green hover:bg-duo-greenDark text-black font-extrabold text-sm uppercase tracking-wider shadow-[0_4px_0_#1BAEAA] active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>Darmowy restart (+1 ❤️)</span>
               </button>
@@ -563,7 +563,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
               ? isCorrect
                 ? {
                     backgroundColor: '#1A3324',
-                    borderTopColor: '#58cc02',
+                    borderTopColor: '#42E8D4',
                   }
                 : {
                     backgroundColor: '#331B1E',
@@ -664,7 +664,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                   disabled={selectedOption === null}
                   className={`flex-1 sm:flex-none sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all min-h-[48px] ${
                     selectedOption !== null
-                      ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_4px_0_#46a302] active:translate-y-0.5 active:shadow-none cursor-pointer'
+                      ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_4px_0_#1BAEAA] active:translate-y-0.5 active:shadow-none cursor-pointer'
                       : 'bg-[#2A373F] text-gray-500 cursor-not-allowed'
                   }`}
                 >
@@ -679,9 +679,9 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                       ? {
                           scale: [1, 1.03, 1],
                           boxShadow: [
-                            '0 4px 0 #46a302',
-                            '0 0 16px rgba(88,204,2,0.6), 0 4px 0 #46a302',
-                            '0 4px 0 #46a302',
+                            '0 4px 0 #1BAEAA',
+                            '0 0 16px rgba(88,204,2,0.6), 0 4px 0 #1BAEAA',
+                            '0 4px 0 #1BAEAA',
                           ],
                         }
                       : {}
@@ -690,7 +690,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                   onClick={handleContinue}
                   className={`flex-1 sm:flex-none sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 min-h-[48px] cursor-pointer ${
                     isCorrect
-                      ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_4px_0_#46a302]'
+                      ? 'bg-duo-green hover:bg-duo-greenDark text-black shadow-[0_4px_0_#1BAEAA]'
                       : 'bg-duo-red hover:bg-duo-redDark text-white shadow-[0_4px_0_#ea2b2b]'
                   }`}
                 >
