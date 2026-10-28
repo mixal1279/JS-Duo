@@ -223,7 +223,7 @@ class NotificationService {
         if (granted) {
           soundService.playLevelUp();
           await this.sendPushNotification('🎉 Powiadomienia włączone w aplikacji!', {
-            body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
+            body: 'Cyberkot będzie przypominać o codziennej passie i nauce JavaScript!',
             icon: this.getAssetUrl('favicon.svg'),
             tag: 'welcome-notification',
             type: 'welcome',
@@ -264,7 +264,7 @@ class NotificationService {
         soundService.playLevelUp();
         // Send instant confirmation notification
         await this.sendPushNotification('🎉 Powiadomienia włączone!', {
-          body: 'Sowa Duo będzie pilnować Twojej codziennej passy i przypominać o nauce JavaScript!',
+          body: 'Cyberkot będzie przypominać o codziennej passie i nauce JavaScript!',
           icon: this.getAssetUrl('favicon.svg'),
           tag: 'welcome-notification',
           type: 'welcome',
@@ -490,7 +490,7 @@ class NotificationService {
       };
     } else {
       return {
-        title: `🦉 Sowa JS Duo tęskni! Czas na codzienną sesję`,
+        title: `🐱 Cyberkot czeka! Czas na codzienną sesję`,
         body: `Nie logowałeś się przez ostatnie 24 godziny. Poświęć 3 minuty na JavaScript i uratuj swoją wspaniałą passę ${streak} dni!`,
       };
     }
