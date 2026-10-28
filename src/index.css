@@ -289,7 +289,7 @@ html.theme-light .border-2.border-\[\#253540\] {
   --codexa-teal: #42E8D4;
   --codexa-violet: #8B5CF6;
 }
-body { background-color: var(--codexa-bg); }
+html:not(.theme-light) body { background-color: var(--codexa-bg); }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
   outline: 2px solid var(--codexa-teal);
   outline-offset: 3px;
