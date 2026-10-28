@@ -420,7 +420,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                       className="relative bg-[#1C2830] border-2 border-[#2C3B45] rounded-2xl p-2.5 sm:p-3 mb-2 shadow-md"
                     >
                       <div className="text-xs font-black text-duo-green flex items-center gap-1 mb-0.5">
-                        <span>Sowa Duo:</span>
+                        <span>Cyberkot:</span>
                         {combo >= 2 && isCorrect && (
                           <span className="text-orange-400">🔥 Combo x{combo}!</span>
                         )}
@@ -573,7 +573,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
         />
       )}
 
-      {/* Out of Hearts Modal (Duolingo Style) */}
+      {/* Out of Hearts Modal */}
       {outOfHeartsModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#172127] border-2 border-red-500/50 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4 animate-scale-up">

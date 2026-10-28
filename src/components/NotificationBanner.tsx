@@ -32,7 +32,7 @@ export const NotificationBanner: React.FC<NotificationBannerProps> = ({
                 <Check size={18} />
               </div>
               <span className="text-xs font-bold">
-                Powiadomienia zostały włączone! Sowa Duo będzie pilnować Twojej passy.
+                Powiadomienia zostały włączone! Cyberkot będzie przypominać Ci o utrzymaniu passy.
               </span>
             </div>
             <button
@@ -90,7 +90,7 @@ export const NotificationBanner: React.FC<NotificationBannerProps> = ({
               <p className="text-xs text-gray-300 leading-relaxed mt-0.5">
                 {permissionState === 'denied'
                   ? 'Powiadomienia są zablokowane w Twojej przeglądarce. Odblokuj je w ustawieniach strony (ikona kłódki 🔒).'
-                  : 'Zezwól na powiadomienia, aby Sowa Duo przypominała Ci o codziennej nauce JavaScriptu.'}
+                  : 'Zezwól na powiadomienia, aby Cyberkot przypominał Ci o codziennej nauce JavaScriptu.'}
               </p>
 
               {/* Action Buttons */}

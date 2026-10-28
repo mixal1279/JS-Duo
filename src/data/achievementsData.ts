@@ -122,7 +122,7 @@ export function calculateAchievements(stats: UserStats): Achievement[] {
     },
     {
       id: 'gem_hoarder',
-      title: 'Skarbnik Duolingo',
+      title: 'Skarbnik Cyberkota',
       description: 'Zgromadź 300 błyszczących kryształów w swoim portfelu',
       icon: '✨',
       category: 'mastery',

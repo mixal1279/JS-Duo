@@ -81,7 +81,7 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
 
         if (practicedToday) {
             views.setTextViewText(R.id.widget_status_title, "Dzisiejsza lekcja zaliczona!");
-            views.setTextViewText(R.id.widget_status_desc, "Świetna robota! Sowa jest zadowolona.");
+            views.setTextViewText(R.id.widget_status_desc, "Świetna robota! Cyberkot jest zadowolony.");
             views.setTextViewText(R.id.widget_action_button, "Powtórz materiał");
         } else {
             switch (mood) {
@@ -91,15 +91,15 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
                     break;
                 case "sad":
                     views.setTextViewText(R.id.widget_status_title, "Długo Cię nie było…");
-                    views.setTextViewText(R.id.widget_status_desc, "Sowa robi się smutna. Wystarczy kilka minut nauki.");
+                    views.setTextViewText(R.id.widget_status_desc, "Cyberkot robi się smutny. Wystarczy kilka minut nauki.");
                     break;
                 case "panicked":
                     views.setTextViewText(R.id.widget_status_title, "Zaraz koniec dnia!");
-                    views.setTextViewText(R.id.widget_status_desc, "Sowa panikuje — uratuj swoją passę krótką lekcją.");
+                    views.setTextViewText(R.id.widget_status_desc, "Cyberkot panikuje — uratuj swoją passę krótką lekcją.");
                     break;
                 default:
                     views.setTextViewText(R.id.widget_status_title, "Ostatnia szansa na dziś!");
-                    views.setTextViewText(R.id.widget_status_desc, "Sowa jest zrozpaczona. Zrób choć jedną lekcję.");
+                    views.setTextViewText(R.id.widget_status_desc, "Cyberkot jest zrozpaczony. Zrób choć jedną lekcję.");
                     break;
             }
             views.setTextViewText(R.id.widget_action_button, "Rozpocznij lekcję teraz");
