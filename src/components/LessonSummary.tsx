@@ -105,7 +105,7 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
 
   return (
     <div className="max-w-xl w-full mx-auto px-4 py-6 flex-1 flex flex-col justify-center animate-fade-in">
-      {/* Header & Owl Mascot */}
+      {/* Header & Cyberkot Mascot */}
       <div className="text-center mb-5">
         <MascotOwl
           mood={wrongCount === 0 ? 'excited' : accuracy >= 60 ? 'happy' : 'thinking'}
@@ -156,7 +156,7 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
         </div>
       </div>
 
-      {/* Duolingo Streak Celebration Card */}
+      {/* Streak Celebration Card */}
       <div className="bg-gradient-to-r from-[#2B1B17] to-[#1C262C] border-2 border-orange-500/60 rounded-3xl p-4 sm:p-5 mb-5 shadow-lg relative overflow-hidden">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
