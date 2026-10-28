@@ -88,9 +88,9 @@ public class WidgetBridgePlugin extends Plugin {
             JSONObject stats = new JSONObject(json);
             JSONArray lessons = stats.optJSONArray("completedLessonKeys");
             if (lessons != null) return lessons.length();
-            // Legacy stats may not have lesson keys; question completion is a weaker fallback.
-            JSONArray questions = stats.optJSONArray("completedQuestionIds");
-            return questions == null ? -1 : questions.length();
+            // Do not use completedQuestionIds here: they can increase mid-lesson.
+            // The inactivity clock must reset only after a lesson is completed.
+            return -1;
         } catch (Exception ignored) {
             return -1;
         }
