@@ -185,10 +185,10 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
 
   if (!session) {
     return (
-      <div className="max-w-xl mx-auto p-6 rounded-3xl bg-[#1C262C] border border-[#2A373F] text-center">
-        <Swords size={36} className="mx-auto mb-3 text-purple-400" />
+      <div className="max-w-xl mx-auto p-6 rounded-3xl bg-[#151B2A] border border-[#293246] text-center">
+        <Swords size={36} className="mx-auto mb-3 text-[#8B5CF6]" />
         <h2 className="text-xl font-black text-white mb-2">Pojedynki online 1v1</h2>
-        <p className="text-sm text-gray-300">Zaloguj się na konto JS Duo, aby zapraszać prawdziwych graczy i rozgrywać pojedynki online.</p>
+        <p className="text-sm text-gray-300">Zaloguj się na konto Codexa, aby zapraszać prawdziwych graczy i rozgrywać pojedynki online.</p>
       </div>
     );
   }
@@ -206,9 +206,9 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
 
   return (
     <div className="max-w-2xl mx-auto px-2 sm:px-4 py-3 pb-10 space-y-5">
-      <div className="rounded-3xl p-5 bg-gradient-to-tr from-[#241738] to-[#1C262C] border-2 border-purple-500/40 text-center">
-        <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-purple-500/20 flex items-center justify-center">
-          <Swords size={30} className="text-purple-300" />
+      <div className="rounded-3xl p-5 bg-gradient-to-tr from-[#182338] to-[#0D111B] border-2 border-[#8B5CF6]/35 text-center">
+        <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-[#8B5CF6]/15 flex items-center justify-center">
+          <Swords size={30} className="text-[#8B5CF6]" />
         </div>
         <h2 className="text-2xl font-black text-white">Pojedynki online 1v1</h2>
         <p className="mt-2 text-sm text-gray-300">Rzuć wyzwanie graczowi. Oboje dostaniecie te same 5 pytań, a punkty będą naliczane przez Supabase.</p>
@@ -221,7 +221,7 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
       {error && <div role="alert" className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">{error}</div>}
 
       {incoming.length > 0 && (
-        <section className="rounded-2xl border border-purple-500/40 bg-[#1C262C] p-4">
+        <section className="rounded-2xl border border-purple-500/40 bg-[#151B2A] p-4">
           <h3 className="font-black text-white mb-3">Otrzymane wyzwania ({incoming.length})</h3>
           <div className="space-y-2">
             {incoming.map((item) => {
@@ -229,7 +229,7 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
               return <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-black/20 p-3">
                 <span className="text-sm text-gray-200">{challenger?.display_name || challenger?.username || 'Gracz'} rzuca Ci wyzwanie</span>
                 <div className="flex gap-2">
-                  <button disabled={busyPlayerId === item.id} onClick={() => void respond(item, true)} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Akceptuj</button>
+                  <button disabled={busyPlayerId === item.id} onClick={() => void respond(item, true)} className="rounded-lg bg-[#42E8D4] px-3 py-2 text-xs font-bold text-[#0D111B] disabled:opacity-50">Akceptuj</button>
                   <button disabled={busyPlayerId === item.id} onClick={() => void respond(item, false)} className="rounded-lg bg-gray-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Odrzuć</button>
                 </div>
               </div>;
@@ -239,7 +239,7 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
       )}
 
       {outgoing.length > 0 && (
-        <section className="rounded-2xl border border-[#2A373F] bg-[#1C262C] p-4">
+        <section className="rounded-2xl border border-[#293246] bg-[#151B2A] p-4">
           <h3 className="font-black text-white mb-2">Wysłane wyzwania</h3>
           {outgoing.map((item) => {
             const target = players.find((player) => player.id === item.opponent_id);
@@ -252,16 +252,16 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
       )}
 
       {active.length > 0 && (
-        <section className="rounded-2xl border border-[#2A373F] bg-[#1C262C] p-4">
+        <section className="rounded-2xl border border-[#293246] bg-[#151B2A] p-4">
           <h3 className="font-black text-white mb-2">Aktywne pojedynki</h3>
-          {active.map((item) => <button key={item.id} onClick={() => setSelectedDuelId(item.id)} className={`block w-full rounded-xl p-3 text-left text-sm mb-2 ${item.id === selectedDuelId ? 'bg-purple-500/20 border border-purple-400/40 text-white' : 'bg-black/20 text-gray-300'}`}>
+          {active.map((item) => <button key={item.id} onClick={() => setSelectedDuelId(item.id)} className={`block w-full rounded-xl p-3 text-left text-sm mb-2 ${item.id === selectedDuelId ? 'bg-[#8B5CF6]/15 border border-[#8B5CF6]/40 text-white' : 'bg-black/20 text-gray-300'}`}>
             Pojedynek • {item.id.slice(0, 8)}
           </button>)}
         </section>
       )}
 
       {selectedDuelId && duel && (
-        <section className="rounded-3xl border border-purple-500/30 bg-[#1C262C] p-4 sm:p-5">
+        <section className="rounded-3xl border border-[#8B5CF6]/30 bg-[#151B2A] p-4 sm:p-5">
           {duel.status === 'pending' && (
             <div className="py-8 text-center">
               <Clock3 size={32} className="mx-auto mb-3 text-yellow-400" />
@@ -316,7 +316,7 @@ export const OnlineDuelView: React.FC<OnlineDuelViewProps> = ({ session, userSta
         </section>
       )}
 
-      <section className="rounded-2xl border border-[#2A373F] bg-[#1C262C] p-4">
+      <section className="rounded-2xl border border-[#293246] bg-[#151B2A] p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-black text-white">Gracze JS Duo</h3>
           <span className="text-xs text-gray-400">{players.length} kont</span>
