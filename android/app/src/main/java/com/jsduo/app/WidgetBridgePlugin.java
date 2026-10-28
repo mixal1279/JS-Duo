@@ -5,15 +5,23 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 @CapacitorPlugin(name = "WidgetBridge")
 public class WidgetBridgePlugin extends Plugin {
-
-    private static final String PREFS_NAME = "CapacitorStorage";
+    private static final String PREFS_NAME = DuoAppIcon.PREFS_NAME;
+    private static final String KEY_LESSON_COUNT = "mascot_completed_lesson_count";
 
     @PluginMethod
     public void updateWidgetData(PluginCall call) {
@@ -23,57 +31,82 @@ public class WidgetBridgePlugin extends Plugin {
             SharedPreferences.Editor editor = prefs.edit();
 
             String statsJson = call.getString("statsJson");
+            String lastActiveDate = call.getString("lastActiveDate");
             if (statsJson != null) {
                 editor.putString("js_duo_user_stats_v3_clean", statsJson);
+                int lessonCount = readCompletedLessonCount(statsJson);
+                int previousLessonCount = prefs.getInt(KEY_LESSON_COUNT, -1);
+                long lastActiveAt = prefs.getLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, 0L);
+
+                // A newly completed lesson advances completedLessonKeys. Ordinary widget syncs
+                // must not reset the inactivity timer.
+                if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
+                    lastActiveAt = System.currentTimeMillis();
+                    editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                }
+                if (lessonCount >= 0) editor.putInt(KEY_LESSON_COUNT, lessonCount);
+
+                if (lastActiveAt <= 0L && lastActiveDate != null && !lastActiveDate.isEmpty()) {
+                    long inferred = inferInitialActivityTime(lastActiveDate);
+                    if (inferred > 0L) editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, inferred);
+                }
             }
 
             Integer streak = call.getInt("streak");
-            if (streak != null) {
-                editor.putInt("streak", streak);
-            }
+            if (streak != null) editor.putInt("streak", streak);
 
             Integer hearts = call.getInt("hearts");
-            if (hearts != null) {
-                editor.putInt("hearts", hearts);
-            }
+            if (hearts != null) editor.putInt("hearts", hearts);
 
-            String lastActiveDate = call.getString("lastActiveDate");
-            if (lastActiveDate != null) {
-                editor.putString("lastActiveDate", lastActiveDate);
-            }
+            if (lastActiveDate != null) editor.putString("lastActiveDate", lastActiveDate);
 
             Integer dailyXp = call.getInt("dailyXp");
-            if (dailyXp != null) {
-                editor.putInt("daily_xp", dailyXp);
-            }
+            if (dailyXp != null) editor.putInt("daily_xp", dailyXp);
 
             Integer dailyXpTarget = call.getInt("dailyXpTarget");
-            if (dailyXpTarget != null) {
-                editor.putInt("daily_xp_target", dailyXpTarget);
-            }
+            if (dailyXpTarget != null) editor.putInt("daily_xp_target", dailyXpTarget);
 
             editor.apply();
 
-            // Update the launcher icon even when the user has not placed the widget.
-            String savedLastActiveDate = prefs.getString("lastActiveDate", "");
-            DuoAppIcon.update(context, DuoAppIcon.moodFor(savedLastActiveDate));
+            // Recalculate immediately, then schedule a native refresh for the next threshold.
+            DuoAppIcon.refresh(context);
 
-            // Trigger widget update broadcast
-            Intent intent = new Intent(context, DailyQuestWidgetProvider.class);
-            intent.setAction(DailyQuestWidgetProvider.ACTION_REFRESH_WIDGET);
-            context.sendBroadcast(intent);
-
-            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-            ComponentName thisWidget = new ComponentName(context, DailyQuestWidgetProvider.class);
-            int[] appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
-            if (appWidgetIds != null && appWidgetIds.length > 0) {
-                DailyQuestWidgetProvider provider = new DailyQuestWidgetProvider();
-                provider.onUpdate(context, appWidgetManager, appWidgetIds);
+            AppWidgetManager manager = AppWidgetManager.getInstance(context);
+            ComponentName widget = new ComponentName(context, DailyQuestWidgetProvider.class);
+            int[] ids = manager.getAppWidgetIds(widget);
+            if (ids != null && ids.length > 0) {
+                new DailyQuestWidgetProvider().onUpdate(context, manager, ids);
             }
-
             call.resolve();
         } catch (Exception e) {
             call.reject("Failed to update widget data: " + e.getMessage());
+        }
+    }
+
+    private static int readCompletedLessonCount(String json) {
+        try {
+            JSONObject stats = new JSONObject(json);
+            JSONArray lessons = stats.optJSONArray("completedLessonKeys");
+            if (lessons != null) return lessons.length();
+            // Do not use completedQuestionIds here: they can increase mid-lesson.
+            // The inactivity clock must reset only after a lesson is completed.
+            return -1;
+        } catch (Exception ignored) {
+            return -1;
+        }
+    }
+
+    private static long inferInitialActivityTime(String dateString) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            sdf.setLenient(false);
+            Date parsed = sdf.parse(dateString);
+            if (parsed == null) return 0L;
+            String today = sdf.format(new Date());
+            if (today.equals(dateString)) return System.currentTimeMillis();
+            return parsed.getTime();
+        } catch (Exception ignored) {
+            return 0L;
         }
     }
 }

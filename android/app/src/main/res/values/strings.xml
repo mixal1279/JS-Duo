@@ -4,6 +4,6 @@
     <string name="title_activity_main">Codexa</string>
     <string name="package_name">com.jsduo.app</string>
     <string name="custom_url_scheme">com.jsduo.app</string>
-    <string name="widget_name">Codexa — codzienna lekcja</string>
+    <string name="widget_name">JS-Duo — codzienna lekcja</string>
     <string name="widget_description">Widget przypominający o codziennej lekcji JavaScript i wspierający regularną naukę.</string>
 </resources>
