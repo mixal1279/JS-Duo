@@ -521,7 +521,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
 
             <p className="text-xs text-gray-300 leading-relaxed mb-3">
-              Lekki, przejrzysty motyw dzienny. Czyste jasne tła, wyrazisty kontrast tekstu i oryginalne barwy JS Duo.
+              Lekki, przejrzysty motyw dzienny. Czyste jasne tła, wyrazisty kontrast tekstu i oryginalne barwy Codexa.
             </p>
 
             {/* Mini Color Swatch & Preview */}
