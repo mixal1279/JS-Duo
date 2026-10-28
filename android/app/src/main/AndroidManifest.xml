@@ -46,6 +46,21 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
+
+        <!-- Re-evaluate the icon/widget at inactivity thresholds and after device/time changes. -->
+        <receiver
+            android:name=".DuoMoodReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.jsduo.app.ACTION_MOOD_REFRESH" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Home Screen Widget Provider -->
         <receiver
             android:name=".DailyQuestWidgetProvider"
