@@ -9,12 +9,12 @@ export default {
     extend: {
       colors: {
         duo: {
-          green: '#58cc02',
-          greenDark: '#46a302',
-          blue: '#1cb0f6',
-          blueDark: '#1899d6',
-          yellow: '#ffc800',
-          yellowDark: '#e5a500',
+          green: '#42E8D4',
+          greenDark: '#1BAEAA',
+          blue: '#8B5CF6',
+          blueDark: '#6D42D8',
+          yellow: '#F6C96B',
+          yellowDark: '#D6A342',
           orange: '#ff9600',
           red: '#ff4b4b',
           redDark: '#ea2b2b',
