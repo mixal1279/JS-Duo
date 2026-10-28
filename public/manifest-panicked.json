@@ -1,14 +1,14 @@
 {
   "id": "./",
-  "name": "JS Duo - Nauka JavaScript",
-  "short_name": "JS Duo",
-  "description": "Interaktywna platforma do nauki JavaScript w stylu Duolingo",
+  "name": "Codexa — nauka programowania",
+  "short_name": "Codexa",
+  "description": "Interaktywna platforma do nauki programowania",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#080B14",
-  "theme_color": "#58cc02",
+  "theme_color": "#42E8D4",
   "icons": [
     {
       "src": "./pwa-icons/duo-panicked.svg",
