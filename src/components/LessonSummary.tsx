@@ -216,10 +216,10 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
       </div>
 
       {/* Recharts Effectiveness Chart Card */}
-      <div className="bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-4 sm:p-5 mb-5 shadow-sm">
-        <div className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-[#2A373F]">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-duo-green/20 border border-duo-green/40 flex items-center justify-center text-duo-green">
+      <div className="w-full min-w-0 bg-[#172227] border-2 border-[#2A373F] rounded-3xl p-3 sm:p-5 mb-5 shadow-sm">
+        <div className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 pb-3 border-b border-[#2A373F]">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="w-8 h-8 shrink-0 rounded-xl bg-duo-green/20 border border-duo-green/40 flex items-center justify-center text-duo-green">
               {chartType === 'donut' ? <PieIcon size={18} /> : <BarChart3 size={18} />}
             </div>
             <div>
@@ -233,17 +233,17 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
           </div>
 
           {/* Chart View Toggle */}
-          <div className="inline-flex p-0.5 rounded-xl bg-[#131F24] border border-[#2A373F]">
+          <div className="flex w-full sm:w-auto min-w-0 p-0.5 rounded-xl bg-[#131F24] border border-[#2A373F]">
             <button
               onClick={() => setChartType('donut')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider flex items-center gap-1 transition-all ${
+              className={`flex-1 sm:flex-none justify-center min-w-0 px-2 py-2 sm:py-1 rounded-lg text-[11px] font-black uppercase tracking-wider flex items-center gap-1 transition-all ${
                 chartType === 'donut'
                   ? 'bg-duo-blue text-white shadow-sm'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
               <PieIcon size={12} />
-              <span>Kołowy</span>
+              <span className="truncate">Kołowy</span>
             </button>
             <button
               onClick={() => setChartType('bar')}
@@ -254,15 +254,15 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
               }`}
             >
               <BarChart3 size={12} />
-              <span>Słupkowy</span>
+              <span className="truncate">Słupkowy</span>
             </button>
           </div>
         </div>
 
         {/* Chart Rendering Container */}
-        <div className="w-full flex flex-col items-center justify-center pt-2">
+        <div className="w-full min-w-0 flex flex-col items-center justify-center pt-2">
           {chartType === 'donut' ? (
-            <div className="w-full h-52 relative flex items-center justify-center">
+            <div className="w-full min-w-0 h-52 relative flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <RechartsPieChart>
                   <Tooltip
@@ -303,7 +303,7 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
               </div>
             </div>
           ) : (
-            <div className="w-full h-52">
+            <div className="w-full min-w-0 h-52">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={barData} margin={{ top: 15, right: 10, left: -15, bottom: 5 }}>
                   <XAxis
