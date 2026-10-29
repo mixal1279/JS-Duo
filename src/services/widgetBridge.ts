@@ -21,7 +21,8 @@ export const WidgetBridge = registerPlugin<WidgetBridgePluginInterface>('WidgetB
 export async function syncWidgetStats(stats: UserStats) {
   try {
     const statsJson = JSON.stringify(stats);
-    const xpQuest = storageService.getQuests().find((quest) => quest.type === 'xp');
+    const quests = storageService.getQuests();
+    const xpQuest = quests.find((quest) => quest.type === 'xp');
     await WidgetBridge.updateWidgetData({
       statsJson,
       streak: stats.streak,
@@ -29,9 +30,9 @@ export async function syncWidgetStats(stats: UserStats) {
       lastActiveDate: stats.lastActiveDate,
       dailyXp: xpQuest?.current ?? 0,
       dailyXpTarget: xpQuest?.target ?? 30,
-      dailyQuestCompletedCount: storageService.getQuests().filter((quest) => quest.current >= quest.target).length,
-      dailyQuestTotalCount: storageService.getQuests().length,
-      nextDailyQuestTitle: storageService.getQuests().find((quest) => quest.current < quest.target)?.title ?? '',
+      dailyQuestCompletedCount: quests.filter((quest) => quest.current >= quest.target).length,
+      dailyQuestTotalCount: quests.length,
+      nextDailyQuestTitle: quests.find((quest) => quest.current < quest.target)?.title ?? '',
     });
   } catch (e) {
     // If running in browser or unsupported, gracefully ignore

@@ -47,7 +47,7 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
 
     public static void updateAppWidget(Context context, AppWidgetManager manager, int appWidgetId) {
         // JS-Duo uses one canonical home-screen widget size: medium 4x2.
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_daily_quest_medium);
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_daily_quest);
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         int streak = prefs.getInt("streak", 0);
@@ -65,19 +65,19 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         int moodIcon;
         switch (mood) {
             case "worried":
-                moodIcon = R.drawable.ic_widget_worried;
+                moodIcon = R.drawable.cybercat_worried;
                 break;
             case "sad":
-                moodIcon = R.drawable.ic_widget_sad;
+                moodIcon = R.drawable.cybercat_sad;
                 break;
             case "panicked":
-                moodIcon = R.drawable.ic_widget_panicked;
+                moodIcon = R.drawable.cybercat_panicked;
                 break;
             case "desperate":
-                moodIcon = R.drawable.ic_widget_desperate;
+                moodIcon = R.drawable.cybercat_desperate;
                 break;
             default:
-                moodIcon = R.drawable.ic_widget_happy;
+                moodIcon = R.drawable.cybercat_happy;
                 break;
         }
 
@@ -149,4 +149,5 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_action_button, pendingIntent);
         manager.updateAppWidget(appWidgetId, views);
     }
+
 }

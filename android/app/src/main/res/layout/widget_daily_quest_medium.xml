@@ -111,7 +111,7 @@
             android:layout_width="1dp"
             android:layout_height="1dp"
             android:visibility="gone"
-            android:src="@drawable/ic_widget_happy" />
+            android:src="@drawable/cybercat_happy" />
     </LinearLayout>
 
     <FrameLayout
@@ -125,7 +125,7 @@
             android:layout_height="match_parent"
             android:padding="2dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_widget_happy"
+            android:src="@drawable/cybercat_happy"
             android:contentDescription="Nastrój cyberkota" />
     </FrameLayout>
 </LinearLayout>

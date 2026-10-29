@@ -23,7 +23,7 @@
                 android:id="@+id/widget_mascot_logo"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_widget_happy"
+                android:src="@drawable/cybercat_happy"
                 android:contentDescription="Nastrój cyberkota" />
 
             <TextView
@@ -140,7 +140,7 @@
             android:layout_height="match_parent"
             android:padding="3dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_widget_happy"
+            android:src="@drawable/cybercat_happy"
             android:contentDescription="Aktualny nastrój cyberkota" />
 
         <TextView

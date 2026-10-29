@@ -40,18 +40,33 @@ public class WidgetBridgePlugin extends Plugin {
                 int lessonCount = readCompletedLessonCount(statsJson);
                 int previousLessonCount = prefs.getInt(KEY_LESSON_COUNT, -1);
                 long lastActiveAt = prefs.getLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, 0L);
+                long completedAt = readLastLessonCompletedAt(statsJson);
 
-                // A newly completed lesson advances completedLessonKeys. Ordinary widget syncs
-                // must not reset the inactivity timer.
-                if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
+                // Prefer the exact completion timestamp from JS-Duo. This also handles replaying
+                // a lesson whose key is already in completedLessonKeys (the array length won't change).
+                if (completedAt > lastActiveAt) {
+                    lastActiveAt = completedAt;
+                    editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                } else if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
+                    // Backwards-compatible fallback for older app versions.
                     lastActiveAt = System.currentTimeMillis();
                     editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
                 }
+
                 if (lessonCount >= 0) editor.putInt(KEY_LESSON_COUNT, lessonCount);
 
-                if (lastActiveAt <= 0L && lastActiveDate != null && !lastActiveDate.isEmpty()) {
-                    long inferred = inferInitialActivityTime(lastActiveDate);
-                    if (inferred > 0L) editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, inferred);
+                // On first sync after upgrading, a stale saved timestamp must not override a
+                // newer activity date. Date-only legacy records can only be approximated.
+                if (lastActiveDate != null && !lastActiveDate.isEmpty()) {
+                    String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                    if (today.equals(lastActiveDate) && (lastActiveAt <= 0L || !today.equals(
+                            new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date(lastActiveAt))))) {
+                        lastActiveAt = System.currentTimeMillis();
+                        editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                    } else if (lastActiveAt <= 0L) {
+                        long inferred = inferInitialActivityTime(lastActiveDate);
+                        if (inferred > 0L) editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, inferred);
+                    }
                 }
             }
 
@@ -90,6 +105,15 @@ public class WidgetBridgePlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             call.reject("Failed to update widget data: " + e.getMessage());
+        }
+    }
+
+    private static long readLastLessonCompletedAt(String json) {
+        try {
+            JSONObject stats = new JSONObject(json);
+            return Math.max(0L, stats.optLong("lastLessonCompletedAt", 0L));
+        } catch (Exception ignored) {
+            return 0L;
         }
     }
 

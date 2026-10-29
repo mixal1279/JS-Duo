@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Gem, Heart, Sparkles, BookOpen, Bell } from 'lucide-react';
+import { CodeXml, Clock3, Gem, Heart, Sparkles, BookOpen, Bell } from 'lucide-react';
 import { UserStats, DailyQuest, LeaderboardUser, Friend, ChatMessage, NotificationConfig, Question, AppTheme } from './types';
 import { storageService, DEFAULT_USER_STATS, DEFAULT_DAILY_QUESTS, getLocalDateString, getDaysDifference } from './services/storageService';
 import { notificationService } from './services/notificationService';
@@ -71,6 +71,22 @@ export const App: React.FC = () => {
 
   // Modal & Toast States
   const [showStreakToast, setShowStreakToast] = useState(false);
+  const [streakStatusTime, setStreakStatusTime] = useState(() => Date.now());
+
+  // Refresh the streak indicator so the amber warning appears near the end of the local day.
+  useEffect(() => {
+    const timer = window.setInterval(() => setStreakStatusTime(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const streakCompletedToday = stats.lastActiveDate === getLocalDateString();
+  const streakAtRisk = stats.streak > 0 && !streakCompletedToday && new Date(streakStatusTime).getHours() >= 20;
+  const streakColor = streakCompletedToday ? '#4ADE80' : streakAtRisk ? '#FBBF24' : '#9CA3AF';
+  const streakLabel = streakCompletedToday
+    ? 'Passa zaliczona dzisiaj'
+    : streakAtRisk
+      ? 'Passa zagrożona — wykonaj lekcję przed końcem dnia'
+      : 'Passa niezaliczona dzisiaj';
 
   // Show the automatic streak toast once per local calendar day. Manual clicks remain unrestricted.
   const showStreakToastOncePerDay = () => {
@@ -119,11 +135,6 @@ export const App: React.FC = () => {
   useEffect(() => {
     storageService.saveQuests(quests);
   }, [quests]);
-
-  useEffect(() => {
-    // Keep the Android home-screen widget in sync with the real daily XP quest.
-    syncWidgetStats(stats);
-  }, [quests, stats]);
 
   useEffect(() => {
     storageService.saveFriends(friends);
@@ -537,6 +548,7 @@ export const App: React.FC = () => {
       level: newLevel,
       streak: newStreak,
       lastActiveDate: today,
+      lastLessonCompletedAt: Date.now(),
       gems: newGems,
       completedQuestionIds: newCompleted,
       completedLessonKeys: newCompletedLessons,
@@ -842,10 +854,13 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-4">
             <div
               onClick={() => setShowStreakToast(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] hover:border-[#FF9600] text-[#FF9600] font-bold text-xs cursor-pointer transition-colors active:scale-95"
-              title="Kliknij, aby wyświetlić komunikat o passie"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] font-bold text-xs cursor-pointer transition-colors active:scale-95"
+              style={{ color: streakColor, borderColor: streakAtRisk ? '#FBBF24' : '#2A373F' }}
+              title={`${streakLabel}. Kliknij, aby wyświetlić szczegóły passy.`}
+              aria-label={`${streakLabel}. ${stats.streak} dni`}
             >
-              <Flame size={16} className="fill-[#FF9600]" />
+              <CodeXml size={16} />
+              {streakAtRisk && <Clock3 size={12} aria-hidden="true" />}
               <span>{stats.streak}</span>
             </div>
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#232E35] border border-[#2A373F] text-[#1CB0F6] font-bold text-xs">
