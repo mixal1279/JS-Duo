@@ -80,7 +80,7 @@ export const App: React.FC = () => {
   }, []);
 
   const streakCompletedToday = stats.lastActiveDate === getLocalDateString();
-  const streakAtRisk = !streakCompletedToday && new Date(streakStatusTime).getHours() >= 20;
+  const streakAtRisk = stats.streak > 0 && !streakCompletedToday && new Date(streakStatusTime).getHours() >= 20;
   const streakColor = streakCompletedToday ? '#4ADE80' : streakAtRisk ? '#FBBF24' : '#9CA3AF';
   const streakLabel = streakCompletedToday
     ? 'Passa zaliczona dzisiaj'
@@ -135,11 +135,6 @@ export const App: React.FC = () => {
   useEffect(() => {
     storageService.saveQuests(quests);
   }, [quests]);
-
-  useEffect(() => {
-    // Keep the Android home-screen widget in sync with the real daily XP quest.
-    syncWidgetStats(stats);
-  }, [quests, stats]);
 
   useEffect(() => {
     storageService.saveFriends(friends);
