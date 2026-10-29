@@ -321,6 +321,35 @@ export const cloudSyncService = {
   },
 
 
+  async synthesizeSpeech(text: string): Promise<Blob> {
+    const trimmedText = text.trim();
+    if (!trimmedText) throw new CloudSyncError('Nie ma tekstu do odczytania.');
+    if (trimmedText.length > 2000) throw new CloudSyncError('Tekst do odczytania może mieć maksymalnie 2000 znaków.');
+    const session = this.getSession();
+    if (!session) throw new CloudSyncError('Zaloguj się, aby skorzystać z głosu nauczyciela.');
+    const validSession = await this.refreshSession(session);
+    const response = await fetch(`${API_URL}/functions/v1/speech-tts`, {
+      method: 'POST',
+      headers: {
+        apikey: ANON_KEY,
+        Authorization: `Bearer ${validSession.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: trimmedText }),
+    });
+    if (!response.ok) {
+      let message = 'Nie udało się wygenerować głosu nauczyciela.';
+      try {
+        const body = await response.json() as { error?: string };
+        if (body.error === 'Speech service is not configured') message = 'Usługa Azure Speech nie jest skonfigurowana.';
+        else if (response.status === 401 || response.status === 403) message = 'Sesja wygasła. Zaloguj się ponownie.';
+        else if (response.status === 429) message = 'Limit usługi mowy został osiągnięty. Spróbuj później.';
+      } catch { /* Keep a safe generic message. */ }
+      throw new CloudSyncError(message);
+    }
+    return await response.blob();
+  },
+
   async submitLearningAnswer(questionId: number, answerIndex: number): Promise<void> {
     const session = this.getSession();
     // Learning remains available offline. Queue only for an already signed-in account
