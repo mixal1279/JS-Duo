@@ -22,6 +22,9 @@ import java.util.Locale;
 public class WidgetBridgePlugin extends Plugin {
     private static final String PREFS_NAME = DuoAppIcon.PREFS_NAME;
     private static final String KEY_LESSON_COUNT = "mascot_completed_lesson_count";
+    private static final String KEY_QUEST_COMPLETED_COUNT = "daily_quest_completed_count";
+    private static final String KEY_QUEST_TOTAL_COUNT = "daily_quest_total_count";
+    private static final String KEY_NEXT_QUEST_TITLE = "daily_quest_next_title";
 
     @PluginMethod
     public void updateWidgetData(PluginCall call) {
@@ -65,6 +68,13 @@ public class WidgetBridgePlugin extends Plugin {
 
             Integer dailyXpTarget = call.getInt("dailyXpTarget");
             if (dailyXpTarget != null) editor.putInt("daily_xp_target", dailyXpTarget);
+
+            Integer completedQuestCount = call.getInt("dailyQuestCompletedCount");
+            if (completedQuestCount != null) editor.putInt(KEY_QUEST_COMPLETED_COUNT, Math.max(0, completedQuestCount));
+            Integer totalQuestCount = call.getInt("dailyQuestTotalCount");
+            if (totalQuestCount != null) editor.putInt(KEY_QUEST_TOTAL_COUNT, Math.max(0, totalQuestCount));
+            String nextQuestTitle = call.getString("nextDailyQuestTitle");
+            if (nextQuestTitle != null) editor.putString(KEY_NEXT_QUEST_TITLE, nextQuestTitle);
 
             editor.apply();
 
