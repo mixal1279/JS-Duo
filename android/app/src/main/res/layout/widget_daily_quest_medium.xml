@@ -115,7 +115,8 @@
     </LinearLayout>
 
     <FrameLayout
-        android:layout_width="45%"
+        android:layout_width="0dp"
+        android:layout_weight="0.8"
         android:layout_height="match_parent"
         android:background="@drawable/widget_mascot_panel_bg">
         <ImageView
