@@ -63,7 +63,7 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
   onContinue,
 }) => {
   const [chartType, setChartType] = useState<'donut' | 'bar'>('donut');
-  const [showReview, setShowReview] = useState(false);
+  const [showReview, setShowReview] = useState(() => results.some((result) => !result.isCorrect));
 
   const totalAnswered = correctCount + wrongCount;
   const accuracy = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 100;
@@ -362,6 +362,16 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
         </div>
       </div>
 
+      {/* Lesson recap: errors open automatically so the learner can review them immediately. */}
+      {wrongCount > 0 && (
+        <div className="mb-3 rounded-2xl border border-red-500/30 bg-red-950/20 px-4 py-3">
+          <h3 className="text-sm font-extrabold text-red-200">Co warto powtórzyć?</h3>
+          <p className="mt-1 text-xs leading-relaxed text-gray-300">
+            Przejrzyj błędne odpowiedzi poniżej. Przy każdym błędzie znajdziesz poprawną odpowiedź i wyjaśnienie, a potem możesz wrócić do teorii tej lekcji.
+          </p>
+        </div>
+      )}
+
       {/* Accordion: Questions Review */}
       {results.length > 0 && (
         <div className="mb-5">
@@ -371,7 +381,7 @@ export const LessonSummary: React.FC<LessonSummaryProps> = ({
           >
             <div className="flex items-center gap-2">
               <HelpCircle size={16} className="text-duo-blue" />
-              <span>Przejrzyj swoje odpowiedzi ({results.length})</span>
+              <span>{wrongCount > 0 ? `Powtórz błędy (${wrongCount})` : `Przejrzyj swoje odpowiedzi (${results.length})`}</span>
             </div>
             {showReview ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
