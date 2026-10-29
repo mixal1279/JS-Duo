@@ -8,5 +8,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(WidgetBridgePlugin.class);
         super.onCreate(savedInstanceState);
+        // Reconcile the launcher icon and widget with the last saved activity as soon as the app opens.
+        DuoAppIcon.refresh(this);
     }
 }
