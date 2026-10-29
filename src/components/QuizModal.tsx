@@ -60,6 +60,14 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   const currentQ = questions[currentIndex];
   const previousQ = currentIndex > 0 ? questions[currentIndex - 1] : undefined;
   const studyContent = getLessonStudyContent(unitId || questions[0]?.unitId || 1, lessonIndex);
+  const theoryExample = questions[0]?.codeSnippet || studyContent.example;
+  const theoryExampleExplanation = questions[0]?.codeSnippet ? questions[0].explanation : studyContent.exampleExplanation;
+  const questionTypeLabel = (type: Question['type']) => ({
+    'single-choice': 'Sprawdź wiedzę',
+    'output-predict': 'Przewidź wynik kodu',
+    'fill-gap': 'Uzupełnij kod',
+    'code-order': 'Ułóż kod',
+  }[type] || 'Ćwiczenie praktyczne');
   const progressPercent = ((currentIndex) / questions.length) * 100;
 
   // Handle Keyboard shortcuts 1, 2, 3, 4, Enter and Escape
@@ -177,8 +185,8 @@ export const QuizModal: React.FC<QuizModalProps> = ({
       setSelectedOption(null);
       setIsAnswerChecked(false);
       setShowExplanation(false);
-      // Pause after questions 2 and 4 for a short recap before continuing.
-      setShowStudyCard(nextIndex === 2 || nextIndex === 4);
+      // All theory is shown first; practice continues without interstitial theory cards.
+      setShowStudyCard(false);
     } else {
       // Finished
       setIsLessonFinished(true);
@@ -321,8 +329,8 @@ export const QuizModal: React.FC<QuizModalProps> = ({
               {!previousQ && (
                 <div className="rounded-2xl bg-[#101A20] border border-[#2A373F] p-4 mb-3">
                   <div className="flex items-center gap-2 text-duo-green font-bold text-xs mb-2"><Code2 size={16} /> Przykład kodu</div>
-                  <CodeBlock code={studyContent.example} />
-                  <p className="text-xs text-gray-400 leading-relaxed mt-3">{studyContent.exampleExplanation}</p>
+                  <CodeBlock code={theoryExample} />
+                  <p className="text-xs text-gray-400 leading-relaxed mt-3">{theoryExampleExplanation}</p>
                 </div>
               )}
               {previousQ?.codeSnippet && (
@@ -377,8 +385,14 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                     {unitTitle} • Lekcja {lessonIndex}
                   </span>
                   <span className="font-bold bg-[#232E35] px-2 py-0.5 rounded text-gray-300">
-                    Pytanie {currentIndex + 1} z {questions.length} (+{currentQ.points} XP)
+                    Ćwiczenie {currentIndex + 1} z {questions.length} (+{currentQ.points} XP)
                   </span>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="inline-flex rounded-full bg-[#24343D] border border-[#344750] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-duo-blue">
+                    {questionTypeLabel(currentQ.type)}
+                  </span>
+                  <span className="inline-flex rounded-full bg-[#24343D] px-2.5 py-1 text-[10px] font-bold text-gray-400">Etap: praktyka</span>
                 </div>
 
                 <div className="flex items-start gap-3">
@@ -562,7 +576,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
         <LessonSummary
           unitTitle={unitTitle}
           lessonIndex={lessonIndex}
-          earnedXp={earnedXp}
+          earnedXp={Math.max(10, earnedXp)}
           correctCount={results.filter((r) => r.isCorrect).length}
           wrongCount={results.filter((r) => !r.isCorrect).length}
           totalQuestions={questions.length}
