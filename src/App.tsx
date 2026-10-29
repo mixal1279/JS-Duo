@@ -537,6 +537,7 @@ export const App: React.FC = () => {
       level: newLevel,
       streak: newStreak,
       lastActiveDate: today,
+      lastLessonCompletedAt: Date.now(),
       gems: newGems,
       completedQuestionIds: newCompleted,
       completedLessonKeys: newCompletedLessons,
