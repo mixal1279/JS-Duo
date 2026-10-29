@@ -25,6 +25,11 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
     }
 
     @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager, int appWidgetId, android.os.Bundle newOptions) {
+        updateAppWidget(context, manager, appWidgetId);
+    }
+
+    @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
         String action = intent.getAction();
@@ -41,7 +46,18 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
     }
 
     public static void updateAppWidget(Context context, AppWidgetManager manager, int appWidgetId) {
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_daily_quest);
+        android.os.Bundle options = manager.getAppWidgetOptions(appWidgetId);
+        int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250);
+        int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 180);
+        int layoutId;
+        if (minWidth < 180) {
+            layoutId = R.layout.widget_daily_quest_small;
+        } else if (minHeight < 150) {
+            layoutId = R.layout.widget_daily_quest_medium;
+        } else {
+            layoutId = R.layout.widget_daily_quest;
+        }
+        RemoteViews views = new RemoteViews(context.getPackageName(), layoutId);
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         int streak = prefs.getInt("streak", 0);
