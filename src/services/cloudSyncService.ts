@@ -482,7 +482,7 @@ export const cloudSyncService = {
     if (!displayName || displayName.length > 24) {
       throw new CloudSyncError('Nazwa wyświetlana musi mieć od 1 do 24 znaków.');
     }
-    const allowedAvatars = ['🦉', '🧙‍♂️', '🤖', '🐱', '🦊', '🚀'];
+    const allowedAvatars = ['💠', '🧙‍♂️', '🤖', '🐱', '🦊', '🚀'];
     if (!allowedAvatars.includes(changes.avatar_emoji)) {
       throw new CloudSyncError('Wybrany awatar jest nieprawidłowy.');
     }
