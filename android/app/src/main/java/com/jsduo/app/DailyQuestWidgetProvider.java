@@ -62,7 +62,7 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         if (practicedToday) {
             background = R.drawable.widget_bg_streak_green;
             accent = Color.rgb(20, 230, 200);
-        } else if (hour >= 20) {
+        } else if (streak > 0 && hour >= 20) {
             background = R.drawable.widget_bg_streak_amber;
             accent = Color.rgb(255, 181, 46);
         } else {
