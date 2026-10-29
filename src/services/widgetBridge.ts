@@ -10,6 +10,9 @@ export interface WidgetBridgePluginInterface {
     lastActiveDate?: string;
     dailyXp?: number;
     dailyXpTarget?: number;
+    dailyQuestCompletedCount?: number;
+    dailyQuestTotalCount?: number;
+    nextDailyQuestTitle?: string;
   }): Promise<void>;
 }
 
@@ -26,6 +29,9 @@ export async function syncWidgetStats(stats: UserStats) {
       lastActiveDate: stats.lastActiveDate,
       dailyXp: xpQuest?.current ?? 0,
       dailyXpTarget: xpQuest?.target ?? 30,
+      dailyQuestCompletedCount: storageService.getQuests().filter((quest) => quest.current >= quest.target).length,
+      dailyQuestTotalCount: storageService.getQuests().length,
+      nextDailyQuestTitle: storageService.getQuests().find((quest) => quest.current < quest.target)?.title ?? '',
     });
   } catch (e) {
     // If running in browser or unsupported, gracefully ignore
