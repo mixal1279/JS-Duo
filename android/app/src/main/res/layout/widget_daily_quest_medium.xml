@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:background="@drawable/widget_bg">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:paddingEnd="6dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <ImageView
+                android:layout_width="27dp"
+                android:layout_height="27dp"
+                android:src="@drawable/ic_widget_flame"
+                android:contentDescription="Passa" />
+            <TextView
+                android:id="@+id/widget_streak_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="0"
+                android:textColor="#FF9A45"
+                android:textSize="23sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Passa"
+            android:textColor="#D8F9FF"
+            android:textSize="11sp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="-3dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ϟ"
+                android:textColor="#42E8D4"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/widget_xp_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:text="0/30 XP"
+                android:textColor="#FFFFFF"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="31dp"
+            android:text="XP dzisiaj"
+            android:textColor="#B7C8D8"
+            android:textSize="11sp" />
+
+        <ProgressBar
+            android:id="@+id/widget_xp_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginTop="10dp"
+            android:max="30"
+            android:progress="0"
+            android:progressTint="#42E8D4"
+            android:progressBackgroundTint="#17334A" />
+
+        <TextView
+            android:id="@+id/widget_status_title"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:visibility="gone"
+            android:text="" />
+        <TextView
+            android:id="@+id/widget_status_desc"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:visibility="gone"
+            android:text="" />
+        <TextView
+            android:id="@+id/widget_action_button"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"
+            android:text="" />
+        <ImageView
+            android:id="@+id/widget_mascot_logo"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"
+            android:src="@drawable/ic_widget_happy" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="45%"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_mascot_panel_bg">
+        <ImageView
+            android:id="@+id/widget_status_icon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_widget_happy"
+            android:contentDescription="Nastrój cyberkota" />
+    </FrameLayout>
+</LinearLayout>
