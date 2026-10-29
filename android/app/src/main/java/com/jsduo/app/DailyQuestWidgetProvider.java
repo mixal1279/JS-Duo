@@ -46,18 +46,8 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
     }
 
     public static void updateAppWidget(Context context, AppWidgetManager manager, int appWidgetId) {
-        android.os.Bundle options = manager.getAppWidgetOptions(appWidgetId);
-        int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250);
-        int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 180);
-        int layoutId;
-        if (minWidth < 180) {
-            layoutId = R.layout.widget_daily_quest_small;
-        } else if (minHeight < 150) {
-            layoutId = R.layout.widget_daily_quest_medium;
-        } else {
-            layoutId = R.layout.widget_daily_quest;
-        }
-        RemoteViews views = new RemoteViews(context.getPackageName(), layoutId);
+        // JS-Duo uses one canonical home-screen widget size: medium 4x2.
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_daily_quest_medium);
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         int streak = prefs.getInt("streak", 0);
