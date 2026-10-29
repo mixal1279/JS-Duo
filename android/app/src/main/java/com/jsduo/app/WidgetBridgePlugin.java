@@ -22,6 +22,9 @@ import java.util.Locale;
 public class WidgetBridgePlugin extends Plugin {
     private static final String PREFS_NAME = DuoAppIcon.PREFS_NAME;
     private static final String KEY_LESSON_COUNT = "mascot_completed_lesson_count";
+    private static final String KEY_QUEST_COMPLETED_COUNT = "daily_quest_completed_count";
+    private static final String KEY_QUEST_TOTAL_COUNT = "daily_quest_total_count";
+    private static final String KEY_NEXT_QUEST_TITLE = "daily_quest_next_title";
 
     @PluginMethod
     public void updateWidgetData(PluginCall call) {
@@ -37,18 +40,33 @@ public class WidgetBridgePlugin extends Plugin {
                 int lessonCount = readCompletedLessonCount(statsJson);
                 int previousLessonCount = prefs.getInt(KEY_LESSON_COUNT, -1);
                 long lastActiveAt = prefs.getLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, 0L);
+                long completedAt = readLastLessonCompletedAt(statsJson);
 
-                // A newly completed lesson advances completedLessonKeys. Ordinary widget syncs
-                // must not reset the inactivity timer.
-                if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
+                // Prefer the exact completion timestamp from JS-Duo. This also handles replaying
+                // a lesson whose key is already in completedLessonKeys (the array length won't change).
+                if (completedAt > lastActiveAt) {
+                    lastActiveAt = completedAt;
+                    editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                } else if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
+                    // Backwards-compatible fallback for older app versions.
                     lastActiveAt = System.currentTimeMillis();
                     editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
                 }
+
                 if (lessonCount >= 0) editor.putInt(KEY_LESSON_COUNT, lessonCount);
 
-                if (lastActiveAt <= 0L && lastActiveDate != null && !lastActiveDate.isEmpty()) {
-                    long inferred = inferInitialActivityTime(lastActiveDate);
-                    if (inferred > 0L) editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, inferred);
+                // On first sync after upgrading, a stale saved timestamp must not override a
+                // newer activity date. Date-only legacy records can only be approximated.
+                if (lastActiveDate != null && !lastActiveDate.isEmpty()) {
+                    String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                    if (today.equals(lastActiveDate) && (lastActiveAt <= 0L || !today.equals(
+                            new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date(lastActiveAt))))) {
+                        lastActiveAt = System.currentTimeMillis();
+                        editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                    } else if (lastActiveAt <= 0L) {
+                        long inferred = inferInitialActivityTime(lastActiveDate);
+                        if (inferred > 0L) editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, inferred);
+                    }
                 }
             }
 
@@ -66,6 +84,13 @@ public class WidgetBridgePlugin extends Plugin {
             Integer dailyXpTarget = call.getInt("dailyXpTarget");
             if (dailyXpTarget != null) editor.putInt("daily_xp_target", dailyXpTarget);
 
+            Integer completedQuestCount = call.getInt("dailyQuestCompletedCount");
+            if (completedQuestCount != null) editor.putInt(KEY_QUEST_COMPLETED_COUNT, Math.max(0, completedQuestCount));
+            Integer totalQuestCount = call.getInt("dailyQuestTotalCount");
+            if (totalQuestCount != null) editor.putInt(KEY_QUEST_TOTAL_COUNT, Math.max(0, totalQuestCount));
+            String nextQuestTitle = call.getString("nextDailyQuestTitle");
+            if (nextQuestTitle != null) editor.putString(KEY_NEXT_QUEST_TITLE, nextQuestTitle);
+
             editor.apply();
 
             // Recalculate immediately, then schedule a native refresh for the next threshold.
@@ -80,6 +105,15 @@ public class WidgetBridgePlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             call.reject("Failed to update widget data: " + e.getMessage());
+        }
+    }
+
+    private static long readLastLessonCompletedAt(String json) {
+        try {
+            JSONObject stats = new JSONObject(json);
+            return Math.max(0L, stats.optLong("lastLessonCompletedAt", 0L));
+        } catch (Exception ignored) {
+            return 0L;
         }
     }
 
