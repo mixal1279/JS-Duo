@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Heart, CheckCircle2, XCircle, HelpCircle, MessageSquareShare, ArrowRight, Award, Zap, Sparkles, BookOpen, Lightbulb, Code2 } from 'lucide-react';
+import { X, Heart, CheckCircle2, XCircle, HelpCircle, MessageSquareShare, ArrowRight, Award, Zap, Sparkles, BookOpen, Lightbulb, Code2, Volume2, Square } from 'lucide-react';
 import { getLessonStudyContent } from '../data/lessonStudyContent';
 import confetti from 'canvas-confetti';
 import { Question, UserStats } from '../types';
@@ -38,6 +38,9 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   onAskCommunity,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [speechStatus, setSpeechStatus] = useState<'idle' | 'loading' | 'speaking' | 'error'>('idle');
+  const [speechError, setSpeechError] = useState('');
+  const speechAudioRef = useRef<HTMLAudioElement | null>(null);
   const [showStudyCard, setShowStudyCard] = useState(true);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
@@ -108,6 +111,51 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, selectedOption, isAnswerChecked, isLessonFinished, earnedXp, perfectLesson, solvedIds, outOfHeartsModal, showStudyCard]);
+
+  const handleSpeakStudyContent = async () => {
+    if (speechStatus === 'speaking' && speechAudioRef.current) {
+      speechAudioRef.current.pause();
+      speechAudioRef.current.currentTime = 0;
+      speechAudioRef.current = null;
+      setSpeechStatus('idle');
+      return;
+    }
+
+    const spokenText = previousQ
+      ? previousQ.explanation
+      : `${studyContent.topic}. ${studyContent.description}. Przykład. ${studyContent.exampleExplanation}`;
+    setSpeechStatus('loading');
+    setSpeechError('');
+    try {
+      const audioBlob = await cloudSyncService.synthesizeSpeech(spokenText);
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      speechAudioRef.current = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        speechAudioRef.current = null;
+        setSpeechStatus('idle');
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        speechAudioRef.current = null;
+        setSpeechStatus('error');
+        setSpeechError('Nie udało się odtworzyć nagrania.');
+      };
+      await audio.play();
+      setSpeechStatus('speaking');
+    } catch (error) {
+      setSpeechStatus('error');
+      setSpeechError(error instanceof Error ? error.message : 'Nie udało się uruchomić głosu nauczyciela.');
+    }
+  };
+
+  useEffect(() => () => {
+    if (speechAudioRef.current) {
+      speechAudioRef.current.pause();
+      speechAudioRef.current = null;
+    }
+  }, []);
 
   const handleSelect = (idx: number) => {
     if (isAnswerChecked) return;
@@ -318,6 +366,21 @@ export const QuizModal: React.FC<QuizModalProps> = ({
               <p className="text-sm text-gray-300 leading-relaxed mb-4">
                 {previousQ ? previousQ.explanation : studyContent.description}
               </p>
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => void handleSpeakStudyContent()}
+                  disabled={speechStatus === 'loading'}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-duo-blue/40 bg-duo-blue/10 px-3 py-2 text-sm font-bold text-duo-blue transition-colors hover:bg-duo-blue/20 disabled:cursor-wait disabled:opacity-60"
+                  aria-label={speechStatus === 'speaking' ? 'Zatrzymaj czytanie teorii' : 'Odsłuchaj teorię'}
+                >
+                  {speechStatus === 'speaking' ? <Square size={16} /> : <Volume2 size={18} />}
+                  {speechStatus === 'loading' ? 'Przygotowuję głos…' : speechStatus === 'speaking' ? 'Zatrzymaj czytanie' : 'Odsłuchaj teorię'}
+                </button>
+                {speechStatus === 'error' && speechError && (
+                  <p role="alert" className="mt-2 text-xs text-red-300">{speechError}</p>
+                )}
+              </div>
               {!previousQ && (
                 <div className="rounded-2xl bg-[#101A20] border border-[#2A373F] p-4 mb-3">
                   <div className="flex items-center gap-2 text-duo-green font-bold text-xs mb-2"><Code2 size={16} /> Przykład kodu</div>
