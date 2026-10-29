@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.widget.RemoteViews;
 
 import java.text.SimpleDateFormat;
@@ -46,19 +47,28 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
     }
 
     public static void updateAppWidget(Context context, AppWidgetManager manager, int appWidgetId) {
-        // JS-Duo uses one canonical home-screen widget size: medium 4x2.
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_daily_quest);
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
-        int streak = prefs.getInt("streak", 0);
-        int dailyXp = Math.max(0, prefs.getInt("daily_xp", 0));
-        int dailyXpTarget = Math.max(1, prefs.getInt("daily_xp_target", 30));
+        int streak = Math.max(0, prefs.getInt("streak", 0));
         String lastActiveDate = prefs.getString("lastActiveDate", "");
-        int completedQuestCount = Math.max(0, prefs.getInt("daily_quest_completed_count", 0));
-        int totalQuestCount = Math.max(0, prefs.getInt("daily_quest_total_count", 0));
-        String nextQuestTitle = prefs.getString("daily_quest_next_title", "");
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         boolean practicedToday = sdf.format(new Date()).equals(lastActiveDate);
+        int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+
+        // Three clear states: gray before practice, amber late in the day, green after today's lesson.
+        final int background;
+        final int accent;
+        if (practicedToday) {
+            background = R.drawable.widget_bg_streak_green;
+            accent = Color.rgb(20, 230, 200);
+        } else if (streak > 0 && hour >= 20) {
+            background = R.drawable.widget_bg_streak_amber;
+            accent = Color.rgb(255, 181, 46);
+        } else {
+            background = R.drawable.widget_bg_streak_gray;
+            accent = Color.rgb(130, 145, 165);
+        }
 
         long lastActiveAt = DuoAppIcon.resolveLastActiveAt(context, lastActiveDate);
         String mood = DuoAppIcon.moodFor(lastActiveAt);
@@ -82,60 +92,10 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         }
 
         views.setTextViewText(R.id.widget_streak_count, String.valueOf(streak));
-        views.setTextViewText(R.id.widget_xp_count, dailyXp + "/" + dailyXpTarget + " XP");
-        views.setProgressBar(R.id.widget_xp_progress, dailyXpTarget,
-                Math.min(dailyXpTarget, dailyXp), false);
         views.setImageViewResource(R.id.widget_status_icon, moodIcon);
-        views.setImageViewResource(R.id.widget_mascot_logo, moodIcon);
-
-        if (totalQuestCount > 0 && completedQuestCount >= totalQuestCount) {
-            views.setTextViewText(R.id.widget_status_title, "Wszystkie zadania zrobione!");
-            views.setTextViewText(R.id.widget_status_desc,
-                    "Ukończono " + completedQuestCount + "/" + totalQuestCount + " dzisiejszych zadań. Świetna robota!");
-        } else if (completedQuestCount > 0) {
-            views.setTextViewText(R.id.widget_status_title,
-                    "Zadania: " + completedQuestCount + "/" + totalQuestCount + " ukończone");
-            String nextText = nextQuestTitle == null || nextQuestTitle.trim().isEmpty()
-                    ? "Wróć do nauki i zrób kolejny krok."
-                    : "Następny cel: " + nextQuestTitle;
-            views.setTextViewText(R.id.widget_status_desc, nextText);
-        } else if (practicedToday && "happy".equals(mood)) {
-            views.setTextViewText(R.id.widget_status_title, "Dzisiejsza lekcja zaliczona!");
-            views.setTextViewText(R.id.widget_status_desc,
-                    "Świetna robota! Cyberkot jest zadowolony.");
-        } else {
-            switch (mood) {
-                case "worried":
-                    views.setTextViewText(R.id.widget_status_title,
-                            "Cyberkot zaczyna się martwić…");
-                    views.setTextViewText(R.id.widget_status_desc,
-                            "Minęło już 6 godzin. Wróć na krótką lekcję.");
-                    break;
-                case "sad":
-                    views.setTextViewText(R.id.widget_status_title, "Długo Cię nie było…");
-                    views.setTextViewText(R.id.widget_status_desc,
-                            "Cyberkot tęskni za wspólnym kodowaniem.");
-                    break;
-                case "panicked":
-                    views.setTextViewText(R.id.widget_status_title,
-                            "Cyberkot wpada w panikę!");
-                    views.setTextViewText(R.id.widget_status_desc,
-                            "Minęło już 18 godzin od ostatniej lekcji.");
-                    break;
-                case "desperate":
-                    views.setTextViewText(R.id.widget_status_title,
-                            "Cyberkot bardzo za Tobą tęskni");
-                    views.setTextViewText(R.id.widget_status_desc,
-                            "Minęły co najmniej 24 godziny. Czas wrócić do JS-Duo.");
-                    break;
-                default:
-                    views.setTextViewText(R.id.widget_status_title, "Miło Cię widzieć!");
-                    views.setTextViewText(R.id.widget_status_desc,
-                            "Cyberkot jest zadowolony. Utrzymaj rytm nauki.");
-                    break;
-            }
-        }
-        views.setTextViewText(R.id.widget_action_button, "Ćwicz teraz");
+        views.setImageViewResource(R.id.widget_streak_icon, R.drawable.ic_widget_code);
+        views.setInt(R.id.widget_streak_icon, "setColorFilter", accent);
+        views.setInt(R.id.widget_container, "setBackgroundResource", background);
 
         Intent launchIntent = new Intent(context, MainActivity.class);
         launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -146,8 +106,6 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         }
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, launchIntent, flags);
         views.setOnClickPendingIntent(R.id.widget_container, pendingIntent);
-        views.setOnClickPendingIntent(R.id.widget_action_button, pendingIntent);
         manager.updateAppWidget(appWidgetId, views);
     }
-
 }

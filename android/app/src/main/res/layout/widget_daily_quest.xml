@@ -1,161 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
-    android:orientation="horizontal"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageView
-                android:id="@+id/widget_mascot_logo"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/cybercat_happy"
-                android:contentDescription="Nastrój cyberkota" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="JS-DUO"
-                android:textColor="#D8F9FF"
-                android:textSize="13sp"
-                android:letterSpacing="0.08"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="9dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_widget_flame"
-                android:contentDescription="Passa" />
+                android:id="@+id/widget_streak_icon"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:src="@drawable/ic_widget_code"
+                android:contentDescription="Stan passy" />
 
             <TextView
                 android:id="@+id/widget_streak_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
+                android:layout_marginStart="7dp"
                 android:text="0"
-                android:textColor="#FF9A45"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
-                android:text="dni"
-                android:textColor="#A9BBCB"
-                android:textSize="11sp" />
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:maxLines="1" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/widget_xp_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="0/30 XP dzisiaj"
-            android:textColor="#75E7F2"
-            android:textSize="11sp"
-            android:textStyle="bold" />
-
-        <ProgressBar
-            android:id="@+id/widget_xp_progress"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:layout_marginTop="5dp"
-            android:max="30"
-            android:progress="0"
-            android:progressTint="#6A5CFF"
-            android:progressBackgroundTint="#263B52" />
-
-        <TextView
-            android:id="@+id/widget_status_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Gotowy na kod?"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/widget_status_desc"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="2dp"
-            android:text="Odblokuj kolejną umiejętność."
-            android:textColor="#B7C8D8"
-            android:textSize="10sp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:includeFontPadding="false" />
-
-        <TextView
-            android:id="@+id/widget_action_button"
-            android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:layout_marginTop="5dp"
-            android:background="@drawable/widget_button_bg"
-            android:gravity="center"
-            android:text="Ćwicz teraz  ›"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <FrameLayout
-        android:layout_width="112dp"
-        android:layout_height="match_parent"
-        android:layout_marginStart="8dp"
-        android:background="@drawable/widget_mascot_panel_bg">
 
         <ImageView
             android:id="@+id/widget_status_icon"
-            android:layout_width="match_parent"
+            android:layout_width="112dp"
             android:layout_height="match_parent"
-            android:padding="3dp"
+            android:padding="1dp"
             android:scaleType="fitCenter"
             android:src="@drawable/cybercat_happy"
-            android:contentDescription="Aktualny nastrój cyberkota" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="5dp"
-            android:background="@drawable/widget_mood_badge_bg"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
-            android:text="TRYB CYBER"
-            android:textColor="#BDF8FF"
-            android:textSize="8sp"
-            android:textStyle="bold" />
-    </FrameLayout>
-</LinearLayout>
+            android:contentDescription="Nastrój cyberkota" />
+    </LinearLayout>
+</FrameLayout>

@@ -35,54 +35,72 @@ public class WidgetBridgePlugin extends Plugin {
 
             String statsJson = call.getString("statsJson");
             String lastActiveDate = call.getString("lastActiveDate");
+            Integer streak = call.getInt("streak");
+
+            // Treat UserStats JSON as the canonical snapshot. The individual fields are
+            // also stored for the native widget, but can be absent in older bridge callers.
             if (statsJson != null) {
                 editor.putString("js_duo_user_stats_v3_clean", statsJson);
-                int lessonCount = readCompletedLessonCount(statsJson);
-                int previousLessonCount = prefs.getInt(KEY_LESSON_COUNT, -1);
-                long lastActiveAt = prefs.getLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, 0L);
-                long completedAt = readLastLessonCompletedAt(statsJson);
+                try {
+                    JSONObject stats = new JSONObject(statsJson);
+                    if (streak == null) streak = stats.has("streak") ? stats.optInt("streak", 0) : null;
+                    if (lastActiveDate == null) lastActiveDate = stats.optString("lastActiveDate", "");
 
-                // Prefer the exact completion timestamp from JS-Duo. This also handles replaying
-                // a lesson whose key is already in completedLessonKeys (the array length won't change).
-                if (completedAt > lastActiveAt) {
-                    lastActiveAt = completedAt;
-                    editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
-                } else if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
-                    // Backwards-compatible fallback for older app versions.
-                    lastActiveAt = System.currentTimeMillis();
-                    editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
-                }
+                    int lessonCount = readCompletedLessonCount(statsJson);
+                    int previousLessonCount = prefs.getInt(KEY_LESSON_COUNT, -1);
+                    long lastActiveAt = prefs.getLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, 0L);
+                    long completedAt = readLastLessonCompletedAt(statsJson);
 
-                if (lessonCount >= 0) editor.putInt(KEY_LESSON_COUNT, lessonCount);
+                    if (lastActiveDate != null && !lastActiveDate.isEmpty()) {
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        dateFormat.setLenient(false);
+                        String timestampDate = lastActiveAt > 0L ? dateFormat.format(new Date(lastActiveAt)) : "";
+                        String completedAtDate = completedAt > 0L ? dateFormat.format(new Date(completedAt)) : "";
 
-                // On first sync after upgrading, a stale saved timestamp must not override a
-                // newer activity date. Date-only legacy records can only be approximated.
-                if (lastActiveDate != null && !lastActiveDate.isEmpty()) {
-                    String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-                    if (today.equals(lastActiveDate) && (lastActiveAt <= 0L || !today.equals(
-                            new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date(lastActiveAt))))) {
-                        lastActiveAt = System.currentTimeMillis();
-                        editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
-                    } else if (lastActiveAt <= 0L) {
-                        long inferred = inferInitialActivityTime(lastActiveDate);
-                        if (inferred > 0L) editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, inferred);
+                        // Prefer the actual lesson-completion timestamp only when it belongs
+                        // to the canonical lastActiveDate. This prevents another account's
+                        // previously cached timestamp from making the mascot look too happy.
+                        if (completedAt > 0L && lastActiveDate.equals(completedAtDate)) {
+                            lastActiveAt = completedAt;
+                            editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                        } else if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
+                            lastActiveAt = System.currentTimeMillis();
+                            editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                        } else if (lastActiveAt <= 0L || !lastActiveDate.equals(timestampDate)) {
+                            long inferred = inferInitialActivityTime(lastActiveDate);
+                            if (inferred > 0L) {
+                                lastActiveAt = inferred;
+                                editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                            }
+                        }
                     }
+
+                    if (lessonCount >= 0) editor.putInt(KEY_LESSON_COUNT, lessonCount);
+                } catch (Exception ignored) {
+                    // Keep the raw snapshot, but don't overwrite good individual values
+                    // when a malformed/older stats payload cannot be parsed.
                 }
             }
 
-            Integer streak = call.getInt("streak");
-            if (streak != null) editor.putInt("streak", streak);
+            if (streak != null) editor.putInt("streak", Math.max(0, streak));
 
             Integer hearts = call.getInt("hearts");
             if (hearts != null) editor.putInt("hearts", hearts);
 
-            if (lastActiveDate != null) editor.putString("lastActiveDate", lastActiveDate);
+            if (lastActiveDate != null) {
+                editor.putString("lastActiveDate", lastActiveDate);
+                // A fresh/reset profile has no activity date. Clear the old native
+                // timestamp too, otherwise the widget can show a stale mascot mood.
+                if (lastActiveDate.isEmpty()) {
+                    editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, 0L);
+                }
+            }
 
             Integer dailyXp = call.getInt("dailyXp");
-            if (dailyXp != null) editor.putInt("daily_xp", dailyXp);
+            if (dailyXp != null) editor.putInt("daily_xp", Math.max(0, dailyXp));
 
             Integer dailyXpTarget = call.getInt("dailyXpTarget");
-            if (dailyXpTarget != null) editor.putInt("daily_xp_target", dailyXpTarget);
+            if (dailyXpTarget != null) editor.putInt("daily_xp_target", Math.max(1, dailyXpTarget));
 
             Integer completedQuestCount = call.getInt("dailyQuestCompletedCount");
             if (completedQuestCount != null) editor.putInt(KEY_QUEST_COMPLETED_COUNT, Math.max(0, completedQuestCount));
@@ -93,7 +111,7 @@ public class WidgetBridgePlugin extends Plugin {
 
             editor.apply();
 
-            // Recalculate immediately, then schedule a native refresh for the next threshold.
+            // Refresh immediately so the launcher uses the latest canonical streak/date.
             DuoAppIcon.refresh(context);
 
             AppWidgetManager manager = AppWidgetManager.getInstance(context);
@@ -122,8 +140,6 @@ public class WidgetBridgePlugin extends Plugin {
             JSONObject stats = new JSONObject(json);
             JSONArray lessons = stats.optJSONArray("completedLessonKeys");
             if (lessons != null) return lessons.length();
-            // Do not use completedQuestionIds here: they can increase mid-lesson.
-            // The inactivity clock must reset only after a lesson is completed.
             return -1;
         } catch (Exception ignored) {
             return -1;
