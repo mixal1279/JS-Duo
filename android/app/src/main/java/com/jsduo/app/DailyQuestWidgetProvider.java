@@ -25,6 +25,11 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
     }
 
     @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager, int appWidgetId, android.os.Bundle newOptions) {
+        updateAppWidget(context, manager, appWidgetId);
+    }
+
+    @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
         String action = intent.getAction();
@@ -41,13 +46,17 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
     }
 
     public static void updateAppWidget(Context context, AppWidgetManager manager, int appWidgetId) {
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_daily_quest);
+        // JS-Duo uses one canonical home-screen widget size: medium 4x2.
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_daily_quest_medium);
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         int streak = prefs.getInt("streak", 0);
         int dailyXp = Math.max(0, prefs.getInt("daily_xp", 0));
         int dailyXpTarget = Math.max(1, prefs.getInt("daily_xp_target", 30));
         String lastActiveDate = prefs.getString("lastActiveDate", "");
+        int completedQuestCount = Math.max(0, prefs.getInt("daily_quest_completed_count", 0));
+        int totalQuestCount = Math.max(0, prefs.getInt("daily_quest_total_count", 0));
+        String nextQuestTitle = prefs.getString("daily_quest_next_title", "");
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         boolean practicedToday = sdf.format(new Date()).equals(lastActiveDate);
 
@@ -79,7 +88,18 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         views.setImageViewResource(R.id.widget_status_icon, moodIcon);
         views.setImageViewResource(R.id.widget_mascot_logo, moodIcon);
 
-        if (practicedToday && "happy".equals(mood)) {
+        if (totalQuestCount > 0 && completedQuestCount >= totalQuestCount) {
+            views.setTextViewText(R.id.widget_status_title, "Wszystkie zadania zrobione!");
+            views.setTextViewText(R.id.widget_status_desc,
+                    "Ukończono " + completedQuestCount + "/" + totalQuestCount + " dzisiejszych zadań. Świetna robota!");
+        } else if (completedQuestCount > 0) {
+            views.setTextViewText(R.id.widget_status_title,
+                    "Zadania: " + completedQuestCount + "/" + totalQuestCount + " ukończone");
+            String nextText = nextQuestTitle == null || nextQuestTitle.trim().isEmpty()
+                    ? "Wróć do nauki i zrób kolejny krok."
+                    : "Następny cel: " + nextQuestTitle;
+            views.setTextViewText(R.id.widget_status_desc, nextText);
+        } else if (practicedToday && "happy".equals(mood)) {
             views.setTextViewText(R.id.widget_status_title, "Dzisiejsza lekcja zaliczona!");
             views.setTextViewText(R.id.widget_status_desc,
                     "Świetna robota! Cyberkot jest zadowolony.");
