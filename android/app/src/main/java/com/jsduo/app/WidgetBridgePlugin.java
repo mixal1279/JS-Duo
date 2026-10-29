@@ -83,7 +83,14 @@ public class WidgetBridgePlugin extends Plugin {
             Integer hearts = call.getInt("hearts");
             if (hearts != null) editor.putInt("hearts", hearts);
 
-            if (lastActiveDate != null) editor.putString("lastActiveDate", lastActiveDate);
+            if (lastActiveDate != null) {
+                editor.putString("lastActiveDate", lastActiveDate);
+                // A fresh/reset profile has no activity date. Clear the old native
+                // timestamp too, otherwise the widget can show a stale mascot mood.
+                if (lastActiveDate.isEmpty()) {
+                    editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, 0L);
+                }
+            }
 
             Integer dailyXp = call.getInt("dailyXp");
             if (dailyXp != null) editor.putInt("daily_xp", Math.max(0, dailyXp));
