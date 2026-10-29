@@ -51,27 +51,31 @@ public class WidgetBridgePlugin extends Plugin {
                     long lastActiveAt = prefs.getLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, 0L);
                     long completedAt = readLastLessonCompletedAt(statsJson);
 
-                    if (completedAt > lastActiveAt) {
-                        lastActiveAt = completedAt;
-                        editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
-                    } else if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
-                        lastActiveAt = System.currentTimeMillis();
-                        editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                    if (lastActiveDate != null && !lastActiveDate.isEmpty()) {
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        dateFormat.setLenient(false);
+                        String timestampDate = lastActiveAt > 0L ? dateFormat.format(new Date(lastActiveAt)) : "";
+                        String completedAtDate = completedAt > 0L ? dateFormat.format(new Date(completedAt)) : "";
+
+                        // Prefer the actual lesson-completion timestamp only when it belongs
+                        // to the canonical lastActiveDate. This prevents another account's
+                        // previously cached timestamp from making the mascot look too happy.
+                        if (completedAt > 0L && lastActiveDate.equals(completedAtDate)) {
+                            lastActiveAt = completedAt;
+                            editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                        } else if (lessonCount >= 0 && previousLessonCount >= 0 && lessonCount > previousLessonCount) {
+                            lastActiveAt = System.currentTimeMillis();
+                            editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                        } else if (lastActiveAt <= 0L || !lastActiveDate.equals(timestampDate)) {
+                            long inferred = inferInitialActivityTime(lastActiveDate);
+                            if (inferred > 0L) {
+                                lastActiveAt = inferred;
+                                editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
+                            }
+                        }
                     }
 
                     if (lessonCount >= 0) editor.putInt(KEY_LESSON_COUNT, lessonCount);
-
-                    if (lastActiveDate != null && !lastActiveDate.isEmpty()) {
-                        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-                        if (today.equals(lastActiveDate) && (lastActiveAt <= 0L || !today.equals(
-                                new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date(lastActiveAt))))) {
-                            lastActiveAt = System.currentTimeMillis();
-                            editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, lastActiveAt);
-                        } else if (lastActiveAt <= 0L) {
-                            long inferred = inferInitialActivityTime(lastActiveDate);
-                            if (inferred > 0L) editor.putLong(DuoAppIcon.KEY_LAST_ACTIVE_AT, inferred);
-                        }
-                    }
                 } catch (Exception ignored) {
                     // Keep the raw snapshot, but don't overwrite good individual values
                     // when a malformed/older stats payload cannot be parsed.
