@@ -3,36 +3,36 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_duo_happy"
+        android:icon="@drawable/cybercat_happy"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_duo_happy"
+        android:roundIcon="@drawable/cybercat_happy"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
-            android:icon="@drawable/ic_duo_happy"
-            android:roundIcon="@drawable/ic_duo_happy"
+            android:icon="@drawable/cybercat_happy"
+            android:roundIcon="@drawable/cybercat_happy"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:exported="true"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density" />
 
         <!-- One launcher alias is enabled at a time to let Android reflect the mascot mood. -->
-        <activity-alias android:name=".MainActivityHappy" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/ic_duo_happy" android:enabled="true" android:exported="true">
+        <activity-alias android:name=".MainActivityHappy" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_happy" android:enabled="true" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity-alias>
-        <activity-alias android:name=".MainActivityWorried" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/ic_duo_worried" android:enabled="false" android:exported="true">
+        <activity-alias android:name=".MainActivityWorried" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_worried" android:enabled="false" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity-alias>
-        <activity-alias android:name=".MainActivitySad" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/ic_duo_sad" android:enabled="false" android:exported="true">
+        <activity-alias android:name=".MainActivitySad" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_sad" android:enabled="false" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity-alias>
-        <activity-alias android:name=".MainActivityPanicked" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/ic_duo_panicked" android:enabled="false" android:exported="true">
+        <activity-alias android:name=".MainActivityPanicked" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_panicked" android:enabled="false" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity-alias>
-        <activity-alias android:name=".MainActivityDesperate" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/ic_duo_desperate" android:enabled="false" android:exported="true">
+        <activity-alias android:name=".MainActivityDesperate" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_desperate" android:enabled="false" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity-alias>
 
@@ -66,7 +66,7 @@
             android:name=".DailyQuestWidgetProvider"
             android:exported="true"
             android:enabled="true"
-            android:icon="@drawable/ic_duo_happy"
+            android:icon="@drawable/cybercat_happy"
             android:label="@string/widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
