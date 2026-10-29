@@ -66,7 +66,7 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
   const availableEmojis = ['👍', '🔥', '💡', '❤️'];
 
   return (
-    <div className="max-w-xl mx-auto px-2 sm:px-4 py-2 pb-2 flex flex-col h-[calc(100dvh-160px)] md:h-[calc(100vh-130px)]">
+    <div className="w-full max-w-xl min-w-0 mx-auto px-2 sm:px-4 py-2 pb-2 flex flex-col min-h-0 h-[calc(100dvh-160px)] md:h-[calc(100vh-130px)]">
       {/* Channels Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto py-1 mb-2 bg-[#1C262C] p-1.5 rounded-2xl border border-[#2A373F] shrink-0">
         {channels.map((ch) => {
@@ -92,12 +92,12 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
       </div>
 
       {/* Channel Header */}
-      <div className="px-3 py-2 bg-[#172127] rounded-xl border border-[#243038] mb-2 flex items-center justify-between shrink-0">
+      <div className="px-3 py-2 bg-[#172127] rounded-xl border border-[#243038] mb-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div>
           <span className="text-xs font-black text-white">#{currentChannelInfo.name}</span>
           <p className="text-[11px] text-gray-400">{currentChannelInfo.desc}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
           {onClearChat && (
             confirmClear ? (
               <div className="flex items-center gap-1 bg-red-500/20 p-1 rounded-xl border border-red-500/30">
@@ -133,7 +133,7 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-2">
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain space-y-3 pr-1 mb-2">
         {channelMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 space-y-3 select-none">
             <div className="w-14 h-14 rounded-2xl bg-[#1C262C] border border-[#2A373F] flex items-center justify-center text-2xl shadow-inner">
@@ -153,16 +153,16 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
             }`}
           >
             <div
-              className={`max-w-[90%] sm:max-w-[85%] rounded-2xl p-3.5 border text-sm ${
+              className={`w-fit max-w-full min-w-0 rounded-2xl p-3 sm:p-3.5 border text-sm ${
                 msg.isCurrentUser
                   ? 'bg-[#1C3545] border-duo-blue text-white rounded-br-sm'
                   : 'bg-[#1C262C] border-[#2A373F] text-gray-200 rounded-bl-sm'
               }`}
             >
               {/* Sender Header */}
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base">{msg.senderAvatar}</span>
+              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1.5 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                  <span className="text-base shrink-0">{msg.senderAvatar}</span>
                   <span
                     className={`font-black text-xs ${
                       msg.isCurrentUser ? 'text-duo-blue' : 'text-gray-200'
@@ -183,15 +183,15 @@ export const CommunityChatView: React.FC<CommunityChatViewProps> = ({
               {msg.linkedQuestionId && (
                 <div
                   onClick={() => onSelectQuestion && onSelectQuestion(msg.linkedQuestionId!)}
-                  className="mb-2 px-2.5 py-1 rounded-lg bg-black/40 border border-yellow-500/40 text-[11px] font-bold text-yellow-300 flex items-center gap-1.5 cursor-pointer hover:bg-black/60 transition-colors"
+                  className="mb-2 w-full min-w-0 px-2.5 py-2 rounded-lg bg-black/40 border border-yellow-500/40 text-[11px] font-bold text-yellow-300 flex items-start gap-1.5 cursor-pointer hover:bg-black/60 transition-colors break-words"
                 >
-                  <HelpCircle size={13} />
-                  <span>Dotyczy pytania #{msg.linkedQuestionId} (Kliknij, aby otworzyć)</span>
+                  <HelpCircle size={13} className="shrink-0 mt-0.5" />
+                  <span className="min-w-0 break-words">Dotyczy pytania #{msg.linkedQuestionId} (Kliknij, aby otworzyć)</span>
                 </div>
               )}
 
               {/* Message Text */}
-              <p className="leading-relaxed whitespace-pre-wrap text-xs sm:text-sm">
+              <p className="leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-xs sm:text-sm">
                 {msg.text}
               </p>
 

@@ -59,13 +59,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
   };
 
   return (
-    <div className={`relative rounded-xl bg-[#0D1117] border border-[#30363D] overflow-hidden text-sm font-mono shadow-inner ${className}`}>
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#161B22] border-b border-[#30363D]">
-        <div className="flex items-center space-x-1.5">
+    <div className={`relative w-full min-w-0 rounded-xl bg-[#0D1117] border border-[#30363D] overflow-hidden text-sm font-mono shadow-inner ${className}`}>
+      <div className="flex items-center justify-between gap-2 min-w-0 px-3 py-1.5 bg-[#161B22] border-b border-[#30363D]">
+        <div className="flex min-w-0 items-center space-x-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]"></div>
           <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]"></div>
           <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]"></div>
-          <span className="ml-2 text-xs text-gray-400 font-sans font-medium">JavaScript</span>
+          <span className="ml-2 truncate text-xs text-gray-400 font-sans font-medium">JavaScript</span>
         </div>
         {allowCopy && (
           <button
@@ -79,7 +79,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
         )}
       </div>
       <div className="p-3 overflow-x-auto text-xs sm:text-sm font-mono leading-relaxed">
-        <div className="table w-full">
+        <div className="table w-max min-w-full">
           {highlightCode(code)}
         </div>
       </div>
