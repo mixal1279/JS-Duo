@@ -57,19 +57,19 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         int moodIcon;
         switch (mood) {
             case "worried":
-                moodIcon = R.drawable.ic_widget_worried;
+                moodIcon = R.drawable.cybercat_worried;
                 break;
             case "sad":
-                moodIcon = R.drawable.ic_widget_sad;
+                moodIcon = R.drawable.cybercat_sad;
                 break;
             case "panicked":
-                moodIcon = R.drawable.ic_widget_panicked;
+                moodIcon = R.drawable.cybercat_panicked;
                 break;
             case "desperate":
-                moodIcon = R.drawable.ic_widget_desperate;
+                moodIcon = R.drawable.cybercat_desperate;
                 break;
             default:
-                moodIcon = R.drawable.ic_widget_happy;
+                moodIcon = R.drawable.cybercat_happy;
                 break;
         }
 
