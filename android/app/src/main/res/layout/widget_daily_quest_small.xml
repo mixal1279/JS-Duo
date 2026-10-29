@@ -12,7 +12,7 @@
         android:id="@+id/widget_status_icon"
         android:layout_width="74dp"
         android:layout_height="74dp"
-        android:src="@drawable/ic_widget_happy"
+        android:src="@drawable/cybercat_happy"
         android:scaleType="fitCenter"
         android:contentDescription="Nastrój cyberkota" />
 
@@ -75,5 +75,5 @@
         android:layout_width="1dp"
         android:layout_height="1dp"
         android:visibility="gone"
-        android:src="@drawable/ic_widget_happy" />
+        android:src="@drawable/cybercat_happy" />
 </LinearLayout>
