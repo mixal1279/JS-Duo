@@ -11,7 +11,8 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingEnd="2dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -21,18 +22,18 @@
 
             <ImageView
                 android:id="@+id/widget_mascot_logo"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:src="@drawable/cybercat_happy"
                 android:contentDescription="Nastrój cyberkota" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="7dp"
                 android:text="JS-DUO"
                 android:textColor="#D8F9FF"
-                android:textSize="13sp"
+                android:textSize="16sp"
                 android:letterSpacing="0.08"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -40,13 +41,13 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="9dp"
+            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:src="@drawable/ic_widget_flame"
                 android:contentDescription="Passa" />
 
@@ -57,7 +58,7 @@
                 android:layout_marginStart="5dp"
                 android:text="0"
                 android:textColor="#FF9A45"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -66,7 +67,7 @@
                 android:layout_marginStart="5dp"
                 android:text="dni"
                 android:textColor="#A9BBCB"
-                android:textSize="11sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
@@ -76,15 +77,15 @@
             android:layout_marginTop="2dp"
             android:text="0/30 XP dzisiaj"
             android:textColor="#75E7F2"
-            android:textSize="11sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <ProgressBar
             android:id="@+id/widget_xp_progress"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:layout_marginTop="5dp"
+            android:layout_height="6dp"
+            android:layout_marginTop="6dp"
             android:max="30"
             android:progress="0"
             android:progressTint="#6A5CFF"
@@ -94,10 +95,10 @@
             android:id="@+id/widget_status_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:text="Gotowy na kod?"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
+            android:textSize="15sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
@@ -107,10 +108,10 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="3dp"
             android:text="Odblokuj kolejną umiejętność."
             android:textColor="#B7C8D8"
-            android:textSize="10sp"
+            android:textSize="12sp"
             android:maxLines="2"
             android:ellipsize="end"
             android:includeFontPadding="false" />
@@ -118,18 +119,18 @@
         <TextView
             android:id="@+id/widget_action_button"
             android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:layout_marginTop="5dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="6dp"
             android:background="@drawable/widget_button_bg"
             android:gravity="center"
             android:text="Ćwicz teraz  ›"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
 
     <FrameLayout
-        android:layout_width="112dp"
+        android:layout_width="124dp"
         android:layout_height="match_parent"
         android:layout_marginStart="8dp"
         android:background="@drawable/widget_mascot_panel_bg">
@@ -138,7 +139,7 @@
             android:id="@+id/widget_status_icon"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="3dp"
+            android:padding="4dp"
             android:scaleType="fitCenter"
             android:src="@drawable/cybercat_happy"
             android:contentDescription="Aktualny nastrój cyberkota" />
@@ -149,13 +150,13 @@
             android:layout_gravity="bottom|center_horizontal"
             android:layout_marginBottom="5dp"
             android:background="@drawable/widget_mood_badge_bg"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:paddingStart="9dp"
+            android:paddingEnd="9dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:text="TRYB CYBER"
             android:textColor="#BDF8FF"
-            android:textSize="8sp"
+            android:textSize="9sp"
             android:textStyle="bold" />
     </FrameLayout>
 </LinearLayout>
