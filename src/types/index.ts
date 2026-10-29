@@ -31,6 +31,8 @@ export interface UserStats {
   level: number;
   streak: number;
   lastActiveDate: string;
+  /** Exact timestamp (Unix ms) of the most recent completed lesson. */
+  lastLessonCompletedAt?: number;
   gems: number;
   hearts: number;
   maxHearts: number;
