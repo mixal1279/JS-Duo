@@ -1,6 +1,5 @@
 import { registerPlugin } from '@capacitor/core';
-import { UserStats } from '../types';
-import { storageService } from './storageService';
+import { DailyQuest, UserStats } from '../types';
 
 export interface WidgetBridgePluginInterface {
   updateWidgetData(options: {
@@ -18,10 +17,9 @@ export interface WidgetBridgePluginInterface {
 
 export const WidgetBridge = registerPlugin<WidgetBridgePluginInterface>('WidgetBridge');
 
-export async function syncWidgetStats(stats: UserStats) {
+export async function syncWidgetStats(stats: UserStats, quests: DailyQuest[]) {
   try {
     const statsJson = JSON.stringify(stats);
-    const quests = storageService.getQuests();
     const xpQuest = quests.find((quest) => quest.type === 'xp');
     await WidgetBridge.updateWidgetData({
       statsJson,
@@ -34,7 +32,7 @@ export async function syncWidgetStats(stats: UserStats) {
       dailyQuestTotalCount: quests.length,
       nextDailyQuestTitle: quests.find((quest) => quest.current < quest.target)?.title ?? '',
     });
-  } catch (e) {
-    // If running in browser or unsupported, gracefully ignore
+  } catch {
+    // Native widget is optional on web/PWA and must never interrupt the app.
   }
 }
