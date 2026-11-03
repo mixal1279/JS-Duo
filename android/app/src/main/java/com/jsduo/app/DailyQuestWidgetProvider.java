@@ -59,25 +59,21 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         // Three visual states share one fixed widget layout and footprint.
         final int background;
         final int accent;
-        final int progressColor;
         final String statusTitle;
         final String statusDescription;
         if (practicedToday) {
             background = R.drawable.widget_bg_streak_green;
             accent = Color.rgb(20, 230, 200);
-            progressColor = Color.rgb(20, 230, 200);
             statusTitle = "Super robota!";
             statusDescription = "Passa zaliczona";
         } else if (streak > 0 && hour >= 20) {
             background = R.drawable.widget_bg_streak_amber;
             accent = Color.rgb(255, 181, 46);
-            progressColor = Color.rgb(255, 181, 46);
             statusTitle = "Nie daj się zatrzymać!";
             statusDescription = "Passa zagrożona";
         } else {
             background = R.drawable.widget_bg_streak_gray;
             accent = Color.rgb(130, 145, 165);
-            progressColor = Color.rgb(65, 160, 245);
             statusTitle = "Czas na kolejną lekcję?";
             statusDescription = "Passa niezaliczona";
         }
