@@ -6,6 +6,7 @@ on:
       - main
       - master
       - 'release/**'
+      - 'feat/widgets-and-app-logo'
     tags:
       - 'v*.*.*'
   workflow_dispatch:
