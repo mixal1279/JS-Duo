@@ -1,50 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_container"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/widget_bg"
-    android:padding="10dp">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:id="@+id/widget_streak_icon"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:src="@drawable/ic_widget_code"
-                android:contentDescription="Stan passy" />
-
-            <TextView
-                android:id="@+id/widget_streak_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
-                android:text="0"
-                android:textColor="#FFFFFF"
-                android:textSize="28sp"
-                android:textStyle="bold"
-                android:maxLines="1" />
-        </LinearLayout>
-
-        <ImageView
-            android:id="@+id/widget_status_icon"
-            android:layout_width="112dp"
-            android:layout_height="match_parent"
-            android:padding="1dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/cybercat_happy"
-            android:contentDescription="Nastrój cyberkota" />
-    </LinearLayout>
+ android:id="@+id/widget_container" android:layout_width="match_parent" android:layout_height="match_parent"
+ android:background="@drawable/widget_bg_streak_gray" android:padding="12dp">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center_vertical" android:orientation="horizontal">
+  <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_vertical" android:orientation="vertical" android:paddingEnd="8dp">
+   <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+    <ImageView android:id="@+id/widget_streak_icon" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/ic_widget_code" android:contentDescription="Stan passy"/>
+    <TextView android:id="@+id/widget_streak_count" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="12" android:textColor="#FFFFFF" android:textSize="28sp" android:textStyle="bold" android:maxLines="1"/>
+   </LinearLayout>
+   <TextView android:id="@+id/widget_status_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Czas na kolejną lekcję?" android:textColor="#F4F7FF" android:textSize="17sp" android:textStyle="bold" android:maxLines="2" android:ellipsize="end"/>
+   <ProgressBar android:id="@+id/widget_xp_progress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="8dp" android:layout_marginTop="9dp" android:max="30" android:progress="0" android:progressTint="#42A5F5" android:progressBackgroundTint="#293B56"/>
+   <TextView android:id="@+id/widget_status_desc" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:text=""/>
+   <TextView android:id="@+id/widget_xp_count" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:text=""/>
+   <TextView android:id="@+id/widget_action_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:text=""/>
+   <ImageView android:id="@+id/widget_mascot_logo" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:src="@mipmap/ic_launcher"/>
+  </LinearLayout>
+  <ImageView android:id="@+id/widget_status_icon" android:layout_width="132dp" android:layout_height="match_parent" android:padding="1dp" android:scaleType="fitCenter" android:src="@drawable/cybercat_happy" android:contentDescription="Nastrój cyberkota"/>
+ </LinearLayout>
 </FrameLayout>
