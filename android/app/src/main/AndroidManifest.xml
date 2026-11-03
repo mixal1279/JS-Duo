@@ -1,89 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <application
-        android:allowBackup="true"
-        android:icon="@drawable/cybercat_happy"
-        android:label="@string/app_name"
-        android:roundIcon="@drawable/cybercat_happy"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-
-        <activity
-            android:name=".MainActivity"
-            android:label="@string/title_activity_main"
-            android:icon="@drawable/cybercat_happy"
-            android:roundIcon="@drawable/cybercat_happy"
-            android:theme="@style/AppTheme.NoActionBarLaunch"
-            android:launchMode="singleTask"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density" />
-
-        <!-- One launcher alias is enabled at a time to let Android reflect the mascot mood. -->
-        <activity-alias android:name=".MainActivityHappy" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_happy" android:enabled="true" android:exported="true">
-            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
-        </activity-alias>
-        <activity-alias android:name=".MainActivityWorried" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_worried" android:enabled="false" android:exported="true">
-            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
-        </activity-alias>
-        <activity-alias android:name=".MainActivitySad" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_sad" android:enabled="false" android:exported="true">
-            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
-        </activity-alias>
-        <activity-alias android:name=".MainActivityPanicked" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_panicked" android:enabled="false" android:exported="true">
-            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
-        </activity-alias>
-        <activity-alias android:name=".MainActivityDesperate" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@drawable/cybercat_desperate" android:enabled="false" android:exported="true">
-            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
-        </activity-alias>
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"></meta-data>
-        </provider>
-
-
-        <!-- Re-evaluate the icon/widget at inactivity thresholds and after device/time changes. -->
-        <receiver
-            android:name=".DuoMoodReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.jsduo.app.ACTION_MOOD_REFRESH" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.TIME_SET" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Home Screen Widget Provider -->
-        <receiver
-            android:name=".DailyQuestWidgetProvider"
-            android:exported="true"
-            android:enabled="true"
-            android:icon="@drawable/cybercat_happy"
-            android:label="@string/widget_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.jsduo.app.ACTION_REFRESH_WIDGET" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/daily_quest_widget_info" />
-        </receiver>
-    </application>
-
-    <!-- Permissions -->
-
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+ <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:roundIcon="@mipmap/ic_launcher_round" android:supportsRtl="true" android:theme="@style/AppTheme">
+  <activity android:name=".MainActivity" android:label="@string/title_activity_main" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:theme="@style/AppTheme.NoActionBarLaunch" android:launchMode="singleTask" android:exported="true" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"/>
+  <activity-alias android:name=".MainActivityHappy" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:enabled="true" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+  <activity-alias android:name=".MainActivityWorried" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:enabled="false" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+  <activity-alias android:name=".MainActivitySad" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:enabled="false" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+  <activity-alias android:name=".MainActivityPanicked" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:enabled="false" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+  <activity-alias android:name=".MainActivityDesperate" android:targetActivity=".MainActivity" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:enabled="false" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+  <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/></provider>
+  <receiver android:name=".DuoMoodReceiver" android:enabled="true" android:exported="false"><intent-filter><action android:name="com.jsduo.app.ACTION_MOOD_REFRESH"/><action android:name="android.intent.action.BOOT_COMPLETED"/><action android:name="android.intent.action.MY_PACKAGE_REPLACED"/><action android:name="android.intent.action.TIME_SET"/><action android:name="android.intent.action.TIMEZONE_CHANGED"/></intent-filter></receiver>
+  <receiver android:name=".DailyQuestWidgetProvider" android:exported="true" android:enabled="true" android:icon="@mipmap/ic_launcher" android:label="@string/widget_name">
+   <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="com.jsduo.app.ACTION_REFRESH_WIDGET"/><action android:name="android.intent.action.BOOT_COMPLETED"/><action android:name="android.intent.action.MY_PACKAGE_REPLACED"/></intent-filter>
+   <meta-data android:name="android.appwidget.provider" android:resource="@xml/daily_quest_widget_info"/>
+  </receiver>
+ </application>
+ <uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.VIBRATE"/><uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 </manifest>
