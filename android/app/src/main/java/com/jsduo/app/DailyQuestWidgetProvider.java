@@ -107,7 +107,13 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         views.setInt(R.id.widget_streak_icon, "setColorFilter", accent);
         int dailyXp = Math.max(0, prefs.getInt("daily_xp", 0));
         int dailyXpTarget = Math.max(1, prefs.getInt("daily_xp_target", 30));
-        views.setProgressBar(R.id.widget_xp_progress, dailyXpTarget, Math.min(dailyXp, dailyXpTarget), false);
+        int progress = Math.min(dailyXp, dailyXpTarget);
+        views.setProgressBar(R.id.widget_xp_progress, dailyXpTarget, progress, false);
+        views.setProgressBar(R.id.widget_xp_progress_amber, dailyXpTarget, progress, false);
+        views.setProgressBar(R.id.widget_xp_progress_green, dailyXpTarget, progress, false);
+        views.setViewVisibility(R.id.widget_xp_progress, practicedToday || (streak > 0 && hour >= 20) ? android.view.View.GONE : android.view.View.VISIBLE);
+        views.setViewVisibility(R.id.widget_xp_progress_amber, !practicedToday && streak > 0 && hour >= 20 ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.widget_xp_progress_green, practicedToday ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setInt(R.id.widget_container, "setBackgroundResource", background);
 
         Intent launchIntent = new Intent(context, MainActivity.class);
