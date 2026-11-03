@@ -13,6 +13,7 @@ import android.widget.RemoteViews;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class DailyQuestWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_REFRESH_WIDGET = "com.jsduo.app.ACTION_REFRESH_WIDGET";
@@ -46,15 +47,49 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    private static int daysSinceLocalDate(String dateString) {
+        if (dateString == null || dateString.isEmpty()) return Integer.MAX_VALUE;
+        try {
+            SimpleDateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            utcFormat.setLenient(false);
+            utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date lastActive = utcFormat.parse(dateString);
+            String todayLocal = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+            Date today = utcFormat.parse(todayLocal);
+            if (lastActive == null || today == null) return Integer.MAX_VALUE;
+            return (int) ((today.getTime() - lastActive.getTime()) / 86_400_000L);
+        } catch (Exception ignored) {
+            return Integer.MAX_VALUE;
+        }
+    }
+
     public static void updateAppWidget(Context context, AppWidgetManager manager, int appWidgetId) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_daily_quest);
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         int streak = Math.max(0, prefs.getInt("streak", 0));
+        int streakFreeze = Math.max(0, prefs.getInt("streakFreeze", 0));
         String lastActiveDate = prefs.getString("lastActiveDate", "");
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        boolean practicedToday = sdf.format(new Date()).equals(lastActiveDate);
+        int daysSinceLastActivity = daysSinceLocalDate(lastActiveDate);
+        boolean practicedToday = daysSinceLastActivity == 0;
+        boolean freezeProtectsStreak = daysSinceLastActivity == 2 && streakFreeze > 0;
+
+        // Mirror storageService.validateAndSyncStreak(): a cached streak must not
+        // remain visible forever when the app has not been opened for several days.
+        // The widget only derives the display value; the app remains responsible
+        // for persisting the reset or consuming a streak freeze.
+        int displayStreak = streak;
+        if (lastActiveDate.isEmpty()
+                || (daysSinceLastActivity > 1 && !freezeProtectsStreak)) {
+            displayStreak = 0;
+        }
+
         int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        boolean streakAtRisk = displayStreak > 0
+                && !practicedToday
+                && daysSinceLastActivity >= 1
+                && (daysSinceLastActivity == 1 || freezeProtectsStreak)
+                && hour >= 20;
 
         // Three visual states share one fixed widget layout and footprint.
         final int background;
@@ -66,11 +101,13 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
             accent = Color.rgb(20, 230, 200);
             statusTitle = "Super robota!";
             statusDescription = "Passa zaliczona";
-        } else if (streak > 0 && hour >= 20) {
+        } else if (streakAtRisk) {
             background = R.drawable.widget_bg_streak_amber;
             accent = Color.rgb(255, 181, 46);
             statusTitle = "Nie daj się zatrzymać!";
-            statusDescription = "Passa zagrożona";
+            statusDescription = freezeProtectsStreak
+                    ? "Zamrożenie chroni passę"
+                    : "Passa zagrożona";
         } else {
             background = R.drawable.widget_bg_streak_gray;
             accent = Color.rgb(130, 145, 165);
@@ -99,7 +136,7 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
                 break;
         }
 
-        views.setTextViewText(R.id.widget_streak_count, String.valueOf(streak));
+        views.setTextViewText(R.id.widget_streak_count, String.valueOf(displayStreak));
         views.setTextViewText(R.id.widget_status_title, statusTitle);
         views.setTextViewText(R.id.widget_status_desc, statusDescription);
         views.setImageViewResource(R.id.widget_status_icon, moodIcon);
@@ -111,8 +148,8 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         views.setProgressBar(R.id.widget_xp_progress, dailyXpTarget, progress, false);
         views.setProgressBar(R.id.widget_xp_progress_amber, dailyXpTarget, progress, false);
         views.setProgressBar(R.id.widget_xp_progress_green, dailyXpTarget, progress, false);
-        views.setViewVisibility(R.id.widget_xp_progress, practicedToday || (streak > 0 && hour >= 20) ? android.view.View.GONE : android.view.View.VISIBLE);
-        views.setViewVisibility(R.id.widget_xp_progress_amber, !practicedToday && streak > 0 && hour >= 20 ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.widget_xp_progress, practicedToday || streakAtRisk ? android.view.View.GONE : android.view.View.VISIBLE);
+        views.setViewVisibility(R.id.widget_xp_progress_amber, streakAtRisk ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.widget_xp_progress_green, practicedToday ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setInt(R.id.widget_container, "setBackgroundResource", background);
 
