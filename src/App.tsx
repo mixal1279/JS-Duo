@@ -126,15 +126,13 @@ export const App: React.FC = () => {
     };
   }, [stats.lastActiveDate]);
 
-  // Sync to LocalStorage on changes
+  // Persist and sync one coherent snapshot so the native widget never reads
+  // yesterday's quest progress from LocalStorage after a same-render state update.
   useEffect(() => {
     storageService.saveStats(stats);
-    syncWidgetStats(stats);
-  }, [stats]);
-
-  useEffect(() => {
     storageService.saveQuests(quests);
-  }, [quests]);
+    void syncWidgetStats(stats, quests);
+  }, [stats, quests]);
 
   useEffect(() => {
     storageService.saveFriends(friends);
