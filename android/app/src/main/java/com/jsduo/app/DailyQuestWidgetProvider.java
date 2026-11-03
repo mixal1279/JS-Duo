@@ -112,7 +112,6 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         int dailyXp = Math.max(0, prefs.getInt("daily_xp", 0));
         int dailyXpTarget = Math.max(1, prefs.getInt("daily_xp_target", 30));
         views.setProgressBar(R.id.widget_xp_progress, dailyXpTarget, Math.min(dailyXp, dailyXpTarget), false);
-        views.setInt(R.id.widget_xp_progress, "setProgressTintList", android.content.res.ColorStateList.valueOf(progressColor));
         views.setInt(R.id.widget_container, "setBackgroundResource", background);
 
         Intent launchIntent = new Intent(context, MainActivity.class);
