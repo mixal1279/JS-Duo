@@ -45,6 +45,7 @@ public class WidgetBridgePlugin extends Plugin {
                     JSONObject stats = new JSONObject(statsJson);
                     if (streak == null) streak = stats.has("streak") ? stats.optInt("streak", 0) : null;
                     if (lastActiveDate == null) lastActiveDate = stats.optString("lastActiveDate", "");
+                    editor.putInt("streakFreeze", Math.max(0, stats.optInt("streakFreeze", 0)));
 
                     int lessonCount = readCompletedLessonCount(statsJson);
                     int previousLessonCount = prefs.getInt(KEY_LESSON_COUNT, -1);
