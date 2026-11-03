@@ -56,18 +56,30 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         boolean practicedToday = sdf.format(new Date()).equals(lastActiveDate);
         int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
 
-        // Three clear states: gray before practice, amber late in the day, green after today's lesson.
+        // Three visual states share one fixed widget layout and footprint.
         final int background;
         final int accent;
+        final int progressColor;
+        final String statusTitle;
+        final String statusDescription;
         if (practicedToday) {
             background = R.drawable.widget_bg_streak_green;
             accent = Color.rgb(20, 230, 200);
+            progressColor = Color.rgb(20, 230, 200);
+            statusTitle = "Super robota!";
+            statusDescription = "Passa zaliczona";
         } else if (streak > 0 && hour >= 20) {
             background = R.drawable.widget_bg_streak_amber;
             accent = Color.rgb(255, 181, 46);
+            progressColor = Color.rgb(255, 181, 46);
+            statusTitle = "Nie daj się zatrzymać!";
+            statusDescription = "Passa zagrożona";
         } else {
             background = R.drawable.widget_bg_streak_gray;
             accent = Color.rgb(130, 145, 165);
+            progressColor = Color.rgb(65, 160, 245);
+            statusTitle = "Czas na kolejną lekcję?";
+            statusDescription = "Passa niezaliczona";
         }
 
         long lastActiveAt = DuoAppIcon.resolveLastActiveAt(context, lastActiveDate);
@@ -92,9 +104,15 @@ public class DailyQuestWidgetProvider extends AppWidgetProvider {
         }
 
         views.setTextViewText(R.id.widget_streak_count, String.valueOf(streak));
+        views.setTextViewText(R.id.widget_status_title, statusTitle);
+        views.setTextViewText(R.id.widget_status_desc, statusDescription);
         views.setImageViewResource(R.id.widget_status_icon, moodIcon);
         views.setImageViewResource(R.id.widget_streak_icon, R.drawable.ic_widget_code);
         views.setInt(R.id.widget_streak_icon, "setColorFilter", accent);
+        int dailyXp = Math.max(0, prefs.getInt("daily_xp", 0));
+        int dailyXpTarget = Math.max(1, prefs.getInt("daily_xp_target", 30));
+        views.setProgressBar(R.id.widget_xp_progress, dailyXpTarget, Math.min(dailyXp, dailyXpTarget), false);
+        views.setInt(R.id.widget_xp_progress, "setProgressTintList", android.content.res.ColorStateList.valueOf(progressColor));
         views.setInt(R.id.widget_container, "setBackgroundResource", background);
 
         Intent launchIntent = new Intent(context, MainActivity.class);
