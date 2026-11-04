@@ -126,12 +126,26 @@ export const App: React.FC = () => {
     };
   }, [stats.lastActiveDate]);
 
-  // Persist and sync one coherent snapshot so the native widget never reads
-  // yesterday's quest progress from LocalStorage after a same-render state update.
+  // Zapisuje i wysyła jeden spójny snapshot po każdej zmianie statystyk lub zadań.
+  // Ponawia synchronizację po powrocie aplikacji na pierwszy plan.
   useEffect(() => {
     storageService.saveStats(stats);
     storageService.saveQuests(quests);
+
+    const synchronizujWidget = () => {
+      if (document.visibilityState === 'visible') {
+        void syncWidgetStats(stats, quests);
+      }
+    };
+
     void syncWidgetStats(stats, quests);
+    window.addEventListener('focus', synchronizujWidget);
+    document.addEventListener('visibilitychange', synchronizujWidget);
+
+    return () => {
+      window.removeEventListener('focus', synchronizujWidget);
+      document.removeEventListener('visibilitychange', synchronizujWidget);
+    };
   }, [stats, quests]);
 
   useEffect(() => {
