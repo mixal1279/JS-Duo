@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -20,6 +21,7 @@ import java.util.Locale;
 
 @CapacitorPlugin(name = "WidgetBridge")
 public class WidgetBridgePlugin extends Plugin {
+    private static final String TAG = "WidgetBridge";
     private static final String PREFS_NAME = DuoAppIcon.PREFS_NAME;
     private static final String KEY_LESSON_COUNT = "mascot_completed_lesson_count";
     private static final String KEY_QUEST_COMPLETED_COUNT = "daily_quest_completed_count";
@@ -110,7 +112,13 @@ public class WidgetBridgePlugin extends Plugin {
             String nextQuestTitle = call.getString("nextDailyQuestTitle");
             if (nextQuestTitle != null) editor.putString(KEY_NEXT_QUEST_TITLE, nextQuestTitle);
 
-            editor.apply();
+            // commit() zapewnia, że odświeżany RemoteViews odczyta już nowy snapshot.
+            if (!editor.commit()) {
+                throw new IllegalStateException("Nie udało się zapisać danych widgetu w SharedPreferences");
+            }
+
+            Log.i(TAG, "Zapisano dane widgetu: streak=" + prefs.getInt("streak", 0)
+                    + ", lastActiveDate=" + prefs.getString("lastActiveDate", ""));
 
             // Refresh immediately so the launcher uses the latest canonical streak/date.
             DuoAppIcon.refresh(context);
@@ -121,8 +129,10 @@ public class WidgetBridgePlugin extends Plugin {
             if (ids != null && ids.length > 0) {
                 new DailyQuestWidgetProvider().onUpdate(context, manager, ids);
             }
+            Log.i(TAG, "Odświeżono widgety: " + (ids == null ? 0 : ids.length));
             call.resolve();
         } catch (Exception e) {
+            Log.e(TAG, "Aktualizacja widgetu nie powiodła się", e);
             call.reject("Failed to update widget data: " + e.getMessage());
         }
     }
